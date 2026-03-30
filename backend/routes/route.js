@@ -1,0 +1,130 @@
+const router = require('express').Router();
+const path = require('path');
+
+const { adminRegister, adminLogIn, getAdminDetail} = require('../controllers/admin-controller.js');
+const { sclassCreate, sclassList, deleteSclass, deleteSclasses, getSclassDetail, getSclassStudents } = require('../controllers/class-controller.js');
+const { complainCreate, complainList } = require('../controllers/complain-controller.js');
+const { noticeCreate, noticeList, deleteNotices, deleteNotice, updateNotice } = require('../controllers/notice-controller.js');
+const {
+    studentRegister, studentLogIn, getStudents, getStudentDetail,
+    deleteStudents, deleteStudent, updateStudent, studentAttendance,
+    deleteStudentsByClass, updateExamResult,
+    clearAllStudentsAttendanceBySubject, clearAllStudentsAttendance,
+    removeStudentAttendanceBySubject, removeStudentAttendance
+} = require('../controllers/student_controller.js');
+const { subjectCreate, classSubjects, deleteSubjectsByClass, getSubjectDetail, deleteSubject, freeSubjectList, allSubjects, deleteSubjects } = require('../controllers/subject-controller.js');
+const { teacherRegister, teacherLogIn, getTeachers, getTeacherDetail, deleteTeachers, deleteTeachersByClass, deleteTeacher, updateTeacherSubject, teacherAttendance } = require('../controllers/teacher-controller.js');
+const { parentRegister, parentLogIn, getParentDetail, getParents, updateParent, deleteParent, addChildToParent } = require('../controllers/parent-controller.js');
+const {
+    createAssignment, getAssignmentsByClass, getAssignmentsBySubject,
+    deleteAssignment, submitAssignment, getStudentSubmissions,
+    getAssignmentSubmissions, gradeSubmission
+} = require('../controllers/assignment-controller.js');
+const { getAttendanceAnalytics } = require('../controllers/attendanceAnalyticsController.js');
+const upload = require('../middleware/upload.js');
+const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest } = require('../controllers/test-controller.js');
+const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
+
+// ── Admin ────────────────────────────────────────────────────────────────────
+router.post('/AdminReg', adminRegister);
+router.post('/AdminLogin', adminLogIn);
+router.get("/Admin/:id", getAdminDetail);
+
+// ── Student ──────────────────────────────────────────────────────────────────
+router.post('/StudentReg', studentRegister);
+router.post('/StudentLogin', studentLogIn);
+router.get("/Students/:id", getStudents);
+router.get("/Student/:id", getStudentDetail);
+router.delete("/Students/:id", deleteStudents);
+router.delete("/StudentsClass/:id", deleteStudentsByClass);
+router.delete("/Student/:id", deleteStudent);
+router.put("/Student/:id", updateStudent);
+router.put('/UpdateExamResult/:id', updateExamResult);
+router.put('/StudentAttendance/:id', studentAttendance);
+router.put('/RemoveAllStudentsSubAtten/:id', clearAllStudentsAttendanceBySubject);
+router.put('/RemoveAllStudentsAtten/:id', clearAllStudentsAttendance);
+router.put('/RemoveStudentSubAtten/:id', removeStudentAttendanceBySubject);
+router.put('/RemoveStudentAtten/:id', removeStudentAttendance);
+
+// ── Teacher ──────────────────────────────────────────────────────────────────
+router.post('/TeacherReg', teacherRegister);
+router.post('/TeacherLogin', teacherLogIn);
+router.get("/Teachers/:id", getTeachers);
+router.get("/Teacher/:id", getTeacherDetail);
+router.delete("/Teachers/:id", deleteTeachers);
+router.delete("/TeachersClass/:id", deleteTeachersByClass);
+router.delete("/Teacher/:id", deleteTeacher);
+router.put("/TeacherSubject", updateTeacherSubject);
+router.post('/TeacherAttendance/:id', teacherAttendance);
+
+// ── Parent ───────────────────────────────────────────────────────────────────
+router.post('/ParentReg', parentRegister);
+router.post('/ParentLogin', parentLogIn);
+router.get("/Parents/:id", getParents);
+router.get("/Parent/:id", getParentDetail);
+router.put("/Parent/:id", updateParent);
+router.delete("/Parent/:id", deleteParent);
+router.put("/ParentAddChild", addChildToParent);
+
+// ── Notice ───────────────────────────────────────────────────────────────────
+router.post('/NoticeCreate', noticeCreate);
+router.get('/NoticeList/:id', noticeList);
+router.delete("/Notices/:id", deleteNotices);
+router.delete("/Notice/:id", deleteNotice);
+router.put("/Notice/:id", updateNotice);
+
+// ── Complain (legacy) ────────────────────────────────────────────────────────
+router.post('/ComplainCreate', complainCreate);
+router.get('/ComplainList/:id', complainList);
+
+// ── Class ────────────────────────────────────────────────────────────────────
+router.post('/SclassCreate', sclassCreate);
+router.get('/SclassList/:id', sclassList);
+router.get("/Sclass/:id", getSclassDetail);
+router.get("/Sclass/Students/:id", getSclassStudents);
+router.delete("/Sclasses/:id", deleteSclasses);
+router.delete("/Sclass/:id", deleteSclass);
+
+// ── Subject ──────────────────────────────────────────────────────────────────
+router.post('/SubjectCreate', subjectCreate);
+router.get('/AllSubjects/:id', allSubjects);
+router.get('/ClassSubjects/:id', classSubjects);
+router.get('/FreeSubjectList/:id', freeSubjectList);
+router.get("/Subject/:id", getSubjectDetail);
+router.delete("/Subject/:id", deleteSubject);
+router.delete("/Subjects/:id", deleteSubjects);
+router.delete("/SubjectsClass/:id", deleteSubjectsByClass);
+
+// ── Assignments ──────────────────────────────────────────────────────────────
+router.post('/AssignmentCreate', createAssignment);
+router.get('/AssignmentsByClass/:classId', getAssignmentsByClass);
+router.get('/AssignmentsBySubject/:subjectId', getAssignmentsBySubject);
+router.delete('/Assignment/:id', deleteAssignment);
+
+// ── Submissions ───────────────────────────────────────────────────────────────
+router.post('/SubmitAssignment', upload.single('file'), submitAssignment);
+router.get('/StudentSubmissions/:studentId', getStudentSubmissions);
+router.get('/AssignmentSubmissions/:assignmentId', getAssignmentSubmissions);
+router.put('/GradeSubmission/:id', gradeSubmission);
+
+// ── Attendance Analytics ──────────────────────────────────────────────────────
+router.get('/attendance-analytics/:studentId', getAttendanceAnalytics);
+
+// ── Serve uploaded files ──────────────────────────────────────────────────────
+const express = require('express');
+router.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// ── Tests ───────────────────────────────────────────────────────────────────
+router.post('/TestCreate', createTest);
+router.get('/TestsByClass/:classId', getTestsByClass);
+router.get('/TestsForStudent/:studentId', getTestsForStudent);
+router.put('/Test/:id', updateTest);
+router.delete('/Test/:id', deleteTest);
+
+// ── Test Attempts ────────────────────────────────────────────────────────────
+router.post('/SubmitAttempt', submitAttempt);
+router.get('/AttemptsByTest/:testId', getAttemptsByTest);
+router.get('/AttemptsByStudent/:studentId', getAttemptsByStudent);
+router.get('/Attempt/:id', getAttemptById);
+
+module.exports = router;

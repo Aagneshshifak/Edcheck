@@ -1,0 +1,38 @@
+{
+  "name": "school-management-system",
+  "version": "1.0.0",
+  "description": "AI-Driven Learning Intelligence Platform",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"cd backend && node index.js\" \"cd frontend && npm start\"",
+    "dev:backend": "cd backend && node index.js",
+    "dev:frontend": "cd frontend && npm start",
+    "seed": "cd backend && npm run seed",
+    "install": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "school-management",
+    "education",
+    "ai-powered",
+    "learning-analytics",
+    "mern-stack",
+    "groq-ai"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "groq-sdk": "^0.3.0",
+    "mongodb": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/school-management-system.git"
+  }
+}
