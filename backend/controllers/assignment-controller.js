@@ -1,5 +1,7 @@
 const Assignment  = require("../models/assignmentSchema");
 const Submission  = require("../models/submissionSchema");
+const Student     = require("../models/studentSchema");
+const { createNotifications } = require("./notification-controller");
 const path        = require("path");
 
 // ── Assignments ──────────────────────────────────────────────────────────────
@@ -9,6 +11,21 @@ const createAssignment = async (req, res) => {
     try {
         const assignment = new Assignment(req.body);
         const result = await assignment.save();
+
+        // Notify all students in the class
+        try {
+            const students = await Student.find({
+                $or: [{ classId: result.sclassName }, { sclassName: result.sclassName }]
+            }).select("_id");
+            if (students.length > 0) {
+                await createNotifications(
+                    students.map((s) => s._id),
+                    `New assignment posted: "${result.title}" — due ${new Date(result.dueDate).toLocaleDateString()}`,
+                    "assignment"
+                );
+            }
+        } catch (_) { /* non-fatal */ }
+
         res.send(result);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -119,6 +136,27 @@ const gradeSubmission = async (req, res) => {
             { grade, feedback, status: "graded" },
             { new: true }
         );
+
+        // Notify the student
+        try {
+            if (result?.studentId) {
+                if (grade != null) {
+                    await createNotifications(
+                        [result.studentId],
+                        `Your assignment has been graded: ${grade}`,
+                        "marks"
+                    );
+                }
+                if (feedback) {
+                    await createNotifications(
+                        [result.studentId],
+                        `Teacher feedback on your assignment: "${feedback}"`,
+                        "feedback"
+                    );
+                }
+            }
+        } catch (_) { /* non-fatal */ }
+
         res.send(result);
     } catch (err) {
         res.status(500).json({ message: err.message });

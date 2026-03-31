@@ -16,8 +16,10 @@ const noticeCreate = async (req, res) => {
 const noticeList = async (req, res) => {
     try {
         let notices = await Notice.find({ school: req.params.id })
+            .sort({ date: -1 })
+            .lean();
         if (notices.length > 0) {
-            res.send(notices)
+            res.send(notices);
         } else {
             res.send({ message: "No notices found" });
         }

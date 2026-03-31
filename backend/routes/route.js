@@ -23,6 +23,8 @@ const {
 const { getAttendanceAnalytics } = require('../controllers/attendanceAnalyticsController.js');
 const { getUpcomingDeadlines } = require('../controllers/deadlines-controller.js');
 const { getStudentProgress } = require('../controllers/progress-controller.js');
+const { getNotifications, markAsRead, markAllAsRead } = require('../controllers/notification-controller.js');
+const { streamNotifications } = require('../controllers/notification-controller.js');
 const upload = require('../middleware/upload.js');
 const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest } = require('../controllers/test-controller.js');
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
@@ -115,6 +117,12 @@ router.get('/attendance-analytics/:studentId', getAttendanceAnalytics);
 
 // ── Upcoming Deadlines ────────────────────────────────────────────────────────
 router.get('/UpcomingDeadlines/:studentId', getUpcomingDeadlines);
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+router.get('/Notifications/stream/:userId', streamNotifications);
+router.get('/Notifications/:userId', getNotifications);
+router.put('/Notifications/read/:id', markAsRead);
+router.put('/Notifications/readAll/:userId', markAllAsRead);
 
 // ── Serve uploaded files ──────────────────────────────────────────────────────
 const express = require('express');

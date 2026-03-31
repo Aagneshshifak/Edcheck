@@ -14,6 +14,7 @@ import TeacherSideBar from './TeacherSideBar';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Logout from '../Logout'
 import AccountMenu from '../../components/AccountMenu';
+import NotificationBell from '../../components/NotificationBell';
 import { AppBar, Drawer } from '../../components/styles';
 import StudentAttendance from '../admin/studentRelated/StudentAttendance';
 
@@ -61,6 +62,7 @@ const TeacherDashboard = () => {
                         >
                             Teacher Dashboard
                         </Typography>
+                        <NotificationBell />
                         <AccountMenu />
                     </Toolbar>
                 </AppBar>

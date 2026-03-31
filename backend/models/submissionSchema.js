@@ -31,5 +31,9 @@ const submissionSchema = new mongoose.Schema({
 
 submissionSchema.index({ studentId: 1, assignmentId: 1 }, { unique: true });
 submissionSchema.index({ assignmentId: 1 });
+// Dashboard: count pending/graded submissions per student
+submissionSchema.index({ studentId: 1, status: 1 });
+// Teacher: all submissions for an assignment sorted by submission time
+submissionSchema.index({ assignmentId: 1, submittedAt: -1 });
 
 module.exports = mongoose.model("submission", submissionSchema);
