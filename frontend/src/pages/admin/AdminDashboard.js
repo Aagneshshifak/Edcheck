@@ -42,6 +42,15 @@ import ClassDetails from './classRelated/ClassDetails';
 import ShowClasses from './classRelated/ShowClasses';
 import AccountMenu from '../../components/AccountMenu';
 
+import AssignmentOversight from './assignmentRelated/AssignmentOversight';
+import AssignmentDetail from './assignmentRelated/AssignmentDetail';
+import TestOversight from './testRelated/TestOversight';
+import TestDetail from './testRelated/TestDetail';
+import AttendanceReport from './attendanceRelated/AttendanceReport';
+import NotificationCenter from './notificationRelated/NotificationCenter';
+import ReportCenter from './reportRelated/ReportCenter';
+import AnalyticsDashboard from './analyticsRelated/AnalyticsDashboard';
+
 const AdminDashboard = () => {
     const [open, setOpen] = useState(false);
     const toggleDrawer = () => {
@@ -135,6 +144,16 @@ const AdminDashboard = () => {
                         <Route path="/Admin/teachers/addteacher/:id" element={<AddTeacher />} />
 
                         <Route path="/logout" element={<Logout />} />
+
+                        {/* New module pages */}
+                        <Route path="/Admin/assignments" element={<AssignmentOversight />} />
+                        <Route path="/Admin/assignments/:id" element={<AssignmentDetail />} />
+                        <Route path="/Admin/tests" element={<TestOversight />} />
+                        <Route path="/Admin/tests/:id" element={<TestDetail />} />
+                        <Route path="/Admin/attendance" element={<AttendanceReport />} />
+                        <Route path="/Admin/notifications" element={<NotificationCenter />} />
+                        <Route path="/Admin/reports" element={<ReportCenter />} />
+                        <Route path="/Admin/analytics" element={<AnalyticsDashboard />} />
                     </Routes>
                 </Box>
             </Box>

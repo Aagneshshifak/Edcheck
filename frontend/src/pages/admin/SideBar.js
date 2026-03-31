@@ -11,6 +11,11 @@ import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import ReportIcon from '@mui/icons-material/Report';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import QuizIcon from '@mui/icons-material/Quiz';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import SummarizeIcon from '@mui/icons-material/Summarize';
+import BarChartIcon from '@mui/icons-material/BarChart';
 
 const SideBar = () => {
     const location = useLocation();
@@ -58,6 +63,42 @@ const SideBar = () => {
                         <ReportIcon color={location.pathname.startsWith("/Admin/complains") ? 'primary' : 'inherit'} />
                     </ListItemIcon>
                     <ListItemText primary="Complains" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Admin/assignments">
+                    <ListItemIcon>
+                        <AssignmentIcon color={location.pathname.startsWith("/Admin/assignments") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Assignments" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Admin/tests">
+                    <ListItemIcon>
+                        <QuizIcon color={location.pathname.startsWith("/Admin/tests") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Tests" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Admin/attendance">
+                    <ListItemIcon>
+                        <EventNoteIcon color={location.pathname.startsWith("/Admin/attendance") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Attendance" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Admin/notifications">
+                    <ListItemIcon>
+                        <NotificationsIcon color={location.pathname.startsWith("/Admin/notifications") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Notifications" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Admin/reports">
+                    <ListItemIcon>
+                        <SummarizeIcon color={location.pathname.startsWith("/Admin/reports") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Reports" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/Admin/analytics">
+                    <ListItemIcon>
+                        <BarChartIcon color={location.pathname.startsWith("/Admin/analytics") ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Analytics" />
                 </ListItemButton>
             </React.Fragment>
             <Divider sx={{ my: 1 }} />

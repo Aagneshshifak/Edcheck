@@ -130,23 +130,69 @@ const getAdminDetail = async (req, res) => {
 //     }
 // }
 
-// const updateAdmin = async (req, res) => {
-//     try {
-//         if (req.body.password) {
-//             const salt = await bcrypt.genSalt(10)
-//             res.body.password = await bcrypt.hash(res.body.password, salt)
-//         }
-//         let result = await Admin.findByIdAndUpdate(req.params.id,
-//             { $set: req.body },
-//             { new: true })
+const updateAdmin = async (req, res) => {
+    try {
+        const { name, email, schoolName, schoolAddress, phone, logoUrl } = req.body;
 
-//         result.password = undefined;
-//         res.send(result)
-//     } catch (error) {
-//         res.status(500).json(err);
-//     }
-// }
+        // Check for duplicate email (excluding current admin)
+        if (email) {
+            const existing = await Admin.findOne({ email, _id: { $ne: req.params.id } });
+            if (existing) {
+                return res.status(409).json({ message: 'Email already used by another account' });
+            }
+        }
 
-// module.exports = { adminRegister, adminLogIn, getAdminDetail, deleteAdmin, updateAdmin };
+        const updateFields = {};
+        if (name !== undefined) updateFields.name = name;
+        if (email !== undefined) updateFields.email = email;
+        if (schoolName !== undefined) updateFields.schoolName = schoolName;
+        if (schoolAddress !== undefined) updateFields.schoolAddress = schoolAddress;
+        if (phone !== undefined) updateFields.phone = phone;
+        if (logoUrl !== undefined) updateFields.logoUrl = logoUrl;
 
-module.exports = { adminRegister, adminLogIn, getAdminDetail };
+        // Handle logo upload via multer (file on req.file)
+        if (req.file) {
+            updateFields.logoUrl = req.file.path || req.file.secure_url || req.file.location;
+        }
+
+        let result = await Admin.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateFields },
+            { new: true }
+        );
+
+        if (!result) return res.status(404).json({ message: 'Admin not found' });
+
+        result.password = undefined;
+        res.send(result);
+    } catch (error) {
+        res.status(500).json(error);
+    }
+};
+
+const updateAdminPassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'currentPassword and newPassword are required' });
+        }
+
+        const admin = await Admin.findById(req.params.id);
+        if (!admin) return res.status(404).json({ message: 'Admin not found' });
+
+        const valid = await bcrypt.compare(currentPassword, admin.password);
+        if (!valid) {
+            return res.status(401).json({ message: 'Current password is incorrect' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        admin.password = await bcrypt.hash(newPassword, salt);
+        await admin.save();
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (error) {
+        res.status(500).json(error);
+    }
+};
+
+module.exports = { adminRegister, adminLogIn, getAdminDetail, updateAdmin, updateAdminPassword };

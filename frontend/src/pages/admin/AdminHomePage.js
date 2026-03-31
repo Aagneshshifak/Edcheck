@@ -4,6 +4,7 @@ import Students from "../../assets/img1.png";
 import Classes from "../../assets/img2.png";
 import Teachers from "../../assets/img3.png";
 import Fees from "../../assets/img4.png";
+import Subjects from "../../assets/subjects.svg";
 import styled from 'styled-components';
 import CountUp from 'react-countup';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,6 +12,8 @@ import { useEffect } from 'react';
 import { getAllSclasses } from '../../redux/sclassRelated/sclassHandle';
 import { getAllStudents } from '../../redux/studentRelated/studentHandle';
 import { getAllTeachers } from '../../redux/teacherRelated/teacherHandle';
+import axios from 'axios';
+import { useState } from 'react';
 
 const AdminHomePage = () => {
     const dispatch = useDispatch();
@@ -22,10 +25,17 @@ const AdminHomePage = () => {
 
     const adminID = currentUser._id
 
+    const [numberOfSubjects, setNumberOfSubjects] = useState(0);
+
     useEffect(() => {
         dispatch(getAllStudents(adminID));
         dispatch(getAllSclasses(adminID, "Sclass"));
         dispatch(getAllTeachers(adminID));
+        axios.get(`${process.env.REACT_APP_BASE_URL}/AllSubjects/${adminID}`)
+            .then(res => {
+                if (Array.isArray(res.data)) setNumberOfSubjects(res.data.length);
+            })
+            .catch(() => {});
     }, [adminID, dispatch]);
 
     const numberOfStudents = studentsList && studentsList.length;
@@ -70,6 +80,15 @@ const AdminHomePage = () => {
                                 Fees Collection
                             </Title>
                             <Data start={0} end={23000} duration={2.5} prefix="$" />                        </StyledPaper>
+                    </Grid>
+                    <Grid item xs={12} md={3} lg={3}>
+                        <StyledPaper>
+                            <img src={Subjects} alt="Subjects" />
+                            <Title>
+                                Total Subjects
+                            </Title>
+                            <Data start={0} end={numberOfSubjects} duration={2.5} />
+                        </StyledPaper>
                     </Grid>
                     <Grid item xs={12} md={12} lg={12}>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
