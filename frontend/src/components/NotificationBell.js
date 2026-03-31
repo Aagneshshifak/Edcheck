@@ -80,7 +80,7 @@ const Toast = ({ notification, onClose }) => {
 const NotificationBell = () => {
     const dispatch = useDispatch();
     const { currentUser } = useSelector((s) => s.user);
-    const { items } = useSelector((s) => s.notifications);
+    const { items, hasMore, nextCursor } = useSelector((s) => s.notifications);
     const [open, setOpen] = useState(false);
     const [toast, setToast] = useState(null);
     const itemsRef = useRef(items);
@@ -104,9 +104,12 @@ const NotificationBell = () => {
         es.onmessage = (e) => {
             try {
                 const notification = JSON.parse(e.data);
-                // Prepend to Redux store
-                dispatch(setNotifications([notification, ...itemsRef.current]));
-                // Show toast
+                // Prepend to Redux store preserving hasMore/nextCursor
+                dispatch(setNotifications({
+                    items: [notification, ...itemsRef.current],
+                    hasMore: false,
+                    nextCursor: null,
+                }));
                 setToast(notification);
             } catch (_) {}
         };
@@ -164,7 +167,8 @@ const NotificationBell = () => {
                                     </Typography>
                                 </Box>
                             ) : (
-                                items.map((n) => (
+                                <>
+                                {items.map((n) => (
                                     <Box key={n._id}
                                         onClick={() => !n.readStatus && handleMarkOne(n._id)}
                                         sx={{
@@ -198,7 +202,17 @@ const NotificationBell = () => {
                                             }} />
                                         )}
                                     </Box>
-                                ))
+                                ))}
+                                {hasMore && (
+                                    <Box sx={{ p: 1.5, textAlign: 'center', borderTop: '1px solid rgba(30,144,255,0.1)' }}>
+                                        <Typography
+                                            onClick={() => dispatch(fetchNotifications(currentUser._id, nextCursor))}
+                                            sx={{ color: '#0ea5e9', fontSize: '0.78rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}>
+                                            Load more
+                                        </Typography>
+                                    </Box>
+                                )}
+                                </>
                             )}
                         </Paper>
                     )}

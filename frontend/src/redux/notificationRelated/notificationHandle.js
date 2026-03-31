@@ -3,11 +3,17 @@ import { setNotifications, markOneRead, markAllRead, setLoading } from "./notifi
 
 const BASE = process.env.REACT_APP_BASE_URL;
 
-export const fetchNotifications = (userId) => async (dispatch) => {
+export const fetchNotifications = (userId, before = null) => async (dispatch, getState) => {
     dispatch(setLoading());
     try {
-        const { data } = await axios.get(`${BASE}/Notifications/${userId}`);
-        dispatch(setNotifications(data));
+        const url = before
+            ? `${BASE}/Notifications/${userId}?before=${before}&limit=20`
+            : `${BASE}/Notifications/${userId}?limit=20`;
+        const { data } = await axios.get(url);
+        const existing = getState().notifications.items;
+        // On initial load replace; on lazy-load append
+        const items = before ? [...existing, ...data.notifications] : data.notifications;
+        dispatch(setNotifications({ items, hasMore: data.hasMore, nextCursor: data.nextCursor }));
     } catch (_) {}
 };
 

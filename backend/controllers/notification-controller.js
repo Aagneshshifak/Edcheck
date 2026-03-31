@@ -61,14 +61,25 @@ const streamNotifications = (req, res) => {
     });
 };
 
-// GET /Notifications/:userId  — fetch history, newest first
+// GET /Notifications/:userId?before=<ISO_date>&limit=20  — cursor-based lazy load
 const getNotifications = async (req, res) => {
     try {
-        const notifications = await Notification.find({ userId: req.params.userId })
+        const limit  = Math.min(50, parseInt(req.query.limit) || 20);
+        const before = req.query.before ? new Date(req.query.before) : new Date();
+
+        const query = { userId: req.params.userId, createdAt: { $lt: before } };
+
+        const notifications = await Notification.find(query)
             .sort({ createdAt: -1 })
-            .limit(50)
+            .limit(limit)
             .lean();
-        res.json(notifications);
+
+        const hasMore = notifications.length === limit;
+        const nextCursor = hasMore
+            ? notifications[notifications.length - 1].createdAt.toISOString()
+            : null;
+
+        res.json({ notifications, hasMore, nextCursor });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

@@ -2,6 +2,7 @@ const Assignment  = require("../models/assignmentSchema");
 const Submission  = require("../models/submissionSchema");
 const Student     = require("../models/studentSchema");
 const { createNotifications } = require("./notification-controller");
+const { withCache, invalidate } = require("../utils/cache");
 const path        = require("path");
 
 // ── Assignments ──────────────────────────────────────────────────────────────
@@ -26,23 +27,37 @@ const createAssignment = async (req, res) => {
             }
         } catch (_) { /* non-fatal */ }
 
+        invalidate(`assignments:class:${result.sclassName}`);
         res.send(result);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-// Get assignments by class
+// Get assignments by class — paginated
+// GET /AssignmentsByClass/:classId?page=1&limit=10
 const getAssignmentsByClass = async (req, res) => {
     try {
-        const assignments = await Assignment.find({
-            sclassName: req.params.classId,
-            isActive: true
-        })
-        .populate("subject", "subName subjectName subCode")
-        .sort({ dueDate: 1 });
+        const page  = Math.max(1, parseInt(req.query.page)  || 1);
+        const limit = Math.min(50, parseInt(req.query.limit) || 20);
+        const skip  = (page - 1) * limit;
 
-        res.send(assignments);
+        const cacheKey = `assignments:class:${req.params.classId}:p${page}:l${limit}`;
+
+        const result = await withCache(cacheKey, async () => {
+            const [assignments, total] = await Promise.all([
+                Assignment.find({ sclassName: req.params.classId, isActive: true })
+                    .populate("subject", "subName subjectName subCode")
+                    .sort({ dueDate: 1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                Assignment.countDocuments({ sclassName: req.params.classId, isActive: true }),
+            ]);
+            return { assignments, total, page, limit, totalPages: Math.ceil(total / limit) };
+        }, 60); // cache for 60s
+
+        res.json(result);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -68,6 +83,7 @@ const getAssignmentsBySubject = async (req, res) => {
 const deleteAssignment = async (req, res) => {
     try {
         const result = await Assignment.findByIdAndDelete(req.params.id);
+        if (result) invalidate(`assignments:class:${result.sclassName}`);
         res.send(result);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -76,25 +92,24 @@ const deleteAssignment = async (req, res) => {
 
 // ── Submissions ──────────────────────────────────────────────────────────────
 
-// Submit assignment (student uploads file)
+// Submit assignment (student uploads file — supports both local and Cloudinary)
 const submitAssignment = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
         const { studentId, assignmentId, school } = req.body;
-        const fileUrl  = `/uploads/${req.file.filename}`;
-        const fileName = req.file.originalname;
-        const fileType = path.extname(req.file.originalname).replace(".", "").toLowerCase();
 
-        // Upsert — one submission per student per assignment
+        // Cloudinary gives req.file.path as the secure URL; local gives a filename
+        const fileUrl  = req.file.path || `/uploads/${req.file.filename}`;
+        const fileName = req.file.originalname;
+        const fileType = fileName.split(".").pop().toLowerCase();
+
+        const assignment = await Assignment.findById(assignmentId).lean();
+        const isLate = assignment && new Date() > new Date(assignment.dueDate);
+
         const submission = await Submission.findOneAndUpdate(
             { studentId, assignmentId },
-            {
-                studentId, assignmentId, fileUrl, fileName, fileType,
-                submittedAt: new Date(), school,
-                status: new Date() > (await Assignment.findById(assignmentId))?.dueDate
-                    ? "late" : "submitted"
-            },
+            { studentId, assignmentId, fileUrl, fileName, fileType, submittedAt: new Date(), school, status: isLate ? "late" : "submitted" },
             { upsert: true, new: true }
         );
 
