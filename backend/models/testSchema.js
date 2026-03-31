@@ -51,5 +51,11 @@ const testSchema = new mongoose.Schema({
 
 testSchema.index({ classId: 1 });
 testSchema.index({ school: 1 });
+// Dashboard: active tests for a class (student test list query)
+testSchema.index({ classId: 1, isActive: 1 });
+// Subject-scoped test lookup
+testSchema.index({ subject: 1 });
+// Teacher: tests created by a specific teacher
+testSchema.index({ createdBy: 1 });
 
 module.exports = mongoose.model("test", testSchema);

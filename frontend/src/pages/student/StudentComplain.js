@@ -35,6 +35,19 @@ const StudentComplain = () => {
         dispatch(addStuff(fields, address))
     };
 
+    const fieldSx = {
+        '& .MuiOutlinedInput-root': {
+            color: '#e5e7eb',
+            borderRadius: '10px',
+            '& fieldset': { borderColor: 'rgba(14,165,233,0.25)' },
+            '&:hover fieldset': { borderColor: 'rgba(14,165,233,0.5)' },
+            '&.Mui-focused fieldset': { borderColor: '#0ea5e9' },
+        },
+        '& .MuiInputLabel-root': { color: 'rgba(229,231,235,0.5)' },
+        '& .MuiInputLabel-root.Mui-focused': { color: '#0ea5e9' },
+        '& input[type="date"]::-webkit-calendar-picker-indicator': { filter: 'invert(1)' },
+    };
+
     useEffect(() => {
         if (status === "added") {
             setLoader(false)
@@ -50,63 +63,31 @@ const StudentComplain = () => {
 
     return (
         <>
-            <Box
-                sx={{
-                    flex: '1 1 auto',
-                    alignItems: 'center',
-                    display: 'flex',
-                    justifyContent: 'center'
-                }}
-            >
-                <Box
-                    sx={{
-                        maxWidth: 550,
-                        px: 3,
-                        py: '100px',
-                        width: '100%'
-                    }}
-                >
-                    <div>
-                        <Stack spacing={1} sx={{ mb: 3 }}>
-                            <Typography variant="h4">Complain</Typography>
+            <Box sx={{ flex: '1 1 auto', alignItems: 'center', display: 'flex', justifyContent: 'center', minHeight: '100vh', background: '#0f172a' }}>
+                <Box sx={{ maxWidth: 550, px: 3, py: '100px', width: '100%' }}>
+                    <Stack spacing={1} sx={{ mb: 3 }}>
+                        <Typography variant="h4" sx={{ color: '#e5e7eb', fontWeight: 700 }}>Complain</Typography>
+                    </Stack>
+                    <form onSubmit={submitHandler}>
+                        <Stack spacing={3}>
+                            <TextField
+                                fullWidth label="Select Date" type="date"
+                                value={date} onChange={(e) => setDate(e.target.value)} required
+                                InputLabelProps={{ shrink: true }}
+                                sx={fieldSx}
+                            />
+                            <TextField
+                                fullWidth label="Write your complaint" variant="outlined"
+                                value={complaint} onChange={(e) => setComplaint(e.target.value)}
+                                required multiline maxRows={4}
+                                sx={fieldSx}
+                            />
                         </Stack>
-                        <form onSubmit={submitHandler}>
-                            <Stack spacing={3}>
-                                <TextField
-                                    fullWidth
-                                    label="Select Date"
-                                    type="date"
-                                    value={date}
-                                    onChange={(event) => setDate(event.target.value)} required
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                />
-                                <TextField
-                                    fullWidth
-                                    label="Write your complain"
-                                    variant="outlined"
-                                    value={complaint}
-                                    onChange={(event) => {
-                                        setComplaint(event.target.value);
-                                    }}
-                                    required
-                                    multiline
-                                    maxRows={4}
-                                />
-                            </Stack>
-                            <BlueButton
-                                fullWidth
-                                size="large"
-                                sx={{ mt: 3 }}
-                                variant="contained"
-                                type="submit"
-                                disabled={loader}
-                            >
-                                {loader ? <CircularProgress size={24} color="inherit" /> : "Add"}
-                            </BlueButton>
-                        </form>
-                    </div>
+                        <BlueButton fullWidth size="large" sx={{ mt: 3, borderRadius: '10px', textTransform: 'none', fontWeight: 600 }}
+                            variant="contained" type="submit" disabled={loader}>
+                            {loader ? <CircularProgress size={24} color="inherit" /> : "Submit"}
+                        </BlueButton>
+                    </form>
                 </Box>
             </Box>
             <Popup message={message} setShowPopup={setShowPopup} showPopup={showPopup} />

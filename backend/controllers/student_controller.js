@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const Student = require('../models/studentSchema.js');
 const Subject = require('../models/subjectSchema.js');
+const { createNotifications } = require('./notification-controller');
 
 const studentRegister = async (req, res) => {
     try {
@@ -165,13 +166,21 @@ const updateExamResult = async (req, res) => {
         }
 
         const result = await student.save();
+
+        // Notify the student that marks were published
+        try {
+            await createNotifications(
+                [student._id],
+                `Your marks have been updated for ${subName}`,
+                "marks"
+            );
+        } catch (_) { /* non-fatal */ }
+
         return res.send(result);
     } catch (error) {
         res.status(500).json(error);
     }
-};
-
-const studentAttendance = async (req, res) => {
+}; = async (req, res) => {
     const { subName, status, date } = req.body;
 
     try {

@@ -20,5 +20,11 @@ const testAttemptSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 testAttemptSchema.index({ studentId: 1, testId: 1 }, { unique: true });
+// Standalone testId: teacher fetches all attempts for a test
+testAttemptSchema.index({ testId: 1 });
+// Progress chart: student's attempts sorted newest-first
+testAttemptSchema.index({ studentId: 1, submittedAt: -1 });
+// Filter completed attempts (submittedAt exists)
+testAttemptSchema.index({ studentId: 1, submittedAt: 1 });
 
 module.exports = mongoose.model("testAttempt", testAttemptSchema);

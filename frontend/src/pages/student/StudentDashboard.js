@@ -16,6 +16,7 @@ import StudentTestResult from './StudentTestResult';
 import LearningProgressChart from './LearningProgressChart';
 import Logout from '../Logout';
 import AccountMenu from '../../components/AccountMenu';
+import NotificationBell from '../../components/NotificationBell';
 import { AppBar, Drawer } from '../../components/styles';
 import { theme } from '../../theme/studentTheme';
 
@@ -26,8 +27,8 @@ const StudentDashboard = () => {
         <Box sx={{ display: 'flex', background: theme.bg, minHeight: '100vh' }}>
             <CssBaseline />
             <AppBar open={open} position='absolute' sx={{
-                background: 'linear-gradient(90deg, #050d18, #0a1628)',
-                borderBottom: '1px solid rgba(30,144,255,0.15)',
+                background: theme.appBar,
+                borderBottom: `1px solid ${theme.divider}`,
                 boxShadow: '0 2px 20px rgba(0,0,0,0.5)',
             }}>
                 <Toolbar sx={{ pr: '24px' }}>
@@ -38,6 +39,7 @@ const StudentDashboard = () => {
                     <Typography component="h1" variant="h6" noWrap sx={{ flexGrow: 1, color: theme.text, fontWeight: 700, letterSpacing: 0.5 }}>
                         Student Dashboard
                     </Typography>
+                    <NotificationBell />
                     <AccountMenu />
                 </Toolbar>
             </AppBar>
@@ -45,15 +47,15 @@ const StudentDashboard = () => {
             <Drawer variant="permanent" open={open} sx={open ? {
                 display: 'flex',
                 '& .MuiDrawer-paper': {
-                    background: 'linear-gradient(180deg, #050d18 0%, #0a1628 100%)',
-                    borderRight: '1px solid rgba(30,144,255,0.15)',
+                    background: theme.drawer,
+                    borderRight: `1px solid ${theme.divider}`,
                 }
             } : {
                 display: 'flex',
                 '@media (max-width: 600px)': { display: 'none' },
                 '& .MuiDrawer-paper': {
-                    background: 'linear-gradient(180deg, #050d18 0%, #0a1628 100%)',
-                    borderRight: '1px solid rgba(30,144,255,0.15)',
+                    background: theme.drawer,
+                    borderRight: `1px solid ${theme.divider}`,
                 }
             }}>
                 <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: [1] }}>

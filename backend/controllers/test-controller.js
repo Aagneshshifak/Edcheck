@@ -1,6 +1,7 @@
 const Test        = require("../models/testSchema");
 const TestAttempt  = require("../models/testAttemptSchema");
 const Student      = require("../models/studentSchema");
+const { createNotifications } = require("./notification-controller");
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -41,6 +42,23 @@ const createTest = async (req, res) => {
 
         const test = new Test(req.body);
         const result = await test.save();
+
+        // Notify all students in the class
+        try {
+            if (result.classId) {
+                const students = await Student.find({
+                    $or: [{ classId: result.classId }, { sclassName: result.classId }]
+                }).select("_id");
+                if (students.length > 0) {
+                    await createNotifications(
+                        students.map((s) => s._id),
+                        `New test scheduled: "${result.title}" (${result.durationMinutes} min)`,
+                        "test"
+                    );
+                }
+            }
+        } catch (_) { /* non-fatal */ }
+
         res.send(result);
     } catch (err) {
         res.status(500).json({ message: err.message });

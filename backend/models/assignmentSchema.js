@@ -30,5 +30,9 @@ const assignmentSchema = new mongoose.Schema({
 assignmentSchema.index({ subject: 1 });
 assignmentSchema.index({ sclassName: 1 });
 assignmentSchema.index({ school: 1 });
+// Compound: dashboard query — active assignments for a class sorted by due date
+assignmentSchema.index({ sclassName: 1, isActive: 1, dueDate: 1 });
+// Compound: subject-scoped assignment list
+assignmentSchema.index({ subject: 1, isActive: 1 });
 
 module.exports = mongoose.model("assignment", assignmentSchema);
