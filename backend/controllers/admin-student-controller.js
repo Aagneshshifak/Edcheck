@@ -1,0 +1,116 @@
+const bcrypt = require('bcrypt');
+const Student = require('../models/studentSchema.js');
+const Sclass = require('../models/sclassSchema.js');
+const Parent = require('../models/parentSchema.js');
+const TestAttempt = require('../models/testAttemptSchema.js');
+const Test = require('../models/testSchema.js');
+const { logger } = require('../utils/serverLogger.js');
+
+// POST /Admin/student/add
+const addStudent = async (req, res) => {
+    try {
+        const { name, rollNum, password, classId, schoolId, parentName, parentPhone, parentId } = req.body;
+        if (!name || !rollNum || !classId || !schoolId) {
+            return res.status(400).json({ message: 'name, rollNum, classId and schoolId are required' });
+        }
+
+        const existing = await Student.findOne({ rollNum, classId });
+        if (existing) return res.status(409).json({ message: 'Roll number already exists in this class' });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(password || String(rollNum), salt);
+
+        const student = new Student({
+            name, rollNum,
+            password: hashed,
+            classId, sclassName: classId,
+            schoolId, school: schoolId,
+            parentId: parentId || undefined,
+            parentName: parentName || undefined,
+            parentPhone: parentPhone || undefined,
+            status: 'active',
+        });
+        await student.save();
+
+        // Add student to class roster
+        await Sclass.findByIdAndUpdate(classId, { $addToSet: { students: student._id } });
+
+        student.password = undefined;
+        logger.info(`Student added: ${name}`, { schoolId, classId });
+        res.status(201).json(student);
+    } catch (err) {
+        logger.error('addStudent failed', { message: err.message });
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// PUT /Admin/student/:id
+const updateStudent = async (req, res) => {
+    try {
+        const { name, rollNum, classId, parentId, parentName, parentPhone, status } = req.body;
+        const update = {};
+        if (name)         update.name        = name;
+        if (rollNum)      update.rollNum      = rollNum;
+        if (classId)      { update.classId = classId; update.sclassName = classId; }
+        if (parentId)     update.parentId     = parentId;
+        if (parentName)   update.parentName   = parentName;
+        if (parentPhone)  update.parentPhone  = parentPhone;
+        if (status)       update.status       = status;
+
+        const student = await Student.findByIdAndUpdate(req.params.id, { $set: update }, { new: true })
+            .populate('classId', 'sclassName')
+            .populate('parentId', 'name phone');
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+
+        student.password = undefined;
+        res.json(student);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// DELETE /Admin/student/:id
+const removeStudent = async (req, res) => {
+    try {
+        const student = await Student.findByIdAndDelete(req.params.id);
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+        await Sclass.findByIdAndUpdate(student.classId, { $pull: { students: student._id } });
+        logger.info(`Student removed: ${student.name}`);
+        res.json({ message: 'Student removed', student });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// GET /Admin/student/:id/performance
+const getStudentPerformance = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id)
+            .populate('classId', 'sclassName')
+            .populate('examResult.subjectId', 'subName')
+            .populate('attendance.subjectId', 'subName');
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+
+        const attempts = await TestAttempt.find({ studentId: req.params.id })
+            .populate({ path: 'testId', select: 'title subject', populate: { path: 'subject', select: 'subName' } });
+
+        const avgScore = attempts.length
+            ? (attempts.reduce((s, a) => s + (a.score / (a.totalMarks || 1)) * 100, 0) / attempts.length).toFixed(1)
+            : null;
+
+        const totalSessions = student.attendance.length;
+        const presentSessions = student.attendance.filter(a => a.status === 'Present').length;
+        const attendancePct = totalSessions ? ((presentSessions / totalSessions) * 100).toFixed(1) : null;
+
+        student.password = undefined;
+        res.json({
+            student,
+            stats: { avgTestScore: avgScore, attendancePercentage: attendancePct, totalAttempts: attempts.length },
+            attempts,
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = { addStudent, updateStudent, removeStudent, getStudentPerformance };

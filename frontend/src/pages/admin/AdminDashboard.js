@@ -16,7 +16,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppBar, Drawer } from '../../components/styles';
 import Logout from '../Logout';
-import SideBar from './SideBar';
+import AdminSideBar from './SideBar';
 import AdminProfile from './AdminProfile';
 import AdminHomePage from './AdminHomePage';
 
@@ -53,6 +53,10 @@ import AttendanceReport from './attendanceRelated/AttendanceReport';
 import NotificationCenter from './notificationRelated/NotificationCenter';
 import ReportCenter from './reportRelated/ReportCenter';
 import AnalyticsDashboard from './analyticsRelated/AnalyticsDashboard';
+import TeacherManagement from './teacherRelated/TeacherManagement';
+import ClassManagement from './classRelated/ClassManagement';
+import StudentManagement from './studentRelated/StudentManagement';
+import SubjectManagement from './subjectRelated/SubjectManagement';
 
 const AdminDashboardInner = () => {
     const [open, setOpen] = useState(false);
@@ -105,7 +109,7 @@ const AdminDashboardInner = () => {
                     </Toolbar>
                     <Divider />
                     <List component="nav">
-                        <SideBar />
+                        <AdminSideBar />
                     </List>
                 </Drawer>
                 <Box component="main" sx={styles.boxStyled}>
@@ -164,6 +168,12 @@ const AdminDashboardInner = () => {
                         <Route path="/Admin/notifications" element={<NotificationCenter />} />
                         <Route path="/Admin/reports" element={<ReportCenter />} />
                         <Route path="/Admin/analytics" element={<AnalyticsDashboard />} />
+
+                        {/* Enhanced management pages */}
+                        <Route path="/Admin/manage/teachers" element={<TeacherManagement />} />
+                        <Route path="/Admin/manage/classes" element={<ClassManagement />} />
+                        <Route path="/Admin/manage/students" element={<StudentManagement />} />
+                        <Route path="/Admin/manage/subjects" element={<SubjectManagement />} />
                     </Routes>
                 </Box>
             </Box>

@@ -57,6 +57,15 @@ const studentSchema = new mongoose.Schema({
         ref: "admin"
     },
 
+    // ── Status & parent info ───────────────────────────────────────────────
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'suspended'],
+        default: 'active',
+    },
+    parentName:  { type: String },
+    parentPhone: { type: String },
+
     // ── AI / Analytics fields ──────────────────────────────────────────────
     behaviorScore: { type: Number, default: 50, min: 0, max: 100 },
     focusIndex:    { type: Number, default: 5,  min: 0, max: 10  },

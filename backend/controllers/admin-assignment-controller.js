@@ -1,5 +1,6 @@
 const Assignment = require("../models/assignmentSchema");
 const Submission = require("../models/submissionSchema");
+const Student    = require("../models/studentSchema");
 
 // GET /Admin/assignments/:schoolId?classId=&subjectId=
 const getSchoolAssignments = async (req, res) => {
@@ -13,6 +14,7 @@ const getSchoolAssignments = async (req, res) => {
         const assignments = await Assignment.find(filter)
             .populate("subject",    "subName subjectName subCode")
             .populate("sclassName", "sclassName className")
+            .populate("createdBy",  "name email")
             .sort({ dueDate: -1 })
             .lean();
 
@@ -20,9 +22,17 @@ const getSchoolAssignments = async (req, res) => {
 
         const enriched = await Promise.all(
             assignments.map(async (a) => {
-                const submissionCount = await Submission.countDocuments({ assignmentId: a._id });
-                const status = new Date(a.dueDate).getTime() >= now ? "Active" : "Closed";
-                return { ...a, submissionCount, status };
+                const [submissionCount, totalStudents] = await Promise.all([
+                    Submission.countDocuments({ assignmentId: a._id }),
+                    Student.countDocuments({ sclassName: a.sclassName?._id || a.sclassName }),
+                ]);
+                const submissionRate = totalStudents > 0
+                    ? Math.round((submissionCount / totalStudents) * 100)
+                    : 0;
+                const dueMs  = new Date(a.dueDate).getTime();
+                const status = dueMs >= now ? "Active" : "Closed";
+                const overdue = status === "Closed" && submissionCount < totalStudents;
+                return { ...a, submissionCount, totalStudents, submissionRate, status, overdue };
             })
         );
 
