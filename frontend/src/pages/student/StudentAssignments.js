@@ -47,11 +47,11 @@ const SubjectSection = ({ subject, assignments, submissions, onUpload }) => {
     const subjectAssignments = assignments.filter(a => (a.subject && a.subject._id ? a.subject._id : a.subject) === subjectId);
     const pending = subjectAssignments.filter(a => !submissions[a._id]).length;
     return (
-        <Box sx={{ background: theme.card, border: theme.cardBorder, borderRadius: 3, mb: 3, overflow: 'hidden' }}>
-            <Box onClick={() => setOpen(!open)} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, cursor: 'pointer', background: 'linear-gradient(90deg,rgba(30,144,255,.1),transparent)', borderBottom: open ? '1px solid rgba(30,144,255,.12)' : 'none' }}>
+        <Box sx={{ background: theme.card, border: theme.cardBorder, borderRadius: 3, mb: 3, overflow: 'hidden', boxShadow: theme.cardShadow }}>
+            <Box onClick={() => setOpen(!open)} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, cursor: 'pointer', background: 'linear-gradient(90deg,rgba(30,144,255,.1),transparent)', borderBottom: open ? '1px solid rgba(30,144,255,.12)' : 'none', '&:hover': { background: 'linear-gradient(90deg,rgba(30,144,255,.18),transparent)' } }}>
                 <Box>
                     <Typography sx={{ color: theme.text, fontWeight: 700, fontSize: '0.95rem' }}>{subject.subName || subject.subjectName}</Typography>
-                    <Typography sx={{ color: theme.textMuted, fontSize: '0.72rem' }}>{subject.subCode} - {subjectAssignments.length} assignments{pending > 0 ? ' - ' + pending + ' pending' : ''}</Typography>
+                    <Typography sx={{ color: theme.textMuted, fontSize: '0.72rem' }}>{subject.subCode} • {subjectAssignments.length} assignments{pending > 0 && ` • ${pending} pending`}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {pending > 0 && <Chip label={pending} size="small" sx={{ bgcolor: '#ffab4022', color: '#ffab40', border: '1px solid #ffab4044', minWidth: 28, height: 22, fontSize: '0.72rem' }} />}
