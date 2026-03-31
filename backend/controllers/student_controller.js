@@ -180,7 +180,9 @@ const updateExamResult = async (req, res) => {
     } catch (error) {
         res.status(500).json(error);
     }
-}; = async (req, res) => {
+};
+
+const studentAttendance = async (req, res) => {
     const { subName, status, date } = req.body;
 
     try {

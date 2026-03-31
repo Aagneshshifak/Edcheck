@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     CssBaseline,
     Box,
@@ -8,6 +8,9 @@ import {
     Divider,
     IconButton,
 } from '@mui/material';
+import { DevLogProvider, useDevLog } from '../../context/DevLogContext';
+import DevLogPanel from '../../components/DevLogPanel';
+import { attachAxiosLogger } from '../../utils/axiosLogger';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { Navigate, Route, Routes } from 'react-router-dom';
@@ -51,8 +54,15 @@ import NotificationCenter from './notificationRelated/NotificationCenter';
 import ReportCenter from './reportRelated/ReportCenter';
 import AnalyticsDashboard from './analyticsRelated/AnalyticsDashboard';
 
-const AdminDashboard = () => {
+const AdminDashboardInner = () => {
     const [open, setOpen] = useState(false);
+    const { addLog } = useDevLog();
+
+    useEffect(() => {
+        const cleanup = attachAxiosLogger(addLog);
+        return cleanup;
+    }, [addLog]);
+
     const toggleDrawer = () => {
         setOpen(!open);
     };
@@ -157,9 +167,16 @@ const AdminDashboard = () => {
                     </Routes>
                 </Box>
             </Box>
+            <DevLogPanel />
         </>
     );
 }
+
+const AdminDashboard = () => (
+    <DevLogProvider>
+        <AdminDashboardInner />
+    </DevLogProvider>
+);
 
 export default AdminDashboard
 
