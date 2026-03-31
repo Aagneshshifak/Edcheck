@@ -23,7 +23,14 @@ const {
 const { getAttendanceAnalytics } = require('../controllers/attendanceAnalyticsController.js');
 const { getUpcomingDeadlines } = require('../controllers/deadlines-controller.js');
 const { getStudentProgress } = require('../controllers/progress-controller.js');
+const { getNotifications, markAsRead, markAllAsRead } = require('../controllers/notification-controller.js');
+const { streamNotifications } = require('../controllers/notification-controller.js');
 const upload = require('../middleware/upload.js');
+
+// Use Cloudinary if configured, otherwise fall back to local disk
+const cloudinaryUpload = process.env.CLOUDINARY_CLOUD_NAME
+    ? require('../middleware/cloudinaryUpload.js')
+    : upload;
 const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest } = require('../controllers/test-controller.js');
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
 
@@ -105,7 +112,7 @@ router.get('/AssignmentsBySubject/:subjectId', getAssignmentsBySubject);
 router.delete('/Assignment/:id', deleteAssignment);
 
 // ── Submissions ───────────────────────────────────────────────────────────────
-router.post('/SubmitAssignment', upload.single('file'), submitAssignment);
+router.post('/SubmitAssignment', cloudinaryUpload.single('file'), submitAssignment);
 router.get('/StudentSubmissions/:studentId', getStudentSubmissions);
 router.get('/AssignmentSubmissions/:assignmentId', getAssignmentSubmissions);
 router.put('/GradeSubmission/:id', gradeSubmission);
@@ -115,6 +122,12 @@ router.get('/attendance-analytics/:studentId', getAttendanceAnalytics);
 
 // ── Upcoming Deadlines ────────────────────────────────────────────────────────
 router.get('/UpcomingDeadlines/:studentId', getUpcomingDeadlines);
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+router.get('/Notifications/stream/:userId', streamNotifications);
+router.get('/Notifications/:userId', getNotifications);
+router.put('/Notifications/read/:id', markAsRead);
+router.put('/Notifications/readAll/:userId', markAllAsRead);
 
 // ── Serve uploaded files ──────────────────────────────────────────────────────
 const express = require('express');

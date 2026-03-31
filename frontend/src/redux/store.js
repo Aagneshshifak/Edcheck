@@ -7,6 +7,7 @@ import { teacherReducer } from './teacherRelated/teacherSlice';
 import { complainReducer } from './complainRelated/complainSlice';
 import deadlinesReducer from './deadlinesRelated/deadlinesSlice';
 import progressReducer from './progressRelated/progressSlice';
+import notificationReducer from './notificationRelated/notificationSlice';
 
 const store = configureStore({
     reducer: {
@@ -18,6 +19,7 @@ const store = configureStore({
         sclass: sclassReducer,
         deadlines: deadlinesReducer,
         progress: progressReducer,
+        notifications: notificationReducer,
     },
 });
 

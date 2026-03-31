@@ -29,5 +29,9 @@ noticeSchema.pre("save", function (next) {
 
 noticeSchema.index({ schoolId: 1 });
 noticeSchema.index({ audience: 1 });
+// Dashboard: school notices sorted newest-first
+noticeSchema.index({ schoolId: 1, date: -1 });
+// Audience-filtered notice list
+noticeSchema.index({ schoolId: 1, audience: 1, date: -1 });
 
 module.exports = mongoose.model("notice", noticeSchema);

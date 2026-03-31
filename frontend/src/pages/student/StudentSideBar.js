@@ -16,17 +16,19 @@ import { theme } from '../../theme/studentTheme';
 const NavItem = ({ to, icon, label, active }) => (
     <ListItemButton component={Link} to={to}
         sx={{
-            borderRadius: 2, mx: 1, mb: 0.5,
-            background: active ? `linear-gradient(90deg, ${theme.accentDark}44, ${theme.accent}22)` : 'transparent',
-            borderLeft: active ? `3px solid ${theme.accent}` : '3px solid transparent',
-            '&:hover': { background: `${theme.accent}15` },
-            transition: 'all 0.2s',
+            borderRadius: '10px', mx: 1, mb: 0.5,
+            background: active
+                ? 'linear-gradient(90deg, rgba(14,165,233,0.18), rgba(14,165,233,0.08))'
+                : 'transparent',
+            borderLeft: active ? `3px solid #0ea5e9` : '3px solid transparent',
+            '&:hover': { background: 'rgba(14,165,233,0.1)' },
+            transition: 'all 0.25s ease',
         }}>
-        <ListItemIcon sx={{ color: active ? theme.accent : theme.textMuted, minWidth: 36 }}>
+        <ListItemIcon sx={{ color: active ? '#0ea5e9' : 'rgba(229,231,235,0.45)', minWidth: 36 }}>
             {icon}
         </ListItemIcon>
         <ListItemText primary={label}
-            primaryTypographyProps={{ sx: { color: active ? theme.text : theme.textMuted, fontSize: '0.88rem', fontWeight: active ? 600 : 400 } }} />
+            primaryTypographyProps={{ sx: { color: active ? '#e5e7eb' : 'rgba(229,231,235,0.5)', fontSize: '0.88rem', fontWeight: active ? 600 : 400 } }} />
     </ListItemButton>
 );
 

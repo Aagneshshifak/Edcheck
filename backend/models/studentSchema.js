@@ -97,5 +97,13 @@ studentSchema.pre("save", function (next) {
 studentSchema.index({ schoolId: 1 });
 studentSchema.index({ classId: 1 });
 studentSchema.index({ rollNum: 1, classId: 1 });
+// Login query: roll number + school (unique login identifier)
+studentSchema.index({ rollNum: 1, schoolId: 1 }, { unique: true });
+// Teacher class view: all students in a class
+studentSchema.index({ classId: 1, name: 1 });
+// Exam result subject lookup (multikey on embedded array)
+studentSchema.index({ "examResult.subjectId": 1 });
+// Attendance subject lookup (multikey on embedded array)
+studentSchema.index({ "attendance.subjectId": 1 });
 
 module.exports = mongoose.model("student", studentSchema);
