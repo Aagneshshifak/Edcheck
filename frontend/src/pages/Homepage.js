@@ -60,11 +60,15 @@ const StyledContainer = styled(Container)`
   justify-content: center;
   align-items: center;
   height: 100vh;
+  background: #ffffff;
+  max-width: 100% !important;
+  padding: 0 !important;
 `;
 
 const StyledPaper = styled.div`
   padding: 24px;
   height: 100vh;
+  background: #ffffff;
 `;
 
 const StyledBox = styled(Box)`
@@ -78,8 +82,7 @@ const StyledBox = styled(Box)`
 
 const StyledTitle = styled.h1`
   font-size: 3rem;
-  color: #252525;
-  /* font-family: "Manrope"; */
+  color: #1a1a2e;
   font-weight: bold;
   padding-top: 0;
   letter-spacing: normal;
@@ -87,7 +90,7 @@ const StyledTitle = styled.h1`
 `;
 
 const StyledText = styled.p`
-  /* color: #550080; */
+  color: #444;
   margin-top: 30px;
   margin-bottom: 30px; 
   letter-spacing: normal;

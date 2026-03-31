@@ -26,6 +26,7 @@ import StudentExamMarks from '../admin/studentRelated/StudentExamMarks';
 import CreateTest from './CreateTest';
 import TestList from './TestList';
 import TestResults from './TestResults';
+import LearningProgressChart from '../student/LearningProgressChart';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -93,6 +94,8 @@ const TeacherDashboard = () => {
                         <Route path="/Teacher/tests" element={<TestList />} />
                         <Route path="/Teacher/tests/create" element={<CreateTest />} />
                         <Route path="/Teacher/tests/:testId/results" element={<TestResults />} />
+
+                        <Route path="/Teacher/class/student/:id/progress" element={<LearningProgressChart viewerRole="Teacher" />} />
 
                         <Route path="/logout" element={<Logout />} />
                     </Routes>

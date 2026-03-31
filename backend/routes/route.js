@@ -21,6 +21,8 @@ const {
     getAssignmentSubmissions, gradeSubmission
 } = require('../controllers/assignment-controller.js');
 const { getAttendanceAnalytics } = require('../controllers/attendanceAnalyticsController.js');
+const { getUpcomingDeadlines } = require('../controllers/deadlines-controller.js');
+const { getStudentProgress } = require('../controllers/progress-controller.js');
 const upload = require('../middleware/upload.js');
 const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest } = require('../controllers/test-controller.js');
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
@@ -45,6 +47,7 @@ router.put('/RemoveAllStudentsSubAtten/:id', clearAllStudentsAttendanceBySubject
 router.put('/RemoveAllStudentsAtten/:id', clearAllStudentsAttendance);
 router.put('/RemoveStudentSubAtten/:id', removeStudentAttendanceBySubject);
 router.put('/RemoveStudentAtten/:id', removeStudentAttendance);
+router.get('/StudentProgress/:studentId', getStudentProgress);
 
 // ── Teacher ──────────────────────────────────────────────────────────────────
 router.post('/TeacherReg', teacherRegister);
@@ -109,6 +112,9 @@ router.put('/GradeSubmission/:id', gradeSubmission);
 
 // ── Attendance Analytics ──────────────────────────────────────────────────────
 router.get('/attendance-analytics/:studentId', getAttendanceAnalytics);
+
+// ── Upcoming Deadlines ────────────────────────────────────────────────────────
+router.get('/UpcomingDeadlines/:studentId', getUpcomingDeadlines);
 
 // ── Serve uploaded files ──────────────────────────────────────────────────────
 const express = require('express');

@@ -13,6 +13,7 @@ import StudentComplain from './StudentComplain';
 import StudentTestList from './StudentTestList';
 import TestRunner from './TestRunner';
 import StudentTestResult from './StudentTestResult';
+import LearningProgressChart from './LearningProgressChart';
 import Logout from '../Logout';
 import AccountMenu from '../../components/AccountMenu';
 import { AppBar, Drawer } from '../../components/styles';
@@ -79,6 +80,7 @@ const StudentDashboard = () => {
                     <Route path="/Student/tests" element={<StudentTestList />} />
                     <Route path="/Student/test/:testId" element={<TestRunner />} />
                     <Route path="/Student/test/:testId/result" element={<StudentTestResult />} />
+                    <Route path="/Student/progress" element={<LearningProgressChart viewerRole="Student" />} />
                     <Route path="/logout" element={<Logout />} />
                     <Route path='*' element={<Navigate to="/" />} />
                 </Routes>

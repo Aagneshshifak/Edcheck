@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Grid, Typography, CircularProgress, LinearProgress } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { getUserDetails } from '../../redux/userRelated/userHandle';
 import { getSubjectList } from '../../redux/sclassRelated/sclassHandle';
 import { calculateOverallAttendancePercentage } from '../../components/attendanceCalculator';
@@ -8,9 +9,12 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import QuizIcon from '@mui/icons-material/Quiz';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import SeeNotice from '../../components/SeeNotice';
+import UpcomingDeadlinesPanel from '../../components/UpcomingDeadlinesPanel';
 import { theme } from '../../theme/studentTheme';
-import axios from 'axios';
+import { fetchDeadlines } from '../../redux/deadlinesRelated/deadlinesHandle';
+import { fetchProgress } from '../../redux/progressRelated/progressHandle';
 
 const SummaryCard = ({ icon, label, value, color, sub }) => (
     <Box sx={{
@@ -72,15 +76,19 @@ const StudentHomePage = () => {
     const dispatch = useDispatch();
     const { userDetails, currentUser, loading } = useSelector(s => s.user);
     const { subjectsList } = useSelector(s => s.sclass);
+    const { deadlines } = useSelector(s => s.deadlines);
+    const progress = useSelector((state) => state.progress);
 
     const [subjectAttendance, setSubjectAttendance] = useState([]);
-    const [pendingAssignments, setPendingAssignments] = useState(0);
-    const [upcomingTests, setUpcomingTests] = useState(0);
 
     const classID = currentUser?.sclassName?._id || currentUser?.classId?._id;
 
     useEffect(() => {
-        if (currentUser?._id) dispatch(getUserDetails(currentUser._id, "Student"));
+        if (currentUser?._id) {
+            dispatch(getUserDetails(currentUser._id, "Student"));
+            dispatch(fetchDeadlines(currentUser._id));
+            dispatch(fetchProgress(currentUser._id));
+        }
         if (classID) dispatch(getSubjectList(classID, "ClassSubjects"));
     }, [dispatch, currentUser?._id, classID]);
 
@@ -88,16 +96,12 @@ const StudentHomePage = () => {
         if (userDetails?.attendance) setSubjectAttendance(userDetails.attendance);
     }, [userDetails]);
 
-    // Fetch pending assignments count
-    useEffect(() => {
-        if (!classID) return;
-        axios.get(`${process.env.REACT_APP_BASE_URL}/AssignmentsByClass/${classID}`)
-            .then(res => {
-                const now = new Date();
-                const pending = res.data.filter(a => new Date(a.dueDate) >= now).length;
-                setPendingAssignments(pending);
-            }).catch(() => {});
-    }, [classID]);
+    const pendingAssignments = deadlines.filter(d => d.type === 'assignment').length;
+    const upcomingTests = deadlines.filter(d => d.type === 'test').length;
+
+    const overallAvg = progress.data && progress.data.length > 0
+        ? Math.round(progress.data.reduce((sum, i) => sum + i.percentageScore, 0) / progress.data.length * 10) / 10
+        : null;
 
     const overallPct = Math.round(calculateOverallAttendancePercentage(subjectAttendance));
 
@@ -133,8 +137,14 @@ const StudentHomePage = () => {
                     <SummaryCard icon={<QuizIcon />} label="Upcoming Tests"
                         value={upcomingTests} color="#a855f7" sub="This week" />
                 </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                    <Link to="/Student/progress" style={{ textDecoration: 'none' }}>
+                        <SummaryCard icon={<TrendingUpIcon />} label="Learning Progress"
+                            value={overallAvg !== null ? `${overallAvg}%` : "No data yet"}
+                            color={theme.accent} />
+                    </Link>
+                </Grid>
             </Grid>
-
             <Grid container spacing={3}>
                 {/* Per-subject attendance */}
                 <Grid item xs={12} md={5}>
@@ -173,6 +183,12 @@ const StudentHomePage = () => {
                         </Typography>
                         <SeeNotice />
                     </Box>
+                </Grid>
+            </Grid>
+
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                    <UpcomingDeadlinesPanel />
                 </Grid>
             </Grid>
         </Box>
