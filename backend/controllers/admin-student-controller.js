@@ -5,6 +5,7 @@ const Parent = require('../models/parentSchema.js');
 const TestAttempt = require('../models/testAttemptSchema.js');
 const Test = require('../models/testSchema.js');
 const { logger } = require('../utils/serverLogger.js');
+const { logActivity } = require('../utils/activityLogger.js');
 
 // POST /Admin/student/add
 const addStudent = async (req, res) => {
@@ -37,6 +38,7 @@ const addStudent = async (req, res) => {
 
         student.password = undefined;
         logger.info(`Student added: ${name}`, { schoolId, classId });
+        logActivity({ schoolId, actorName: 'Admin', actorRole: 'Admin', action: 'added student', target: name, targetType: 'student' });
         res.status(201).json(student);
     } catch (err) {
         logger.error('addStudent failed', { message: err.message });

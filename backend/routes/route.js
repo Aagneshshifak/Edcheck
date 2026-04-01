@@ -44,6 +44,19 @@ const { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance: getTeac
 const { addClass, updateClass, removeClass, getClassDetail } = require('../controllers/admin-class-controller.js');
 const { addStudent: adminAddStudent, updateStudent: adminUpdateStudent, removeStudent, getStudentPerformance: adminGetStudentPerf } = require('../controllers/admin-student-controller.js');
 
+const { getActivityLogs } = require('../controllers/activity-log-controller.js');
+const { bulkUploadStudents } = require('../controllers/bulk-upload-controller.js');
+const { getAlerts } = require('../controllers/alerts-controller.js');
+
+// ── Admin — Activity Logs ─────────────────────────────────────────────────────
+router.get('/Admin/activity/:schoolId', getActivityLogs);
+
+// ── Admin — Real-time Alerts ──────────────────────────────────────────────────
+router.get('/Admin/alerts/:schoolId', getAlerts);
+
+// ── Admin — Bulk Upload ───────────────────────────────────────────────────────
+router.post('/Admin/bulk/students', upload.single('file'), bulkUploadStudents);
+
 const { addSubject, removeSubject, getSubjectsDetail, updateTopics, assignTeacher } = require('../controllers/admin-subject-controller.js');
 
 // ── Admin — Subject Management ────────────────────────────────────────────────

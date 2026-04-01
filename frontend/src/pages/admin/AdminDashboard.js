@@ -55,6 +55,9 @@ import AttendanceReport from './attendanceRelated/AttendanceReport';
 import NotificationCenter from './notificationRelated/NotificationCenter';
 import ReportCenter from './reportRelated/ReportCenter';
 import Leaderboard from './analyticsRelated/Leaderboard';
+import AlertsCenter from './alertsRelated/AlertsCenter';
+import ActivityLog from './activityRelated/ActivityLog';
+import BulkUpload from './studentRelated/BulkUpload';
 import TeacherManagement from './teacherRelated/TeacherManagement';
 import ClassManagement from './classRelated/ClassManagement';
 import StudentManagement from './studentRelated/StudentManagement';
@@ -180,6 +183,9 @@ const AdminDashboardInner = () => {
                         <Route path="/Admin/notifications" element={<NotificationCenter />} />
                         <Route path="/Admin/reports" element={<ReportCenter />} />
                         <Route path="/Admin/leaderboard" element={<Leaderboard />} />
+                        <Route path="/Admin/alerts" element={<AlertsCenter />} />
+                        <Route path="/Admin/activity" element={<ActivityLog />} />
+                        <Route path="/Admin/bulk-upload" element={<BulkUpload />} />
 
                         {/* Enhanced management pages */}
                         <Route path="/Admin/manage/teachers" element={<TeacherManagement />} />
