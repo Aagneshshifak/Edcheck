@@ -7,7 +7,7 @@ import {
     DialogTitle, DialogContent, DialogActions, Table, TableHead,
     TableBody, TableRow, TableCell, TableContainer, IconButton,
     Chip, MenuItem, Select, FormControl, InputLabel, CircularProgress,
-    Alert, Tooltip, Tabs, Tab, Divider,
+    Alert, Tooltip, Tabs, Tab,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -22,21 +22,21 @@ const ClassManagement = () => {
     const schoolId = useSelector(s => s.user.currentUser._id);
     const navigate = useNavigate();
 
-    const [classes, setClasses]     = useState([]);
-    const [teachers, setTeachers]   = useState([]);
-    const [loading, setLoading]     = useState(false);
-    const [error, setError]         = useState('');
-    const [success, setSuccess]     = useState('');
+    const [classes, setClasses]   = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [loading, setLoading]   = useState(false);
+    const [error, setError]       = useState('');
+    const [success, setSuccess]   = useState('');
 
-    const [formOpen, setFormOpen]   = useState(false);
-    const [editId, setEditId]       = useState(null);
-    const [form, setForm]           = useState(EMPTY_FORM);
-    const [saving, setSaving]       = useState(false);
+    const [formOpen, setFormOpen] = useState(false);
+    const [editId, setEditId]     = useState(null);
+    const [form, setForm]         = useState(EMPTY_FORM);
+    const [saving, setSaving]     = useState(false);
 
-    // Detail drawer
-    const [detailOpen, setDetailOpen] = useState(false);
-    const [detail, setDetail]         = useState(null);
+    const [detailOpen, setDetailOpen]       = useState(false);
+    const [detail, setDetail]               = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
+    const [detailTab, setDetailTab]         = useState(0);
 
     const fetchAll = useCallback(() => {
         setLoading(true);
@@ -45,7 +45,9 @@ const ClassManagement = () => {
             axios.get(`${BASE}/Teachers/${schoolId}`),
         ]).then(([c, t]) => {
             setClasses(Array.isArray(c.data) ? c.data : []);
-            setTeachers(Array.isArray(t.data) ? t.data : []);
+            // Normalise teacher list: ensure _id is always a plain string
+            const tList = Array.isArray(t.data) ? t.data : [];
+            setTeachers(tList.map(t => ({ ...t, _id: String(t._id) })));
         }).catch(() => setError('Failed to load data'))
           .finally(() => setLoading(false));
     }, [schoolId]);
@@ -53,9 +55,15 @@ const ClassManagement = () => {
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
     const openAdd = () => { setEditId(null); setForm(EMPTY_FORM); setFormOpen(true); };
+
     const openEdit = (c) => {
         setEditId(c._id);
-        setForm({ className: c.sclassName, section: c.section || '', classTeacherId: c.classTeacher?._id || '' });
+        setForm({
+            className:       c.sclassName || c.className || '',
+            section:         c.section || '',
+            // Normalise to string so MUI Select value matches
+            classTeacherId:  c.classTeacher ? String(c.classTeacher._id || c.classTeacher) : '',
+        });
         setFormOpen(true);
     };
 
@@ -64,7 +72,13 @@ const ClassManagement = () => {
         setSaving(true); setError('');
         try {
             if (editId) {
-                await axios.put(`${BASE}/Admin/class/${editId}`, form);
+                const payload = {
+                    className: form.className,
+                    section: form.section,
+                    // Send null to explicitly clear, send ID to set, omit if unchanged
+                    classTeacherId: form.classTeacherId === '' ? null : form.classTeacherId,
+                };
+                await axios.put(`${BASE}/Admin/class/${editId}`, payload);
                 setSuccess('Class updated');
             } else {
                 await axios.post(`${BASE}/Admin/class/add`, { ...form, schoolId });
@@ -87,7 +101,7 @@ const ClassManagement = () => {
     };
 
     const openDetail = async (id) => {
-        setDetailOpen(true); setDetailLoading(true); setDetail(null);
+        setDetailOpen(true); setDetailLoading(true); setDetail(null); setDetailTab(0);
         try {
             const { data } = await axios.get(`${BASE}/Admin/class/${id}/detail`);
             setDetail(data);
@@ -95,12 +109,12 @@ const ClassManagement = () => {
         finally { setDetailLoading(false); }
     };
 
-    const [detailTab, setDetailTab] = useState(0);
-
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4"><ClassIcon sx={{ mr: 1, verticalAlign: 'middle' }} />Class Management</Typography>
+                <Typography variant="h4">
+                    <ClassIcon sx={{ mr: 1, verticalAlign: 'middle' }} />Class Management
+                </Typography>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={openAdd}>Create Class</Button>
             </Box>
 
@@ -112,7 +126,7 @@ const ClassManagement = () => {
                     <Table size="small">
                         <TableHead sx={{ bgcolor: 'grey.100' }}>
                             <TableRow>
-                                {['Class Name','Section','Class Teacher','Actions'].map(h => (
+                                {['Class Name', 'Section', 'Class Teacher', 'Actions'].map(h => (
                                     <TableCell key={h}><strong>{h}</strong></TableCell>
                                 ))}
                             </TableRow>
@@ -121,16 +135,30 @@ const ClassManagement = () => {
                             {classes.length === 0 ? (
                                 <TableRow><TableCell colSpan={4} align="center">No classes found</TableCell></TableRow>
                             ) : classes.map(c => (
-                                <TableRow key={c._id} hover>
+                        <TableRow key={c._id} hover>
                                     <TableCell>{c.sclassName}</TableCell>
                                     <TableCell>{c.section || '—'}</TableCell>
-                                    <TableCell>{c.classTeacher?.name || '—'}</TableCell>
                                     <TableCell>
-                                        <Tooltip title="View Detail"><IconButton size="small" onClick={() => openDetail(c._id)}><VisibilityIcon /></IconButton></Tooltip>
-                                        <Tooltip title="Add Subjects"><Button size="small" onClick={() => navigate(`/Admin/addsubject/${c._id}`)}>+ Subjects</Button></Tooltip>
-                                        <Tooltip title="Add Students"><Button size="small" onClick={() => navigate(`/Admin/class/addstudents/${c._id}`)}>+ Students</Button></Tooltip>
-                                        <Tooltip title="Edit"><IconButton size="small" onClick={() => openEdit(c)}><EditIcon /></IconButton></Tooltip>
-                                        <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => handleDelete(c._id, c.sclassName)}><DeleteIcon /></IconButton></Tooltip>
+                                        {c.classTeacher?.name
+                                            ? c.classTeacher.name
+                                            : teachers.find(t => t._id === String(c.classTeacher?._id || c.classTeacher))?.name || '—'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Tooltip title="View Detail">
+                                            <IconButton size="small" onClick={() => openDetail(c._id)}><VisibilityIcon /></IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Add Subjects">
+                                            <Button size="small" onClick={() => navigate(`/Admin/addsubject/${c._id}`)}>+ Subjects</Button>
+                                        </Tooltip>
+                                        <Tooltip title="Add Students">
+                                            <Button size="small" onClick={() => navigate(`/Admin/class/addstudents/${c._id}`)}>+ Students</Button>
+                                        </Tooltip>
+                                        <Tooltip title="Edit">
+                                            <IconButton size="small" onClick={() => openEdit(c)}><EditIcon /></IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Delete">
+                                            <IconButton size="small" color="error" onClick={() => handleDelete(c._id, c.sclassName)}><DeleteIcon /></IconButton>
+                                        </Tooltip>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -143,14 +171,25 @@ const ClassManagement = () => {
             <Dialog open={formOpen} onClose={() => setFormOpen(false)} maxWidth="xs" fullWidth>
                 <DialogTitle>{editId ? 'Edit Class' : 'Create Class'}</DialogTitle>
                 <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
-                    <TextField label="Class Name" value={form.className} onChange={e => setForm(f => ({...f, className: e.target.value}))} required fullWidth />
-                    <TextField label="Section (optional)" value={form.section} onChange={e => setForm(f => ({...f, section: e.target.value}))} fullWidth />
+                    <TextField
+                        label="Class Name" value={form.className} required fullWidth
+                        onChange={e => setForm(f => ({ ...f, className: e.target.value }))}
+                    />
+                    <TextField
+                        label="Section (optional)" value={form.section} fullWidth
+                        onChange={e => setForm(f => ({ ...f, section: e.target.value }))}
+                    />
                     <FormControl fullWidth>
                         <InputLabel>Class Teacher (optional)</InputLabel>
-                        <Select value={form.classTeacherId} label="Class Teacher (optional)"
-                            onChange={e => setForm(f => ({...f, classTeacherId: e.target.value}))}>
-                            <MenuItem value=""><em>None</em></MenuItem>
-                            {teachers.map(t => <MenuItem key={t._id} value={t._id}>{t.name}</MenuItem>)}
+                        <Select
+                            value={form.classTeacherId}
+                            label="Class Teacher (optional)"
+                            onChange={e => setForm(f => ({ ...f, classTeacherId: e.target.value }))}
+                        >
+                            <MenuItem value=""><em>None (clear teacher)</em></MenuItem>
+                            {teachers.map(t => (
+                                <MenuItem key={t._id} value={t._id}>{t.name}</MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 </DialogContent>
@@ -178,7 +217,10 @@ const ClassManagement = () => {
                                     <TableHead><TableRow><TableCell>Subject</TableCell><TableCell>Teacher</TableCell></TableRow></TableHead>
                                     <TableBody>
                                         {detail.subjects?.map(s => (
-                                            <TableRow key={s._id}><TableCell>{s.subName}</TableCell><TableCell>{s.teacherId?.name || '—'}</TableCell></TableRow>
+                                            <TableRow key={s._id}>
+                                                <TableCell>{s.subName}</TableCell>
+                                                <TableCell>{s.teacherId?.name || '—'}</TableCell>
+                                            </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
@@ -191,7 +233,12 @@ const ClassManagement = () => {
                                             <TableRow key={s._id}>
                                                 <TableCell>{s.name}</TableCell>
                                                 <TableCell>{s.rollNum}</TableCell>
-                                                <TableCell><Chip label={s.status || 'active'} size="small" color={s.status === 'active' ? 'success' : s.status === 'suspended' ? 'error' : 'default'} /></TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={s.status || 'active'} size="small"
+                                                        color={s.status === 'active' ? 'success' : s.status === 'suspended' ? 'error' : 'default'}
+                                                    />
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>

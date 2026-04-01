@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const Student = require('../models/studentSchema.js');
 const Subject = require('../models/subjectSchema.js');
 const { createNotifications } = require('./notification-controller');
+const { withCache, invalidate } = require('../utils/cache.js');
 
 const studentRegister = async (req, res) => {
     try {
@@ -27,6 +28,7 @@ const studentRegister = async (req, res) => {
             let result = await student.save();
 
             result.password = undefined;
+            invalidate(`students:school:${req.body.adminID || req.body.schoolId}`);
             res.send(result);
         }
     } catch (err) {
@@ -60,16 +62,52 @@ const studentLogIn = async (req, res) => {
     }
 };
 
+// GET /Students/:id  — cursor-based pagination with .lean()
+// Query params: cursor (last _id), limit (default 20), classId, status
 const getStudents = async (req, res) => {
     try {
-        let students = await Student.find({
-            $or: [{ school: req.params.id }, { schoolId: req.params.id }]
-        }).populate("sclassName", "sclassName");
-        if (students.length > 0) {
-            res.send(students.map(s => ({ ...s._doc, password: undefined })));
+        const schoolQ = { $or: [{ school: req.params.id }, { schoolId: req.params.id }] };
+        const limit   = Math.min(parseInt(req.query.limit) || 20, 100);
+        const cursor  = req.query.cursor || null;
+        const classId = req.query.classId || null;
+        const status  = req.query.status  || null;
+
+        const filter = { ...schoolQ };
+        if (cursor)  filter._id    = { $gt: cursor };
+        if (classId) filter.$or    = [{ classId }, { sclassName: classId }];
+        if (status)  filter.status = status;
+
+        // When filtering by class, we can't use the simple schoolQ $or alongside classId $or
+        // so rebuild the filter properly
+        const baseFilter = cursor ? { _id: { $gt: cursor } } : {};
+        if (classId) {
+            baseFilter.$and = [
+                schoolQ,
+                { $or: [{ classId }, { sclassName: classId }] },
+            ];
         } else {
-            res.send({ message: "No students found" });
+            Object.assign(baseFilter, schoolQ);
         }
+        if (status) baseFilter.status = status;
+
+        const [students, total] = await Promise.all([
+            Student.find(baseFilter)
+                .sort({ _id: 1 })
+                .limit(limit + 1)
+                .select('-password -attendance -examResult -learningFlags -conceptMastery')
+                .populate('sclassName', 'sclassName')
+                .lean(),
+            Student.countDocuments(classId
+                ? { $and: [schoolQ, { $or: [{ classId }, { sclassName: classId }] }], ...(status ? { status } : {}) }
+                : { ...schoolQ, ...(status ? { status } : {}) }
+            ),
+        ]);
+
+        const hasMore    = students.length > limit;
+        const page       = hasMore ? students.slice(0, limit) : students;
+        const nextCursor = hasMore ? String(page[page.length - 1]._id) : null;
+
+        res.json({ students: page, nextCursor, hasMore, total });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -95,10 +133,11 @@ const getStudentDetail = async (req, res) => {
 
 const deleteStudent = async (req, res) => {
     try {
-        const result = await Student.findByIdAndDelete(req.params.id)
+        const result = await Student.findByIdAndDelete(req.params.id);
+        if (result) invalidate(`students:school:${result.schoolId || result.school}`);
         res.send(result)
     } catch (error) {
-        res.status(500).json(err);
+        res.status(500).json(error);
     }
 }
 
@@ -108,10 +147,11 @@ const deleteStudents = async (req, res) => {
         if (result.deletedCount === 0) {
             res.send({ message: "No students found to delete" })
         } else {
+            invalidate(`students:school:${req.params.id}`);
             res.send(result)
         }
     } catch (error) {
-        res.status(500).json(err);
+        res.status(500).json(error);
     }
 }
 

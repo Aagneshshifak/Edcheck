@@ -1,273 +1,282 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import {
     Container, Typography, Box, Paper, TextField, Button,
     FormControl, InputLabel, Select, MenuItem, Alert,
     CircularProgress, Table, TableBody, TableCell, TableContainer,
-    TableHead, TableRow, IconButton, Tooltip, Divider,
+    TableHead, TableRow, IconButton, Tooltip, Divider, Chip,
+    ToggleButtonGroup, ToggleButton, Badge,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import PeopleIcon from '@mui/icons-material/People';
+import SchoolIcon from '@mui/icons-material/School';
+import PersonIcon from '@mui/icons-material/Person';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import GroupsIcon from '@mui/icons-material/Groups';
 
-const RECIPIENT_TYPES = ['All', 'Students', 'Teachers', 'Parents', 'Class'];
+const BASE = process.env.REACT_APP_BASE_URL;
+
+const RECIPIENT_OPTIONS = [
+    { value: 'All',      label: 'Whole School', icon: <SchoolIcon />,          color: '#1976d2' },
+    { value: 'Students', label: 'Students',      icon: <GroupsIcon />,          color: '#2e7d32' },
+    { value: 'Teachers', label: 'Teachers',      icon: <PersonIcon />,          color: '#7b1fa2' },
+    { value: 'Parents',  label: 'Parents',       icon: <FamilyRestroomIcon />,  color: '#e65100' },
+    { value: 'Class',    label: 'Specific Class', icon: <PeopleIcon />,         color: '#0288d1' },
+];
+
+const RECIPIENT_COLORS = Object.fromEntries(RECIPIENT_OPTIONS.map(r => [r.value, r.color]));
 
 const NotificationCenter = () => {
-    const currentUser = useSelector(state => state.user.currentUser);
+    const currentUser = useSelector(s => s.user.currentUser);
     const schoolId = currentUser?.school || currentUser?._id;
 
-    // Compose form state
-    const [title, setTitle] = useState('');
-    const [message, setMessage] = useState('');
+    // Compose state
+    const [title, setTitle]               = useState('');
+    const [message, setMessage]           = useState('');
     const [recipientType, setRecipientType] = useState('All');
-    const [classId, setClassId] = useState('');
-    const [scheduledAt, setScheduledAt] = useState('');
-    const [formError, setFormError] = useState('');
-    const [sending, setSending] = useState(false);
-    const [sendSuccess, setSendSuccess] = useState('');
+    const [classId, setClassId]           = useState('');
+    const [formError, setFormError]       = useState('');
+    const [sending, setSending]           = useState(false);
+    const [sendSuccess, setSendSuccess]   = useState('');
 
-    // Classes list for "Class" recipient type
-    const [classes, setClasses] = useState([]);
+    // Recipient preview
+    const [previewCount, setPreviewCount] = useState(null);
+    const [previewing, setPreviewing]     = useState(false);
 
-    // Sent notifications list
+    // Data
+    const [classes, setClasses]           = useState([]);
     const [notifications, setNotifications] = useState([]);
-    const [listLoading, setListLoading] = useState(true);
-    const [listError, setListError] = useState('');
+    const [listLoading, setListLoading]   = useState(true);
+    const [listError, setListError]       = useState('');
 
-    const fetchClasses = () => {
-        axios.get(`${process.env.REACT_APP_BASE_URL}/SclassList/${schoolId}`)
+    const fetchClasses = useCallback(() => {
+        axios.get(`${BASE}/SclassList/${schoolId}`)
             .then(res => setClasses(Array.isArray(res.data) ? res.data : []))
             .catch(() => setClasses([]));
-    };
+    }, [schoolId]);
 
-    const fetchNotifications = () => {
-        setListLoading(true);
-        setListError('');
-        axios.get(`${process.env.REACT_APP_BASE_URL}/Admin/notifications/sent/${schoolId}`)
+    const fetchNotifications = useCallback(() => {
+        setListLoading(true); setListError('');
+        axios.get(`${BASE}/Admin/notifications/sent/${schoolId}`)
             .then(res => setNotifications(Array.isArray(res.data) ? res.data : []))
             .catch(err => setListError(err.response?.data?.message || 'Failed to load notifications'))
             .finally(() => setListLoading(false));
-    };
+    }, [schoolId]);
 
     useEffect(() => {
-        if (schoolId) {
-            fetchClasses();
-            fetchNotifications();
-        }
-    }, [schoolId]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (schoolId) { fetchClasses(); fetchNotifications(); }
+    }, [fetchClasses, fetchNotifications, schoolId]);
+
+    // Auto-preview recipient count when type/class changes
+    useEffect(() => {
+        if (!schoolId) return;
+        if (recipientType === 'Class' && !classId) { setPreviewCount(null); return; }
+        setPreviewing(true);
+        const params = { recipientType, schoolId };
+        if (classId) params.classId = classId;
+        axios.get(`${BASE}/Admin/notifications/preview`, { params })
+            .then(res => setPreviewCount(res.data.count))
+            .catch(() => setPreviewCount(null))
+            .finally(() => setPreviewing(false));
+    }, [recipientType, classId, schoolId]);
 
     const handleSend = async (e) => {
         e.preventDefault();
-        setFormError('');
-        setSendSuccess('');
-
-        if (!title.trim()) {
-            setFormError('Title is required.');
-            return;
-        }
-        if (!message.trim()) {
-            setFormError('Message body is required.');
-            return;
-        }
-        if (recipientType === 'Class' && !classId) {
-            setFormError('Please select a class.');
-            return;
-        }
+        setFormError(''); setSendSuccess('');
+        if (!title.trim())   return setFormError('Title is required.');
+        if (!message.trim()) return setFormError('Message body is required.');
+        if (recipientType === 'Class' && !classId) return setFormError('Please select a class.');
 
         setSending(true);
         try {
-            const payload = {
-                title: title.trim(),
-                message: message.trim(),
-                recipientType,
-                schoolId,
-                ...(recipientType === 'Class' && classId ? { classId } : {}),
-                ...(scheduledAt ? { scheduledAt } : {}),
-            };
-            const res = await axios.post(`${process.env.REACT_APP_BASE_URL}/Admin/notifications/send`, payload);
-            setSendSuccess(`Notification sent to ${res.data.count} recipient(s).`);
-            setTitle('');
-            setMessage('');
-            setRecipientType('All');
-            setClassId('');
-            setScheduledAt('');
+            const payload = { title: title.trim(), message: message.trim(), recipientType, schoolId };
+            if (classId) payload.classId = classId;
+            const res = await axios.post(`${BASE}/Admin/notifications/send`, payload);
+            setSendSuccess(`Sent to ${res.data.count} recipient(s).`);
+            setTitle(''); setMessage(''); setRecipientType('All'); setClassId('');
             fetchNotifications();
         } catch (err) {
             setFormError(err.response?.data?.message || 'Failed to send notification.');
-        } finally {
-            setSending(false);
-        }
+        } finally { setSending(false); }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Delete this notification?')) return;
+        if (!window.confirm('Delete this notification for all recipients?')) return;
         try {
-            await axios.delete(`${process.env.REACT_APP_BASE_URL}/Admin/notifications/${id}`);
-            setNotifications(prev => prev.filter(n => n.notificationId !== id && n._id !== id));
-        } catch (err) {
-            alert(err.response?.data?.message || 'Delete failed.');
-        }
+            await axios.delete(`${BASE}/Admin/notifications/${id}`);
+            setNotifications(prev => prev.filter(n => (n.notificationId || n._id) !== id));
+        } catch (err) { alert(err.response?.data?.message || 'Delete failed.'); }
     };
 
-    // Parse title and recipient type from the stored message string "title: body"
-    const parseNotification = (n) => {
-        const raw = n.message || '';
-        const colonIdx = raw.indexOf(': ');
-        const parsedTitle = colonIdx !== -1 ? raw.substring(0, colonIdx) : raw;
-        return { parsedTitle };
-    };
+    const selectedOption = RECIPIENT_OPTIONS.find(r => r.value === recipientType);
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Typography variant="h4" gutterBottom>Notification Center</Typography>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                <NotificationsIcon color="primary" />
+                <Typography variant="h4">Notification Control Panel</Typography>
+            </Box>
 
-            {/* Compose Form */}
+            {/* ── Compose ── */}
             <Paper sx={{ p: 3, mb: 4 }}>
-                <Typography variant="h6" gutterBottom>Compose Notification</Typography>
-                <Box component="form" onSubmit={handleSend} noValidate>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <TextField
-                            label="Title"
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
-                            required
-                            fullWidth
-                            size="small"
-                            inputProps={{ maxLength: 200 }}
-                        />
-                        <TextField
-                            label="Message"
-                            value={message}
-                            onChange={e => setMessage(e.target.value)}
-                            required
-                            fullWidth
-                            multiline
-                            minRows={3}
-                            size="small"
-                        />
-                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                            <FormControl size="small" sx={{ minWidth: 180 }}>
-                                <InputLabel>Recipient Type</InputLabel>
-                                <Select
-                                    value={recipientType}
-                                    label="Recipient Type"
-                                    onChange={e => { setRecipientType(e.target.value); setClassId(''); }}
+                <Typography variant="h6" gutterBottom>Compose & Send</Typography>
+                <Box component="form" onSubmit={handleSend} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+
+                    {/* Recipient type selector */}
+                    <Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Send to:</Typography>
+                        <ToggleButtonGroup
+                            value={recipientType}
+                            exclusive
+                            onChange={(_, v) => { if (v) { setRecipientType(v); setClassId(''); } }}
+                            sx={{ flexWrap: 'wrap', gap: 1 }}
+                        >
+                            {RECIPIENT_OPTIONS.map(opt => (
+                                <ToggleButton
+                                    key={opt.value}
+                                    value={opt.value}
+                                    sx={{
+                                        display: 'flex', gap: 0.5, px: 2,
+                                        '&.Mui-selected': { bgcolor: opt.color, color: '#fff', '&:hover': { bgcolor: opt.color } }
+                                    }}
                                 >
-                                    {RECIPIENT_TYPES.map(t => (
-                                        <MenuItem key={t} value={t}>{t}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                                    {opt.icon}
+                                    {opt.label}
+                                </ToggleButton>
+                            ))}
+                        </ToggleButtonGroup>
+                    </Box>
 
-                            {recipientType === 'Class' && (
-                                <FormControl size="small" sx={{ minWidth: 180 }}>
-                                    <InputLabel>Class</InputLabel>
-                                    <Select
-                                        value={classId}
-                                        label="Class"
-                                        onChange={e => setClassId(e.target.value)}
-                                    >
-                                        <MenuItem value="">Select class</MenuItem>
-                                        {classes.map(c => (
-                                            <MenuItem key={c._id} value={c._id}>
-                                                {c.sclassName || c.className}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            )}
+                    {/* Class selector (only for Class type) */}
+                    {recipientType === 'Class' && (
+                        <FormControl size="small" sx={{ maxWidth: 280 }}>
+                            <InputLabel>Select Class</InputLabel>
+                            <Select value={classId} label="Select Class" onChange={e => setClassId(e.target.value)}>
+                                <MenuItem value="">Choose a class</MenuItem>
+                                {classes.map(c => (
+                                    <MenuItem key={c._id} value={c._id}>{c.sclassName || c.className}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
 
-                            <TextField
-                                label="Scheduled Time (optional)"
-                                type="datetime-local"
-                                value={scheduledAt}
-                                onChange={e => setScheduledAt(e.target.value)}
-                                size="small"
-                                InputLabelProps={{ shrink: true }}
-                                sx={{ minWidth: 220 }}
-                            />
+                    {/* Recipient count preview */}
+                    {(previewCount !== null || previewing) && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {previewing
+                                ? <CircularProgress size={16} />
+                                : <Chip
+                                    icon={<PeopleIcon />}
+                                    label={`${previewCount} recipient${previewCount !== 1 ? 's' : ''} will receive this`}
+                                    size="small"
+                                    sx={{ bgcolor: selectedOption?.color, color: '#fff' }}
+                                  />
+                            }
                         </Box>
+                    )}
 
-                        {formError && <Alert severity="error">{formError}</Alert>}
-                        {sendSuccess && <Alert severity="success">{sendSuccess}</Alert>}
+                    <TextField
+                        label="Title"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        required fullWidth size="small"
+                        inputProps={{ maxLength: 200 }}
+                        placeholder='e.g. "Math test scheduled on Friday"'
+                    />
+                    <TextField
+                        label="Message"
+                        value={message}
+                        onChange={e => setMessage(e.target.value)}
+                        required fullWidth multiline minRows={3} size="small"
+                        placeholder="Write your message here..."
+                    />
 
-                        <Box>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                startIcon={sending ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
-                                disabled={sending}
-                            >
-                                {sending ? 'Sending…' : 'Send Notification'}
-                            </Button>
-                        </Box>
+                    {formError  && <Alert severity="error"   onClose={() => setFormError('')}>{formError}</Alert>}
+                    {sendSuccess && <Alert severity="success" onClose={() => setSendSuccess('')}>{sendSuccess}</Alert>}
+
+                    <Box>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            size="large"
+                            startIcon={sending ? <CircularProgress size={18} color="inherit" /> : <SendIcon />}
+                            disabled={sending || (recipientType === 'Class' && !classId)}
+                            sx={{ bgcolor: selectedOption?.color, '&:hover': { bgcolor: selectedOption?.color, filter: 'brightness(0.9)' } }}
+                        >
+                            {sending ? 'Sending...' : `Send to ${selectedOption?.label}`}
+                        </Button>
                     </Box>
                 </Box>
             </Paper>
 
             <Divider sx={{ mb: 3 }} />
 
-            {/* Sent Notifications List */}
-            <Typography variant="h6" gutterBottom>Sent Notifications</Typography>
+            {/* ── Sent list ── */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Sent Notifications</Typography>
+                <Chip label={`${notifications.length} total`} size="small" />
+            </Box>
 
-            {listLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {listError && <Alert severity="error" sx={{ mb: 2 }}>{listError}</Alert>}
+            {listLoading && <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>}
+            {listError   && <Alert severity="error" sx={{ mb: 2 }}>{listError}</Alert>}
 
             {!listLoading && !listError && (
                 <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ backgroundColor: 'grey.100' }}>
-                                <TableCell><strong>Title</strong></TableCell>
-                                <TableCell><strong>Message</strong></TableCell>
-                                <TableCell><strong>Send Time</strong></TableCell>
-                                <TableCell align="center"><strong>Recipients</strong></TableCell>
-                                <TableCell align="center"><strong>Read</strong></TableCell>
-                                <TableCell align="center"><strong>Actions</strong></TableCell>
+                    <Table size="small">
+                        <TableHead sx={{ bgcolor: 'grey.100' }}>
+                            <TableRow>
+                                {['Title', 'Message', 'Sent To', 'Time', 'Recipients', 'Read', ''].map(h => (
+                                    <TableCell key={h}><strong>{h}</strong></TableCell>
+                                ))}
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {notifications.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                    <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                                         No notifications sent yet.
                                     </TableCell>
                                 </TableRow>
-                            ) : (
-                                notifications.map(n => {
-                                    const { parsedTitle } = parseNotification(n);
-                                    const notifId = n.notificationId || n._id;
-                                    return (
-                                        <TableRow key={notifId} hover>
-                                            <TableCell sx={{ fontWeight: 500 }}>{parsedTitle}</TableCell>
-                                            <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {n.message}
-                                            </TableCell>
-                                            <TableCell>
-                                                {n.createdAt ? new Date(n.createdAt).toLocaleString() : '—'}
-                                            </TableCell>
-                                            <TableCell align="center">{n.totalRecipients ?? '—'}</TableCell>
-                                            <TableCell align="center">{n.readCount ?? 0}</TableCell>
-                                            <TableCell align="center">
-                                                <Tooltip title="Delete notification">
-                                                    <IconButton
-                                                        size="small"
-                                                        color="error"
-                                                        onClick={() => handleDelete(notifId)}
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
+                            ) : notifications.map(n => {
+                                const notifId = n.notificationId || n._id;
+                                const rt = n.recipientType || 'All';
+                                return (
+                                    <TableRow key={String(notifId)} hover>
+                                        <TableCell sx={{ fontWeight: 600, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {n.title || n.message?.split(':')[0] || '—'}
+                                        </TableCell>
+                                        <TableCell sx={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'text.secondary' }}>
+                                            {n.message}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                label={rt}
+                                                size="small"
+                                                sx={{ bgcolor: RECIPIENT_COLORS[rt] || '#9e9e9e', color: '#fff', fontSize: 11 }}
+                                            />
+                                        </TableCell>
+                                        <TableCell sx={{ whiteSpace: 'nowrap', fontSize: 12 }}>
+                                            {n.createdAt ? new Date(n.createdAt).toLocaleString() : '—'}
+                                        </TableCell>
+                                        <TableCell align="center">{n.totalRecipients ?? '—'}</TableCell>
+                                        <TableCell align="center">
+                                            <Typography variant="body2" color={n.readCount > 0 ? 'success.main' : 'text.secondary'}>
+                                                {n.readCount ?? 0}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Tooltip title="Delete for all recipients">
+                                                <IconButton size="small" color="error" onClick={() => handleDelete(String(notifId))}>
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
                         </TableBody>
                     </Table>
                 </TableContainer>

@@ -39,10 +39,14 @@ const updateClass = async (req, res) => {
     try {
         const { className, section, classTeacherId, subjectIds } = req.body;
         const update = {};
-        if (className)      { update.className = className; update.sclassName = className; }
-        if (section !== undefined) update.section = section;
-        if (classTeacherId) update.classTeacher = classTeacherId;
-
+        if (className)             { update.className = className; update.sclassName = className; }
+        if (section !== undefined)   update.section = section;
+        // null = explicitly clear teacher; valid string = set teacher; undefined/'' = don't touch
+        if (classTeacherId === null) {
+            update.classTeacher = null;
+        } else if (classTeacherId && classTeacherId !== '') {
+            update.classTeacher = classTeacherId;
+        }
         const sclass = await Sclass.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
         if (!sclass) return res.status(404).json({ message: 'Class not found' });
 

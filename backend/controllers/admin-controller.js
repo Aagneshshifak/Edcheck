@@ -6,6 +6,7 @@ const Teacher = require('../models/teacherSchema.js');
 const Subject = require('../models/subjectSchema.js');
 const Notice = require('../models/noticeSchema.js');
 const Complain = require('../models/complainSchema.js');
+const { withCache, invalidate } = require('../utils/cache.js');
 
 // const adminRegister = async (req, res) => {
 //     try {
@@ -98,15 +99,21 @@ const adminLogIn = async (req, res) => {
     }
 };
 
+// GET /Admin/:id — also used as session validation
 const getAdminDetail = async (req, res) => {
     try {
-        let admin = await Admin.findById(req.params.id);
-        if (admin) {
-            admin.password = undefined;
-            res.send(admin);
-        }
-        else {
-            res.send({ message: "No admin found" });
+        const data = await withCache(`admin:${req.params.id}`, async () => {
+            const admin = await Admin.findById(req.params.id);
+            if (!admin) return null;
+            const obj = admin.toObject();
+            delete obj.password;
+            return obj;
+        }, 300);
+
+        if (data) {
+            res.send(data);
+        } else {
+            res.status(404).send({ message: "No admin found" });
         }
     } catch (err) {
         res.status(500).json(err);
@@ -164,6 +171,7 @@ const updateAdmin = async (req, res) => {
         if (!result) return res.status(404).json({ message: 'Admin not found' });
 
         result.password = undefined;
+        invalidate(`admin:${req.params.id}`);
         res.send(result);
     } catch (error) {
         res.status(500).json(error);

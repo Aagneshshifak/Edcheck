@@ -3,14 +3,10 @@ const Student = require('../models/studentSchema.js');
 const Teacher = require('../models/teacherSchema.js');
 const Parent = require('../models/parentSchema.js');
 const { createNotifications } = require('./notification-controller.js');
+const { logger } = require('../utils/serverLogger.js');
 
-/**
- * Resolve recipient user IDs based on recipientType and schoolId.
- * Returns an array of ObjectId strings.
- */
 async function resolveRecipients(recipientType, schoolId, classId) {
     const schoolQuery = { $or: [{ schoolId }, { school: schoolId }] };
-
     switch (recipientType) {
         case 'All': {
             const [students, teachers, parents] = await Promise.all([
@@ -18,42 +14,39 @@ async function resolveRecipients(recipientType, schoolId, classId) {
                 Teacher.find(schoolQuery, '_id').lean(),
                 Parent.find({ school: schoolId }, '_id').lean(),
             ]);
-            return [
-                ...students.map(s => s._id),
-                ...teachers.map(t => t._id),
-                ...parents.map(p => p._id),
-            ];
+            return [...students, ...teachers, ...parents].map(u => u._id);
         }
         case 'Students': {
-            const query = classId
-                ? { $or: [{ classId }, { sclassName: classId }], ...schoolQuery }
-                : schoolQuery;
-            const students = await Student.find(query, '_id').lean();
-            return students.map(s => s._id);
+            const q = classId ? { $or: [{ classId }, { sclassName: classId }], ...schoolQuery } : schoolQuery;
+            return (await Student.find(q, '_id').lean()).map(s => s._id);
         }
-        case 'Teachers': {
-            const teachers = await Teacher.find(schoolQuery, '_id').lean();
-            return teachers.map(t => t._id);
-        }
-        case 'Parents': {
-            const parents = await Parent.find({ school: schoolId }, '_id').lean();
-            return parents.map(p => p._id);
-        }
+        case 'Teachers':
+            return (await Teacher.find(schoolQuery, '_id').lean()).map(t => t._id);
+        case 'Parents':
+            return (await Parent.find({ school: schoolId }, '_id').lean()).map(p => p._id);
         case 'Class': {
             if (!classId) return [];
-            const students = await Student.find(
-                { $or: [{ classId }, { sclassName: classId }], ...schoolQuery },
-                '_id'
-            ).lean();
-            return students.map(s => s._id);
+            const q = { $or: [{ classId }, { sclassName: classId }], ...schoolQuery };
+            return (await Student.find(q, '_id').lean()).map(s => s._id);
         }
-        default:
-            return [];
+        default: return [];
     }
 }
 
+// GET /Admin/notifications/preview  — recipient count before sending
+// Query: recipientType, schoolId, classId?
+const previewRecipients = async (req, res) => {
+    try {
+        const { recipientType, schoolId, classId } = req.query;
+        if (!recipientType || !schoolId) return res.status(400).json({ message: 'recipientType and schoolId required' });
+        const ids = await resolveRecipients(recipientType, schoolId, classId);
+        res.json({ count: ids.length });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // POST /Admin/notifications/send
-// Body: { title, message, recipientType, classId?, scheduledAt?, schoolId }
 const sendNotification = async (req, res) => {
     try {
         const { title, message, recipientType, classId, schoolId } = req.body;
@@ -61,27 +54,21 @@ const sendNotification = async (req, res) => {
         if (!title || !message || !recipientType || !schoolId) {
             return res.status(400).json({ message: 'title, message, recipientType, and schoolId are required' });
         }
-
-        const validTypes = ['All', 'Students', 'Teachers', 'Parents', 'Class'];
-        if (!validTypes.includes(recipientType)) {
-            return res.status(400).json({ message: `recipientType must be one of: ${validTypes.join(', ')}` });
+        if (!['All', 'Students', 'Teachers', 'Parents', 'Class'].includes(recipientType)) {
+            return res.status(400).json({ message: 'Invalid recipientType' });
         }
-
         if (recipientType === 'Class' && !classId) {
-            return res.status(400).json({ message: 'classId is required when recipientType is "Class"' });
+            return res.status(400).json({ message: 'classId is required for Class recipient type' });
         }
 
         const recipientIds = await resolveRecipients(recipientType, schoolId, classId);
-
         if (recipientIds.length === 0) {
-            return res.status(200).json({ message: 'Notifications sent', count: 0 });
+            return res.status(200).json({ message: 'No recipients found', count: 0 });
         }
 
-        // Build the combined message string (title + body)
-        const fullMessage = `${title}: ${message}`;
+        await createNotifications(recipientIds, message, 'announcement', { title, recipientType });
 
-        await createNotifications(recipientIds, fullMessage, 'feedback');
-
+        logger.info(`Notification sent to ${recipientIds.length} recipients`, { recipientType, title });
         return res.status(201).json({ message: 'Notifications sent', count: recipientIds.length });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -89,44 +76,33 @@ const sendNotification = async (req, res) => {
 };
 
 // GET /Admin/notifications/sent/:schoolId
-// Returns notifications sent to users of this school, grouped by message content
 const getSentNotifications = async (req, res) => {
     try {
         const { schoolId } = req.params;
-
-        // Gather all user IDs belonging to this school
         const schoolQuery = { $or: [{ schoolId }, { school: schoolId }] };
         const [students, teachers, parents] = await Promise.all([
             Student.find(schoolQuery, '_id').lean(),
             Teacher.find(schoolQuery, '_id').lean(),
             Parent.find({ school: schoolId }, '_id').lean(),
         ]);
+        const userIds = [...students, ...teachers, ...parents].map(u => u._id);
+        if (!userIds.length) return res.status(200).json([]);
 
-        const userIds = [
-            ...students.map(s => s._id),
-            ...teachers.map(t => t._id),
-            ...parents.map(p => p._id),
-        ];
-
-        if (userIds.length === 0) {
-            return res.status(200).json([]);
-        }
-
-        // Aggregate notifications for these users, grouped by message
         const grouped = await Notification.aggregate([
-            { $match: { userId: { $in: userIds } } },
-            {
-                $group: {
-                    _id: '$message',
-                    notificationId: { $first: '$_id' },
-                    message: { $first: '$message' },
-                    type: { $first: '$type' },
-                    createdAt: { $first: '$createdAt' },
-                    totalRecipients: { $sum: 1 },
-                    readCount: { $sum: { $cond: ['$readStatus', 1, 0] } },
-                },
-            },
+            { $match: { userId: { $in: userIds }, type: 'announcement' } },
+            { $group: {
+                _id: { title: '$title', message: '$message' },
+                notificationId: { $first: '$_id' },
+                title:          { $first: '$title' },
+                message:        { $first: '$message' },
+                recipientType:  { $first: '$recipientType' },
+                type:           { $first: '$type' },
+                createdAt:      { $first: '$createdAt' },
+                totalRecipients: { $sum: 1 },
+                readCount:      { $sum: { $cond: ['$readStatus', 1, 0] } },
+            }},
             { $sort: { createdAt: -1 } },
+            { $limit: 100 },
         ]);
 
         return res.status(200).json(grouped);
@@ -135,17 +111,17 @@ const getSentNotifications = async (req, res) => {
     }
 };
 
-// DELETE /Admin/notifications/:id
+// DELETE /Admin/notifications/:id  — deletes all notifications with same title+message
 const deleteNotification = async (req, res) => {
     try {
-        const deleted = await Notification.findByIdAndDelete(req.params.id);
-        if (!deleted) {
-            return res.status(404).json({ message: 'Notification not found' });
-        }
+        const target = await Notification.findById(req.params.id);
+        if (!target) return res.status(404).json({ message: 'Notification not found' });
+        // Delete all copies of this broadcast
+        await Notification.deleteMany({ title: target.title, message: target.message });
         return res.status(200).json({ message: 'Notification deleted' });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
 };
 
-module.exports = { sendNotification, getSentNotifications, deleteNotification };
+module.exports = { sendNotification, getSentNotifications, deleteNotification, previewRecipients };

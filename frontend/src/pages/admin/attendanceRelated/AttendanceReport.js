@@ -13,8 +13,15 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 const pct = (n) => `${n}%`;
 
 const rowBg = (percentage) => {
-    if (percentage < 60) return '#ffebee';   // red-tinted
-    if (percentage < 75) return '#fff8e1';   // amber-tinted
+    if (percentage < 60) return 'rgba(255,0,80,0.12)';    // neon red
+    if (percentage < 75) return 'rgba(255,200,0,0.10)';   // neon amber
+    return 'inherit';
+};
+
+// Neon glow text color for low attendance
+const rowColor = (percentage) => {
+    if (percentage < 60) return '#ff2d55';   // neon red
+    if (percentage < 75) return '#ffd60a';   // neon yellow
     return 'inherit';
 };
 
@@ -63,7 +70,15 @@ const SchoolView = ({ schoolId, onSelectClass }) => {
                                 <TableRow
                                     key={row.classId}
                                     hover
-                                    sx={{ cursor: 'pointer', backgroundColor: rowBg(row.attendancePercentage) }}
+                                    sx={{
+                                        cursor: 'pointer',
+                                        backgroundColor: rowBg(row.attendancePercentage),
+                                        ...(row.attendancePercentage < 75 && {
+                                            boxShadow: row.attendancePercentage < 60
+                                                ? 'inset 0 0 0 1px rgba(255,45,85,0.4)'
+                                                : 'inset 0 0 0 1px rgba(255,214,10,0.3)',
+                                        }),
+                                    }}
                                     onClick={() => onSelectClass(row.classId, row.className)}
                                 >
                                     <TableCell>{row.className}</TableCell>
@@ -127,7 +142,14 @@ const ClassView = ({ classId, className, onBack, onSelectStudent }) => {
                             rows.map((row) => (
                                 <TableRow
                                     key={row.studentId}
-                                    sx={{ backgroundColor: rowBg(row.overallPercentage) }}
+                                    sx={{
+                                        backgroundColor: rowBg(row.overallPercentage),
+                                        ...(row.overallPercentage < 75 && {
+                                            boxShadow: row.overallPercentage < 60
+                                                ? 'inset 0 0 0 1px rgba(255,45,85,0.4)'
+                                                : 'inset 0 0 0 1px rgba(255,214,10,0.3)',
+                                        }),
+                                    }}
                                 >
                                     <TableCell>{row.studentName}</TableCell>
                                     <TableCell align="right">{row.rollNum}</TableCell>

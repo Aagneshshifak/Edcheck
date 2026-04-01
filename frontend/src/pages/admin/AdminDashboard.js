@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
 import {
     CssBaseline,
     Box,
@@ -16,7 +18,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppBar, Drawer } from '../../components/styles';
 import Logout from '../Logout';
-import AdminSideBar from './SideBar';
+import SideBar from './SideBar';
 import AdminProfile from './AdminProfile';
 import AdminHomePage from './AdminHomePage';
 
@@ -52,20 +54,33 @@ import TestDetail from './testRelated/TestDetail';
 import AttendanceReport from './attendanceRelated/AttendanceReport';
 import NotificationCenter from './notificationRelated/NotificationCenter';
 import ReportCenter from './reportRelated/ReportCenter';
-import AnalyticsDashboard from './analyticsRelated/AnalyticsDashboard';
+import Leaderboard from './analyticsRelated/Leaderboard';
 import TeacherManagement from './teacherRelated/TeacherManagement';
 import ClassManagement from './classRelated/ClassManagement';
 import StudentManagement from './studentRelated/StudentManagement';
 import SubjectManagement from './subjectRelated/SubjectManagement';
 
 const AdminDashboardInner = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const { addLog } = useDevLog();
+    const schoolId = useSelector(s => s.user.currentUser?._id);
 
     useEffect(() => {
         const cleanup = attachAxiosLogger(addLog);
         return cleanup;
     }, [addLog]);
+
+    // Validate session — if admin _id no longer exists in DB, clear stale session
+    useEffect(() => {
+        if (!schoolId) return;
+        axios.get(`${process.env.REACT_APP_BASE_URL}/Admin/${schoolId}`)
+            .catch(err => {
+                if (err.response?.status === 404) {
+                    localStorage.removeItem('user');
+                    window.location.reload();
+                }
+            });
+    }, [schoolId]); // eslint-disable-line
 
     const toggleDrawer = () => {
         setOpen(!open);
@@ -82,10 +97,7 @@ const AdminDashboardInner = () => {
                             color="inherit"
                             aria-label="open drawer"
                             onClick={toggleDrawer}
-                            sx={{
-                                marginRight: '36px',
-                                ...(open && { display: 'none' }),
-                            }}
+                            sx={{ marginRight: '24px' }}
                         >
                             <MenuIcon />
                         </IconButton>
@@ -109,7 +121,7 @@ const AdminDashboardInner = () => {
                     </Toolbar>
                     <Divider />
                     <List component="nav">
-                        <AdminSideBar />
+                        <SideBar />
                     </List>
                 </Drawer>
                 <Box component="main" sx={styles.boxStyled}>
@@ -167,7 +179,7 @@ const AdminDashboardInner = () => {
                         <Route path="/Admin/attendance" element={<AttendanceReport />} />
                         <Route path="/Admin/notifications" element={<NotificationCenter />} />
                         <Route path="/Admin/reports" element={<ReportCenter />} />
-                        <Route path="/Admin/analytics" element={<AnalyticsDashboard />} />
+                        <Route path="/Admin/leaderboard" element={<Leaderboard />} />
 
                         {/* Enhanced management pages */}
                         <Route path="/Admin/manage/teachers" element={<TeacherManagement />} />
@@ -192,10 +204,7 @@ export default AdminDashboard
 
 const styles = {
     boxStyled: {
-        backgroundColor: (theme) =>
-            theme.palette.mode === 'light'
-                ? theme.palette.grey[100]
-                : theme.palette.grey[900],
+        background: 'linear-gradient(135deg, #0f172a 0%, #0a1628 100%)',
         flexGrow: 1,
         height: '100vh',
         overflow: 'auto',
@@ -207,7 +216,7 @@ const styles = {
         px: [1],
     },
     drawerStyled: {
-        display: "flex"
+        display: 'flex',
     },
     hideDrawer: {
         display: 'flex',
