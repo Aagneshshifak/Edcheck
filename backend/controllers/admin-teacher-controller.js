@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const Teacher = require('../models/teacherSchema.js');
 const Subject = require('../models/subjectSchema.js');
 const Sclass = require('../models/sclassSchema.js');
@@ -123,4 +124,69 @@ const getTeacherPerformance = async (req, res) => {
     }
 };
 
-module.exports = { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance };
+// POST /Admin/teachers/bulk-delete
+const bulkDeleteTeachers = async (req, res) => {
+    try {
+        const { teacherIds, schoolId } = req.body;
+        if (!teacherIds || !Array.isArray(teacherIds) || teacherIds.length === 0) {
+            return res.status(400).json({ message: 'teacherIds must be a non-empty array' });
+        }
+
+        // Validate all teachers belong to the school
+        const teachers = await Teacher.find({ _id: { $in: teacherIds }, schoolId });
+        if (teachers.length !== teacherIds.length) {
+            return res.status(403).json({ message: 'Some teacher IDs do not belong to this school' });
+        }
+
+        const ids = teachers.map(t => t._id);
+
+        await Subject.updateMany({ teacherId: { $in: ids } }, { $unset: { teacherId: 1, teacher: 1 } });
+        await Teacher.deleteMany({ _id: { $in: ids } });
+
+        const N = ids.length;
+        logger.info(`Bulk deleted ${N} teachers`, { schoolId });
+        res.json({ deleted: N, message: `${N} teachers removed` });
+    } catch (err) {
+        logger.error('bulkDeleteTeachers failed', { message: err.message });
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// PATCH /Admin/teacher/:id/status
+const updateTeacherStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!['active', 'suspended'].includes(status)) {
+            return res.status(400).json({ message: "status must be 'active' or 'suspended'" });
+        }
+
+        const teacher = await Teacher.findByIdAndUpdate(
+            req.params.id,
+            { $set: { status } },
+            { new: true, select: '_id name status' }
+        );
+        if (!teacher) return res.status(404).json({ message: 'Teacher not found' });
+
+        res.json({ _id: teacher._id, name: teacher.name, status: teacher.status });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// POST /Admin/teacher/:id/reset-password
+const resetTeacherPassword = async (req, res) => {
+    try {
+        const tempPassword = crypto.randomBytes(6).toString('base64').slice(0, 8);
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(tempPassword, salt);
+
+        const teacher = await Teacher.findByIdAndUpdate(req.params.id, { $set: { password: hashed } });
+        if (!teacher) return res.status(404).json({ message: 'Teacher not found' });
+
+        res.json({ tempPassword });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance, bulkDeleteTeachers, updateTeacherStatus, resetTeacherPassword };

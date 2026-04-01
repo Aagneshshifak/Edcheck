@@ -47,6 +47,11 @@ import ClassDetails from './classRelated/ClassDetails';
 import ShowClasses from './classRelated/ShowClasses';
 import AccountMenu from '../../components/AccountMenu';
 
+import SystemHealth from './systemRelated/SystemHealth';
+import SystemConfig from './configRelated/SystemConfig';
+import DataManager from './dataRelated/DataManager';
+import AnalyticsDashboard from './analyticsRelated/AnalyticsDashboard';
+
 import AssignmentOversight from './assignmentRelated/AssignmentOversight';
 import AssignmentDetail from './assignmentRelated/AssignmentDetail';
 import TestOversight from './testRelated/TestOversight';
@@ -65,6 +70,7 @@ import SubjectManagement from './subjectRelated/SubjectManagement';
 
 const AdminDashboardInner = () => {
     const [open, setOpen] = useState(true);
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const { addLog } = useDevLog();
     const schoolId = useSelector(s => s.user.currentUser?._id);
 
@@ -104,6 +110,15 @@ const AdminDashboardInner = () => {
                         >
                             <MenuIcon />
                         </IconButton>
+                        <IconButton
+                            edge="start"
+                            color="inherit"
+                            aria-label="open mobile drawer"
+                            onClick={() => setDrawerOpen(true)}
+                            sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
                         <Typography
                             component="h1"
                             variant="h6"
@@ -123,6 +138,17 @@ const AdminDashboardInner = () => {
                         </IconButton>
                     </Toolbar>
                     <Divider />
+                    <List component="nav">
+                        <SideBar />
+                    </List>
+                </Drawer>
+                <Drawer
+                    variant="temporary"
+                    anchor="left"
+                    open={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    sx={{ display: { xs: 'block', md: 'none' } }}
+                >
                     <List component="nav">
                         <SideBar />
                     </List>
@@ -192,6 +218,12 @@ const AdminDashboardInner = () => {
                         <Route path="/Admin/manage/classes" element={<ClassManagement />} />
                         <Route path="/Admin/manage/students" element={<StudentManagement />} />
                         <Route path="/Admin/manage/subjects" element={<SubjectManagement />} />
+
+                        {/* System & data pages */}
+                        <Route path="/Admin/health" element={<SystemHealth />} />
+                        <Route path="/Admin/config" element={<SystemConfig />} />
+                        <Route path="/Admin/data" element={<DataManager />} />
+                        <Route path="/Admin/analytics" element={<AnalyticsDashboard />} />
                     </Routes>
                 </Box>
             </Box>

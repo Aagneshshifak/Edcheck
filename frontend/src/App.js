@@ -9,11 +9,13 @@ import ParentDashboard from './pages/parent/ParentDashboard';
 import LoginPage from './pages/LoginPage';
 import AdminRegisterPage from './pages/admin/AdminRegisterPage';
 import ChooseUser from './pages/ChooseUser';
+import { ToastProvider } from './context/ToastContext';
 
 const App = () => {
   const { currentRole } = useSelector(state => state.user);
 
   return (
+    <ToastProvider>
     <Router>
       {currentRole === null &&
         <Routes>
@@ -37,6 +39,7 @@ const App = () => {
       {currentRole === "Teacher" && <TeacherDashboard />}
       {currentRole === "Parent"  && <ParentDashboard />}
     </Router>
+    </ToastProvider>
   );
 };
 

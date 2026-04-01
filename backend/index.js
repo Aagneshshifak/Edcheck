@@ -6,6 +6,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
 const { logger, requestLogger, sseHandler } = require("./utils/serverLogger");
+const responseTimeTracker = require("./utils/responseTimeTracker");
 
 const app = express();
 const Routes = require("./routes/route.js");
@@ -13,6 +14,13 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json({ limit: "10mb" }));
 app.use(cors());
+
+// Response time tracking middleware (before routes)
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on("finish", () => responseTimeTracker.record(Date.now() - start));
+    next();
+});
 
 // Request/response logger (before routes)
 app.use(requestLogger);

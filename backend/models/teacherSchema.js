@@ -37,6 +37,8 @@ const teacherSchema = new mongoose.Schema({
         ref: "sclass"
     },
 
+    status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+
     attendance: [{
         date:         { type: Date, required: true },
         presentCount: { type: Number, default: 0 },
