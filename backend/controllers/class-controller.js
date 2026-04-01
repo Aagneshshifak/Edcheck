@@ -1,7 +1,7 @@
 const Sclass = require('../models/sclassSchema.js');
 const Student = require('../models/studentSchema.js');
 const Subject = require('../models/subjectSchema.js');
-const Teacher = require('../models/teacherSchema.js');
+const Teacher = require('../models/teacherSchema.js'); // must be required before populate('classTeacher') runs
 
 const sclassCreate = async (req, res) => {
     try {
@@ -29,12 +29,40 @@ const sclassCreate = async (req, res) => {
 
 const sclassList = async (req, res) => {
     try {
-        let sclasses = await Sclass.find({ school: req.params.id })
-        if (sclasses.length > 0) {
-            res.send(sclasses)
-        } else {
-            res.send({ message: "No sclasses found" });
+        const sclasses = await Sclass.find({
+            $or: [{ school: req.params.id }, { schoolId: req.params.id }]
+        }).lean();
+
+        if (!sclasses.length) {
+            return res.json({ message: "No sclasses found" });
         }
+
+        // Collect all classTeacher IDs that are ObjectIds (not yet populated)
+        const teacherIds = sclasses
+            .map(c => c.classTeacher)
+            .filter(id => id && typeof id !== 'object');
+
+        // Fetch teachers in one query
+        const teacherMap = {};
+        if (teacherIds.length) {
+            const teachers = await Teacher.find(
+                { _id: { $in: teacherIds } },
+                'name email'
+            ).lean();
+            teachers.forEach(t => { teacherMap[String(t._id)] = t; });
+        }
+
+        // Merge teacher data into each class
+        const result = sclasses.map(c => {
+            if (!c.classTeacher) return c;
+            // Already populated (object with _id)
+            if (typeof c.classTeacher === 'object' && c.classTeacher.name) return c;
+            // Raw ObjectId — replace with teacher object
+            const teacher = teacherMap[String(c.classTeacher)];
+            return { ...c, classTeacher: teacher || c.classTeacher };
+        });
+
+        res.json(result);
     } catch (err) {
         res.status(500).json(err);
     }

@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const Teacher = require('../models/teacherSchema.js');
 const Subject = require('../models/subjectSchema.js');
+const { withCache, invalidate } = require('../utils/cache.js');
 
 const teacherRegister = async (req, res) => {
     const { name, email, password, role, school, teachSubject, teachSclass } = req.body;
@@ -50,14 +51,19 @@ const teacherLogIn = async (req, res) => {
 
 const getTeachers = async (req, res) => {
     try {
-        let teachers = await Teacher.find({ school: req.params.id })
-            .populate("teachSubject", "subName")
-            .populate("teachSclass", "sclassName");
+        const teachers = await withCache(`teachers:school:${req.params.id}`, async () => {
+            const list = await Teacher.find({
+                $or: [{ school: req.params.id }, { schoolId: req.params.id }]
+            })
+                .populate("teachSubject", "subName")
+                .populate("teachSubjects", "subName")
+                .populate("teachSclass", "sclassName")
+                .populate("teachClasses", "sclassName");
+            return list.map(t => ({ ...t._doc, password: undefined }));
+        }, 120);
+
         if (teachers.length > 0) {
-            let modifiedTeachers = teachers.map((teacher) => {
-                return { ...teacher._doc, password: undefined };
-            });
-            res.send(modifiedTeachers);
+            res.send(teachers);
         } else {
             res.send({ message: "No teachers found" });
         }
@@ -104,7 +110,9 @@ const updateTeacherSubject = async (req, res) => {
 const deleteTeacher = async (req, res) => {
     try {
         const deletedTeacher = await Teacher.findByIdAndDelete(req.params.id);
-
+        if (deletedTeacher) {
+            invalidate(`teachers:school:${deletedTeacher.schoolId || deletedTeacher.school}`);
+        }
         await Subject.updateOne(
             { teacher: deletedTeacher._id, teacher: { $exists: true } },
             { $unset: { teacher: 1 } }

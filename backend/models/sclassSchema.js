@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const sclassSchema = new mongoose.Schema({
     className: { type: String },   // spec field name
     sclassName: { type: String },  // backward-compat alias
+    section: { type: String, default: '' },
+    classTeacher: { type: mongoose.Schema.Types.ObjectId, ref: 'teacher' },
 
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
