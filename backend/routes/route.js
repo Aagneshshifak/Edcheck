@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const path = require('path');
 
-const { adminRegister, adminLogIn, getAdminDetail} = require('../controllers/admin-controller.js');
+const { adminRegister, adminLogIn, getAdminDetail, updateAdmin, updateAdminPassword } = require('../controllers/admin-controller.js');
 const { sclassCreate, sclassList, deleteSclass, deleteSclasses, getSclassDetail, getSclassStudents } = require('../controllers/class-controller.js');
 const { complainCreate, complainList } = require('../controllers/complain-controller.js');
 const { noticeCreate, noticeList, deleteNotices, deleteNotice, updateNotice } = require('../controllers/notice-controller.js');
@@ -31,13 +31,61 @@ const upload = require('../middleware/upload.js');
 const cloudinaryUpload = process.env.CLOUDINARY_CLOUD_NAME
     ? require('../middleware/cloudinaryUpload.js')
     : upload;
+const { getSchoolAssignments } = require('../controllers/admin-assignment-controller.js');
+const { getSchoolTests, adminCreateTest, toggleTestStatus } = require('../controllers/admin-test-controller.js');
+const { getSchoolAttendance, getClassAttendance, getStudentAttendance } = require('../controllers/admin-attendance-controller.js');
+const { sendNotification, getSentNotifications, deleteNotification, previewRecipients } = require('../controllers/admin-notification-controller.js');
+const { getAnalyticsOverview, getLeaderboard, getSubjectDifficulty, getTeacherPerformance, getStudentRisk } = require('../controllers/admin-analytics-controller.js');
+const { getStudentPerformance, getClassAttendanceReport, getTeacherActivity, getAssignmentCompletion } = require('../controllers/admin-report-controller.js');
 const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest } = require('../controllers/test-controller.js');
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
+
+const { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance: getTeacherIndividualPerformance } = require('../controllers/admin-teacher-controller.js');
+const { addClass, updateClass, removeClass, getClassDetail } = require('../controllers/admin-class-controller.js');
+const { addStudent: adminAddStudent, updateStudent: adminUpdateStudent, removeStudent, getStudentPerformance: adminGetStudentPerf } = require('../controllers/admin-student-controller.js');
+
+const { addSubject, removeSubject, getSubjectsDetail, updateTopics, assignTeacher } = require('../controllers/admin-subject-controller.js');
+
+// ── Admin — Subject Management ────────────────────────────────────────────────
+router.post('/Admin/subjects/add', addSubject);
+router.delete('/Admin/subjects/:id', removeSubject);
+router.get('/Admin/subjects/detail/:schoolId', getSubjectsDetail);
+router.put('/Admin/subjects/:id/topics', updateTopics);
+router.put('/Admin/subjects/:id/teacher', assignTeacher);
+
+// ── Admin — Test Management ───────────────────────────────────────────────────
+router.post('/Admin/tests/create', adminCreateTest);
+router.put('/Admin/tests/:id/toggle', toggleTestStatus);
+
+// ── Admin — Teacher Management ────────────────────────────────────────────────
+router.post('/Admin/teacher/add', addTeacher);
+router.put('/Admin/teacher/:id', updateTeacher);
+router.delete('/Admin/teacher/:id', removeTeacher);
+router.get('/Admin/teacher/:id/performance', getTeacherIndividualPerformance);
+
+// ── Admin — Class Management ──────────────────────────────────────────────────
+router.post('/Admin/class/add', addClass);
+router.put('/Admin/class/:id', updateClass);
+router.delete('/Admin/class/:id', removeClass);
+router.get('/Admin/class/:id/detail', getClassDetail);
+
+// ── Admin — Student Management ────────────────────────────────────────────────
+router.post('/Admin/student/add', adminAddStudent);
+router.put('/Admin/student/:id', adminUpdateStudent);
+router.delete('/Admin/student/:id', removeStudent);
+router.get('/Admin/student/:id/performance', adminGetStudentPerf);
+
+const { getDashboardSummary } = require('../controllers/admin-dashboard-controller.js');
+
+// ── Admin — Dashboard summary ─────────────────────────────────────────────────
+router.get('/Admin/dashboard/:schoolId', getDashboardSummary);
 
 // ── Admin ────────────────────────────────────────────────────────────────────
 router.post('/AdminReg', adminRegister);
 router.post('/AdminLogin', adminLogIn);
 router.get("/Admin/:id", getAdminDetail);
+router.put("/Admin/:id/password", updateAdminPassword);
+router.put("/Admin/:id", cloudinaryUpload.single('logo'), updateAdmin);
 
 // ── Student ──────────────────────────────────────────────────────────────────
 router.post('/StudentReg', studentRegister);
@@ -104,6 +152,36 @@ router.get("/Subject/:id", getSubjectDetail);
 router.delete("/Subject/:id", deleteSubject);
 router.delete("/Subjects/:id", deleteSubjects);
 router.delete("/SubjectsClass/:id", deleteSubjectsByClass);
+
+// ── Admin — Assignment oversight ──────────────────────────────────────────────
+router.get('/Admin/assignments/:schoolId', getSchoolAssignments);
+
+// ── Admin — Test oversight ────────────────────────────────────────────────────
+router.get('/Admin/tests/:schoolId', getSchoolTests);
+
+// ── Admin — Attendance reporting ──────────────────────────────────────────────
+router.get('/Admin/attendance/school/:schoolId', getSchoolAttendance);
+router.get('/Admin/attendance/class/:classId', getClassAttendance);
+router.get('/Admin/attendance/student/:studentId', getStudentAttendance);
+
+// ── Admin — Analytics ─────────────────────────────────────────────────────────
+router.get('/Admin/analytics/overview/:schoolId', getAnalyticsOverview);
+router.get('/Admin/analytics/leaderboard/:schoolId', getLeaderboard);
+router.get('/Admin/analytics/subjectDifficulty/:schoolId', getSubjectDifficulty);
+router.get('/Admin/analytics/teachers/:schoolId', getTeacherPerformance);
+router.get('/Admin/analytics/risk/:schoolId', getStudentRisk);
+
+// ── Admin — Reports ───────────────────────────────────────────────────────────
+router.get('/Admin/reports/studentPerformance/:schoolId', getStudentPerformance);
+router.get('/Admin/reports/classAttendance/:schoolId', getClassAttendanceReport);
+router.get('/Admin/reports/teacherActivity/:schoolId', getTeacherActivity);
+router.get('/Admin/reports/assignmentCompletion/:schoolId', getAssignmentCompletion);
+
+// ── Admin — Notification management ──────────────────────────────────────────
+router.get('/Admin/notifications/preview', previewRecipients);
+router.post('/Admin/notifications/send', sendNotification);
+router.get('/Admin/notifications/sent/:schoolId', getSentNotifications);
+router.delete('/Admin/notifications/:id', deleteNotification);
 
 // ── Assignments ──────────────────────────────────────────────────────────────
 router.post('/AssignmentCreate', createAssignment);

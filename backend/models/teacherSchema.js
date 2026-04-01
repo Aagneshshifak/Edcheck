@@ -4,6 +4,7 @@ const teacherSchema = new mongoose.Schema({
     name:     { type: String, required: true },
     email:    { type: String, unique: true, required: true },
     password: { type: String, required: true }, // bcrypt hashed
+    phone:    { type: String },
     role:     { type: String, default: "Teacher" },
 
     schoolId: {

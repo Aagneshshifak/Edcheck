@@ -1,12 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 * {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Inter', 'Poppins', sans-serif;
   margin: 0;
   box-sizing: border-box;
 }
 
 body {
   background: #0f172a;
-  color: #e5e7eb;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -14,8 +18,10 @@ a {
   color: inherit;
 }
 
+/* Smooth scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -31,12 +37,21 @@ a {
   background: rgba(14, 165, 233, 0.6);
 }
 
+/* Glass card utility */
+.glass-card {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(14, 165, 233, 0.15);
+  border-radius: 12px;
+}
+
 :root {
-  --color-bg: #1f1f38;
-  --color-bg-variant: #2c2c6c;
-  --color-primary: #4db5ff;
-  --color-primary-variant: rgba(77, 181, 255, 0.4);
-  --color-light: rgba(255, 255, 255, 0.6);
+  --color-bg:       #0f172a;
+  --color-surface:  #111827;
+  --color-accent:   #0ea5e9;
+  --color-text:     #e2e8f0;
+  --color-muted:    #94a3b8;
+  --gradient-main:  linear-gradient(135deg, #000428 0%, #004e92 100%);
 }
 
 /* FORM */

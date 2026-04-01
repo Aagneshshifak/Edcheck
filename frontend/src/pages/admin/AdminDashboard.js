@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
 import {
     CssBaseline,
     Box,
@@ -8,6 +10,9 @@ import {
     Divider,
     IconButton,
 } from '@mui/material';
+import { DevLogProvider, useDevLog } from '../../context/DevLogContext';
+import DevLogPanel from '../../components/DevLogPanel';
+import { attachAxiosLogger } from '../../utils/axiosLogger';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { Navigate, Route, Routes } from 'react-router-dom';
@@ -42,8 +47,41 @@ import ClassDetails from './classRelated/ClassDetails';
 import ShowClasses from './classRelated/ShowClasses';
 import AccountMenu from '../../components/AccountMenu';
 
-const AdminDashboard = () => {
-    const [open, setOpen] = useState(false);
+import AssignmentOversight from './assignmentRelated/AssignmentOversight';
+import AssignmentDetail from './assignmentRelated/AssignmentDetail';
+import TestOversight from './testRelated/TestOversight';
+import TestDetail from './testRelated/TestDetail';
+import AttendanceReport from './attendanceRelated/AttendanceReport';
+import NotificationCenter from './notificationRelated/NotificationCenter';
+import ReportCenter from './reportRelated/ReportCenter';
+import Leaderboard from './analyticsRelated/Leaderboard';
+import TeacherManagement from './teacherRelated/TeacherManagement';
+import ClassManagement from './classRelated/ClassManagement';
+import StudentManagement from './studentRelated/StudentManagement';
+import SubjectManagement from './subjectRelated/SubjectManagement';
+
+const AdminDashboardInner = () => {
+    const [open, setOpen] = useState(true);
+    const { addLog } = useDevLog();
+    const schoolId = useSelector(s => s.user.currentUser?._id);
+
+    useEffect(() => {
+        const cleanup = attachAxiosLogger(addLog);
+        return cleanup;
+    }, [addLog]);
+
+    // Validate session — if admin _id no longer exists in DB, clear stale session
+    useEffect(() => {
+        if (!schoolId) return;
+        axios.get(`${process.env.REACT_APP_BASE_URL}/Admin/${schoolId}`)
+            .catch(err => {
+                if (err.response?.status === 404) {
+                    localStorage.removeItem('user');
+                    window.location.reload();
+                }
+            });
+    }, [schoolId]); // eslint-disable-line
+
     const toggleDrawer = () => {
         setOpen(!open);
     };
@@ -59,10 +97,7 @@ const AdminDashboard = () => {
                             color="inherit"
                             aria-label="open drawer"
                             onClick={toggleDrawer}
-                            sx={{
-                                marginRight: '36px',
-                                ...(open && { display: 'none' }),
-                            }}
+                            sx={{ marginRight: '24px' }}
                         >
                             <MenuIcon />
                         </IconButton>
@@ -135,21 +170,41 @@ const AdminDashboard = () => {
                         <Route path="/Admin/teachers/addteacher/:id" element={<AddTeacher />} />
 
                         <Route path="/logout" element={<Logout />} />
+
+                        {/* New module pages */}
+                        <Route path="/Admin/assignments" element={<AssignmentOversight />} />
+                        <Route path="/Admin/assignments/:id" element={<AssignmentDetail />} />
+                        <Route path="/Admin/tests" element={<TestOversight />} />
+                        <Route path="/Admin/tests/:id" element={<TestDetail />} />
+                        <Route path="/Admin/attendance" element={<AttendanceReport />} />
+                        <Route path="/Admin/notifications" element={<NotificationCenter />} />
+                        <Route path="/Admin/reports" element={<ReportCenter />} />
+                        <Route path="/Admin/leaderboard" element={<Leaderboard />} />
+
+                        {/* Enhanced management pages */}
+                        <Route path="/Admin/manage/teachers" element={<TeacherManagement />} />
+                        <Route path="/Admin/manage/classes" element={<ClassManagement />} />
+                        <Route path="/Admin/manage/students" element={<StudentManagement />} />
+                        <Route path="/Admin/manage/subjects" element={<SubjectManagement />} />
                     </Routes>
                 </Box>
             </Box>
+            <DevLogPanel />
         </>
     );
 }
+
+const AdminDashboard = () => (
+    <DevLogProvider>
+        <AdminDashboardInner />
+    </DevLogProvider>
+);
 
 export default AdminDashboard
 
 const styles = {
     boxStyled: {
-        backgroundColor: (theme) =>
-            theme.palette.mode === 'light'
-                ? theme.palette.grey[100]
-                : theme.palette.grey[900],
+        background: 'linear-gradient(135deg, #0f172a 0%, #0a1628 100%)',
         flexGrow: 1,
         height: '100vh',
         overflow: 'auto',
@@ -161,7 +216,7 @@ const styles = {
         px: [1],
     },
     drawerStyled: {
-        display: "flex"
+        display: 'flex',
     },
     hideDrawer: {
         display: 'flex',

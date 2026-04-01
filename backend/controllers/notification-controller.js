@@ -29,10 +29,9 @@ const pushToUser = (userId, notification) => {
 };
 
 // Helper — create one or many notifications and push via SSE
-const createNotifications = async (userIds, message, type) => {
-    const docs = userIds.map((userId) => ({ userId, message, type }));
+const createNotifications = async (userIds, message, type, extra = {}) => {
+    const docs = userIds.map((userId) => ({ userId, message, type, ...extra }));
     const inserted = await Notification.insertMany(docs);
-    // Push each notification to its connected client immediately
     for (const n of inserted) {
         pushToUser(n.userId, n.toObject());
     }
