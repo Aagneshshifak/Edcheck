@@ -11,9 +11,11 @@ export const groupAttendanceBySubject = (subjectAttendance) => {
     const attendanceBySubject = {};
 
     subjectAttendance.forEach((attendance) => {
-        const subName = attendance.subName.subName;
-        const sessions = attendance.subName.sessions;
-        const subId = attendance.subName._id;
+        const sub = attendance.subName || attendance.subjectId;
+        if (!sub) return;
+        const subName = sub.subName || sub.subjectName || 'Unknown';
+        const sessions = sub.sessions;
+        const subId = sub._id;
 
         if (!attendanceBySubject[subName]) {
             attendanceBySubject[subName] = {
@@ -43,9 +45,15 @@ export const calculateOverallAttendancePercentage = (subjectAttendance) => {
     const uniqueSubIds = [];
 
     subjectAttendance.forEach((attendance) => {
-        const subId = attendance.subName._id;
+        // subName may be a populated object or undefined (raw attendance from new schema uses subjectId)
+        const sub = attendance.subName || attendance.subjectId;
+        if (!sub) {
+            presentCountSum += attendance.status === "Present" ? 1 : 0;
+            return;
+        }
+        const subId = sub._id;
         if (!uniqueSubIds.includes(subId)) {
-            const sessions = parseInt(attendance.subName.sessions);
+            const sessions = parseInt(sub.sessions) || 0;
             totalSessionsSum += sessions;
             uniqueSubIds.push(subId);
         }

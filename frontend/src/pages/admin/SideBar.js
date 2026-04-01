@@ -160,10 +160,8 @@ const SideBar = () => (
 
             {/* Analytics */}
             <Section label="Analytics" />
-            <NavItem icon={<SummarizeIcon    fontSize="small" />} label="Reports"          path="/Admin/reports"    />
-            <NavItem icon={<BarChartIcon     fontSize="small" />} label="Analytics"        path="/Admin/analytics"  />
-            <NavItem icon={<PsychologyIcon   fontSize="small" />} label="Teacher Analytics" path="/Admin/analytics" />
-            <NavItem icon={<WarningAmberIcon fontSize="small" />} label="Student Risk"      path="/Admin/analytics" />
+            <NavItem icon={<SummarizeIcon    fontSize="small" />} label="Reports"   path="/Admin/reports"   />
+            <NavItem icon={<BarChartIcon     fontSize="small" />} label="Analytics" path="/Admin/analytics" />
 
             <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
 

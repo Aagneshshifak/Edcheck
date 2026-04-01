@@ -12,7 +12,10 @@ import { useSelector } from 'react-redux';
 
 const TeacherSideBar = () => {
     const { currentUser } = useSelector((state) => state.user);
-    const sclassName = currentUser.teachSclass
+    // teachSclass may be undefined for teachers created via the new schema (uses teachClasses array)
+    const sclassName = currentUser.teachSclass?.sclassName
+        || currentUser.teachClasses?.[0]?.sclassName
+        || 'My Class';
 
     const location = useLocation();
     return (
@@ -28,7 +31,7 @@ const TeacherSideBar = () => {
                     <ListItemIcon>
                         <ClassOutlinedIcon color={location.pathname.startsWith("/Teacher/class") ? 'primary' : 'inherit'} />
                     </ListItemIcon>
-                    <ListItemText primary={`Class ${sclassName.sclassName}`} />
+                    <ListItemText primary={`Class ${sclassName}`} />
                 </ListItemButton>
                 <ListItemButton component={Link} to="/Teacher/complain">
                     <ListItemIcon>
