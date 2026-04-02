@@ -47,16 +47,38 @@ const FIRST_NAMES = [
     "Meera","Siddharth","Kavya","Aditya","Nisha","Pranav","Shreya","Akash","Pooja","Nikhil",
     "Riya","Harish","Swathi","Deepak","Lavanya","Suresh","Bhavana","Manoj","Keerthi","Varun",
     "Ishaan","Tanvi","Gautam","Pallavi","Rithvik","Sana","Abhishek","Nandini","Vivek","Amrita",
-    "Chirag","Sowmya","Yash","Kritika","Sriram"
+    "Chirag","Sowmya","Yash","Kritika","Sriram","Priya","Rohit","Anjali","Vikram","Sunita",
+    "Kiran","Deepa","Rajesh","Meena","Arun","Kavitha","Mohan","Lakshmi","Ganesh","Saritha",
+    "Venkat","Padma","Ravi","Geetha","Ashok","Nirmala","Balu","Shanthi","Dinesh","Vimala",
+    "Sunil","Radha","Praveen","Kamala","Murali","Vasantha","Babu","Sumathi","Selvam","Nalini",
+    "Ramesh","Usha","Prakash","Anitha","Naresh","Rekha","Sanjay","Bharat","Leela","Mani",
+    "Senthil","Gowri","Balaji","Hema","Rajan","Vani","Subramaniam","Chitra","Pandian","Revathi",
+    "Murugan","Saraswathi","Krishnan","Parvathi","Shankar","Mythili","Gopal","Vasuki","Arumugam","Thenmozhi",
+    "Palanivel","Malathi","Durai","Suganya","Muthukumar","Rajeswari","Annamalai","Kalpana","Velan","Nithya",
+    "Saravanan","Jayanthi","Periyasamy","Mangai","Sundaram","Vijayalakshmi","Natarajan","Geetha","Ramu","Selvi",
+    "Kannan","Ponni","Murugesan","Kamakshi","Subramanian","Alamelu","Venkatesan","Bhuvana","Palani","Saranya",
+    "Thiyagarajan","Meenakshi","Ramasamy","Kaveri","Srinivasan","Ambika","Mani","Rukmini","Arjunan","Vasantha"
 ];
-const LAST_NAMES = ["Sharma","Patel","Nair","Reddy","Kumar","Singh","Iyer","Menon","Rao","Pillai"];
+
+const LAST_NAMES = ["Sharma","Patel","Nair","Reddy","Kumar","Singh","Iyer","Menon","Rao","Pillai",
+                    "Gupta","Verma","Joshi","Mishra","Tiwari","Pandey","Dubey","Shukla","Yadav","Chauhan"];
 
 const PARENT_FIRST = [
     "Ramesh","Sunita","Vijay","Meena","Arun","Kavitha","Suresh","Priya","Mohan","Lakshmi",
     "Rajesh","Deepa","Sanjay","Rekha","Kiran","Divya","Harish","Swathi","Manoj","Bhavana",
     "Naresh","Anitha","Prakash","Usha","Ganesh","Saritha","Venkat","Padma","Ravi","Geetha",
     "Ashok","Nirmala","Balu","Shanthi","Dinesh","Vimala","Sunil","Radha","Praveen","Kamala",
-    "Murali","Vasantha","Babu","Sumathi","Selvam"
+    "Murali","Vasantha","Babu","Sumathi","Selvam","Rajan","Vani","Krishnan","Parvathi","Shankar",
+    "Gopal","Vasuki","Arumugam","Thenmozhi","Palanivel","Malathi","Durai","Suganya","Muthukumar","Rajeswari",
+    "Annamalai","Kalpana","Velan","Nithya","Saravanan","Jayanthi","Periyasamy","Mangai","Sundaram","Vijayalakshmi",
+    "Natarajan","Geetha","Ramu","Selvi","Kannan","Ponni","Murugesan","Kamakshi","Subramanian","Alamelu",
+    "Venkatesan","Bhuvana","Palani","Saranya","Thiyagarajan","Meenakshi","Ramasamy","Kaveri","Srinivasan","Ambika",
+    "Balaji","Hema","Senthil","Gowri","Murugan","Saraswathi","Pandian","Revathi","Arjunan","Nalini",
+    "Subramaniam","Chitra","Mani","Rukmini","Shanmugam","Devaki","Perumal","Kamala","Selvakumar","Sumathy",
+    "Balasubramanian","Radhika","Chellapan","Vasumathi","Duraisamy","Gomathi","Krishnamurthy","Savithri","Murugesan","Thilaga",
+    "Raghunathan","Kalyani","Somasundaram","Bhagavathi","Veerasamy","Ponnammal","Arumugasamy","Karthiyayini","Palaniswamy","Saradha",
+    "Subbaiah","Mangalam","Rengasamy","Ponnamma","Velayutham","Kamakshi","Ayyasamy","Meenakshi","Chinnaswamy","Rajalakshmi",
+    "Muthusamy","Parameswari","Karuppasamy","Veeralakshmi","Saminathan","Thayammal","Arjunaswamy","Kuppammal","Ramasamy","Ponnuthai"
 ];
 
 // Generate a random Indian-style phone number
@@ -183,19 +205,22 @@ async function seed() {
         console.log(`  Class teacher: ${TEACHER_NAMES[i]} → ${className(CLASS_DEFS[i])}`);
     }
 
-    // 45 Students per class + parents
+    // 45 Students per class + parents — each student gets a globally unique name
     let totalStudents = 0;
     let totalParents  = 0;
-    let phoneIdx = 0;
+    let phoneIdx      = 0;
+    let globalIdx     = 0;   // increments across all classes → unique name per student
 
     for (let ci = 0; ci < classes.length; ci++) {
         const cls = classes[ci];
         const batch = [];
 
         for (let si = 0; si < 45; si++) {
-            const firstName = FIRST_NAMES[si];
-            const lastName  = LAST_NAMES[si % LAST_NAMES.length];
+            const firstName = FIRST_NAMES[globalIdx % FIRST_NAMES.length];
+            const lastName  = LAST_NAMES[globalIdx % LAST_NAMES.length];
             const roll      = si + 1;
+            globalIdx++;
+
             const attRate   = 55 + Math.floor(Math.random() * 45);
             const totalSess = 21;
             const presentN  = Math.round((attRate / 100) * totalSess);
@@ -211,11 +236,11 @@ async function seed() {
                 });
             }
 
-            const parentFirstName = PARENT_FIRST[si];
+            const parentFirstName = PARENT_FIRST[(globalIdx - 1) % PARENT_FIRST.length];
             const parentPhone     = randPhone(phoneIdx++);
 
             batch.push({
-                name:        firstName + " " + lastName,
+                name:        `${firstName} ${lastName}`,
                 rollNum:     roll,
                 password:    await h("student123"),
                 sclassName:  cls._id,

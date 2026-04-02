@@ -24,8 +24,8 @@ const StudentAttendance = ({ situation }) => {
     const [studentID, setStudentID] = useState("");
     const [subjectName, setSubjectName] = useState("");
     const [chosenSubName, setChosenSubName] = useState("");
-    const [status, setStatus] = useState('');
-    const [date, setDate] = useState('');
+    const [status, setStatus] = useState('Present');
+    const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
 
     const [showPopup, setShowPopup] = useState(false);
     const [message, setMessage] = useState("");

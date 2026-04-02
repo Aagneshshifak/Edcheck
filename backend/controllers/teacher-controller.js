@@ -33,9 +33,11 @@ const teacherLogIn = async (req, res) => {
         if (teacher) {
             const validated = await bcrypt.compare(req.body.password, teacher.password);
             if (validated) {
-                teacher = await teacher.populate("teachSubject", "subName sessions")
-                teacher = await teacher.populate("school", "schoolName")
-                teacher = await teacher.populate("teachSclass", "sclassName")
+                teacher = await teacher.populate("teachSubject",  "subName sessions")
+                teacher = await teacher.populate("teachSubjects", "subName sessions")
+                teacher = await teacher.populate("school",        "schoolName")
+                teacher = await teacher.populate("teachSclass",   "sclassName")
+                teacher = await teacher.populate("teachClasses",  "sclassName")
                 teacher.password = undefined;
                 res.send(teacher);
             } else {
@@ -75,9 +77,11 @@ const getTeachers = async (req, res) => {
 const getTeacherDetail = async (req, res) => {
     try {
         let teacher = await Teacher.findById(req.params.id)
-            .populate("teachSubject", "subName sessions")
+            .populate("teachSubject",  "subName sessions")
+            .populate("teachSubjects", "subName sessions")
+            .populate("teachSclass",   "sclassName")
+            .populate("teachClasses",  "sclassName")
             .populate("school", "schoolName")
-            .populate("teachSclass", "sclassName")
         if (teacher) {
             teacher.password = undefined;
             res.send(teacher);
