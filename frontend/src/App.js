@@ -38,6 +38,7 @@ const App = () => {
       {currentRole === "Student" && <StudentDashboard />}
       {currentRole === "Teacher" && <TeacherDashboard />}
       {currentRole === "Parent"  && <ParentDashboard />}
+      {/* Catch-all for parent deep links when not logged in */}
     </Router>
     </ToastProvider>
   );

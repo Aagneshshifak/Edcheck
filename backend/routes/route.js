@@ -14,7 +14,7 @@ const {
 } = require('../controllers/student_controller.js');
 const { subjectCreate, classSubjects, deleteSubjectsByClass, getSubjectDetail, deleteSubject, freeSubjectList, allSubjects, deleteSubjects } = require('../controllers/subject-controller.js');
 const { teacherRegister, teacherLogIn, getTeachers, getTeacherDetail, deleteTeachers, deleteTeachersByClass, deleteTeacher, updateTeacherSubject, teacherAttendance } = require('../controllers/teacher-controller.js');
-const { parentRegister, parentLogIn, getParentDetail, getParents, updateParent, deleteParent, addChildToParent } = require('../controllers/parent-controller.js');
+const { parentRegister, parentLogIn, getParentDetail, getParentChildren, verifyParentStudent, getParents, updateParent, deleteParent, addChildToParent } = require('../controllers/parent-controller.js');
 const {
     createAssignment, getAssignmentsByClass, getAssignmentsBySubject,
     getAssignmentsByTeacher, deleteAssignment, submitAssignment,
@@ -184,6 +184,8 @@ router.post('/TeacherAttendance/:id', teacherAttendance);
 router.post('/ParentReg', parentRegister);
 router.post('/ParentLogin', parentLogIn);
 router.get("/Parents/:id", getParents);
+router.get("/Parent/children/:parentId", getParentChildren);
+router.get("/Parent/:parentId/student/:studentId/verify", verifyParentStudent);
 router.get("/Parent/:id", getParentDetail);
 router.put("/Parent/:id", updateParent);
 router.delete("/Parent/:id", deleteParent);
