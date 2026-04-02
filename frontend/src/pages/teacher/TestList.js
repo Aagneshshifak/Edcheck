@@ -24,8 +24,11 @@ import axios from 'axios';
 
 const TestList = () => {
     const { currentUser } = useSelector((state) => state.user);
-    const classId = currentUser?.teachSclass?._id || '';
-    const schoolId = currentUser?.school?._id || '';
+    const classId = currentUser?.teachSclass?._id
+        || currentUser?.teachClasses?.[0]?._id
+        || currentUser?.teachClasses?.[0]
+        || '';
+    const schoolId = currentUser?.school?._id || currentUser?.schoolId || '';
     const navigate = useNavigate();
 
     const [tests, setTests] = useState([]);

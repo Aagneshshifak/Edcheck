@@ -24,6 +24,7 @@ const assignmentSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "teacher"
     },
+    fileUrl:  { type: String },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
