@@ -88,6 +88,10 @@ router.delete('/Admin/teacher/:id', removeTeacher);
 router.get('/Admin/teacher/:id/performance', getTeacherIndividualPerformance);
 router.delete('/Admin/teachers/bulk', bulkDeleteTeachers);
 router.put('/Admin/teacher/:id/status', updateTeacherStatus);
+
+// ── Teacher — Class Insights ──────────────────────────────────────────────────
+const { getClassInsights } = require('../controllers/teacher-insights-controller');
+router.get('/Teacher/class/:classId/insights', getClassInsights);
 router.post('/Admin/teacher/:id/resetPassword', resetTeacherPassword);
 
 // ── Admin — Class Management ──────────────────────────────────────────────────

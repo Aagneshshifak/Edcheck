@@ -29,7 +29,9 @@ import TestList from './TestList';
 import TestResults from './TestResults';
 import LearningProgressChart from '../student/LearningProgressChart';
 import TakeAttendance from './TakeAttendance';
+import WeakStudentsPanel from './WeakStudentsPanel';
 import TeacherAssignments from './TeacherAssignments';
+import TeacherAnalytics from './TeacherAnalytics';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -102,6 +104,8 @@ const TeacherDashboard = () => {
                         <Route path="/Teacher/class/student/:id/progress" element={<LearningProgressChart viewerRole="Teacher" />} />
                         <Route path="/Teacher/assignments" element={<TeacherAssignments />} />
                         <Route path="/Teacher/attendance" element={<TakeAttendance />} />
+                        <Route path="/Teacher/weak-students" element={<WeakStudentsPanel />} />
+                        <Route path="/Teacher/analytics" element={<TeacherAnalytics />} />
 
                         <Route path="/logout" element={<Logout />} />
                     </Routes>

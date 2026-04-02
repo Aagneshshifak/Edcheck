@@ -18,11 +18,16 @@ import {
     RadioGroup,
     FormLabel,
     IconButton,
+    Tooltip,
+    Divider,
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import DownloadIcon from '@mui/icons-material/Download';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 
 const emptyQuestion = () => ({
     questionText: '',
@@ -34,13 +39,16 @@ const emptyQuestion = () => ({
 const CreateTest = () => {
     const { currentUser } = useSelector((state) => state.user);
 
-    const subjects = currentUser?.teachSubject
-        ? Array.isArray(currentUser.teachSubject)
-            ? currentUser.teachSubject
-            : [currentUser.teachSubject]
-        : [];
-    const classId = currentUser?.teachSclass?._id || '';
-    const schoolId = currentUser?.school?._id || '';
+    const subjects = currentUser?.teachSubjects?.length
+        ? currentUser.teachSubjects
+        : currentUser?.teachSubject
+            ? Array.isArray(currentUser.teachSubject) ? currentUser.teachSubject : [currentUser.teachSubject]
+            : [];
+    const classId = currentUser?.teachSclass?._id
+        || currentUser?.teachClasses?.[0]?._id
+        || currentUser?.teachClasses?.[0]
+        || '';
+    const schoolId = currentUser?.school?._id || currentUser?.schoolId || '';
     const createdBy = currentUser?._id || '';
 
     const [title, setTitle] = useState('');
@@ -50,6 +58,111 @@ const CreateTest = () => {
     const [questions, setQuestions] = useState([emptyQuestion()]);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [submitting, setSubmitting] = useState(false);
+
+    // ── Excel / XML import ────────────────────────────────────────────────────
+
+    /**
+     * Expected Excel columns (row 1 = header):
+     * questionText | option1 | option2 | option3 | option4 | correctAnswer (1-based) | marks
+     */
+    const parseExcel = (file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const wb = XLSX.read(e.target.result, { type: 'array' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                const parsed = rows.map((row) => {
+                    const opts = [row.option1, row.option2, row.option3, row.option4]
+                        .map(String)
+                        .filter(o => o.trim() !== '');
+                    const correct = Math.max(0, Number(row.correctAnswer || 1) - 1);
+                    return {
+                        questionText: String(row.questionText || ''),
+                        options: opts.length >= 2 ? opts : ['', ''],
+                        correctAnswer: correct,
+                        marks: Number(row.marks || 1),
+                    };
+                }).filter(q => q.questionText.trim());
+                if (parsed.length === 0) {
+                    setSnackbar({ open: true, message: 'No valid questions found in file', severity: 'warning' });
+                    return;
+                }
+                setQuestions(parsed);
+                setSnackbar({ open: true, message: `Imported ${parsed.length} questions from Excel`, severity: 'success' });
+            } catch {
+                setSnackbar({ open: true, message: 'Failed to parse Excel file', severity: 'error' });
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    /**
+     * Expected XML structure:
+     * <questions>
+     *   <question marks="1">
+     *     <text>Question text</text>
+     *     <option correct="true">Option A</option>
+     *     <option>Option B</option>
+     *   </question>
+     * </questions>
+     */
+    const parseXML = (file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(e.target.result, 'text/xml');
+                const qNodes = doc.querySelectorAll('question');
+                const parsed = Array.from(qNodes).map((q) => {
+                    const text = q.querySelector('text')?.textContent?.trim() || '';
+                    const optNodes = q.querySelectorAll('option');
+                    const options = [];
+                    let correctAnswer = 0;
+                    optNodes.forEach((opt, i) => {
+                        options.push(opt.textContent.trim());
+                        if (opt.getAttribute('correct') === 'true') correctAnswer = i;
+                    });
+                    return {
+                        questionText: text,
+                        options: options.length >= 2 ? options : ['', ''],
+                        correctAnswer,
+                        marks: Number(q.getAttribute('marks') || 1),
+                    };
+                }).filter(q => q.questionText);
+                if (parsed.length === 0) {
+                    setSnackbar({ open: true, message: 'No valid questions found in XML', severity: 'warning' });
+                    return;
+                }
+                setQuestions(parsed);
+                setSnackbar({ open: true, message: `Imported ${parsed.length} questions from XML`, severity: 'success' });
+            } catch {
+                setSnackbar({ open: true, message: 'Failed to parse XML file', severity: 'error' });
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    const handleImport = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'xml') parseXML(file);
+        else if (['xlsx', 'xls', 'csv'].includes(ext)) parseExcel(file);
+        else setSnackbar({ open: true, message: 'Unsupported file type. Use .xlsx, .xls, .csv or .xml', severity: 'error' });
+    };
+
+    const downloadTemplate = () => {
+        const ws = XLSX.utils.aoa_to_sheet([
+            ['questionText', 'option1', 'option2', 'option3', 'option4', 'correctAnswer', 'marks'],
+            ['What is 2+2?', '3', '4', '5', '6', '2', '1'],
+            ['Capital of France?', 'Berlin', 'Paris', 'Rome', 'Madrid', '2', '1'],
+        ]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Questions');
+        XLSX.writeFile(wb, 'questions_template.xlsx');
+    };
 
     const handleAddQuestion = () => {
         setQuestions((prev) => [...prev, emptyQuestion()]);
@@ -162,9 +275,9 @@ const CreateTest = () => {
                             label="Subject"
                             onChange={(e) => setSubject(e.target.value)}
                         >
-                            {subjects.map((s) => (
-                                <MenuItem key={s._id} value={s._id}>
-                                    {s.subName}
+                            {subjects.map((s, i) => (
+                                <MenuItem key={s._id || s._id || i} value={s._id || s}>
+                                    {s.subName || s.subjectName || String(s)}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -195,6 +308,23 @@ const CreateTest = () => {
                 <Typography variant="h6" fontWeight={600} mb={2}>
                     Questions
                 </Typography>
+
+                {/* Bulk import */}
+                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <Tooltip title="Download Excel template">
+                        <Button size="small" variant="outlined" startIcon={<DownloadIcon />} onClick={downloadTemplate}>
+                            Template
+                        </Button>
+                    </Tooltip>
+                    <Button size="small" variant="outlined" startIcon={<UploadFileIcon />} component="label">
+                        Import Excel / XML
+                        <input type="file" hidden accept=".xlsx,.xls,.csv,.xml" onChange={handleImport} />
+                    </Button>
+                    <Typography variant="caption" color="text.secondary">
+                        Supports .xlsx, .xls, .csv, .xml — replaces current questions
+                    </Typography>
+                </Box>
+                <Divider sx={{ mb: 2 }} />
 
                 {questions.map((q, qIndex) => (
                     <Card key={qIndex} variant="outlined" sx={{ mb: 2 }}>
