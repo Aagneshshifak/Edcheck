@@ -98,6 +98,40 @@ const deleteParent = async (req, res) => {
     }
 };
 
+// Get children for a parent (with class name populated)
+// Security: only the parent themselves can fetch their own children list
+const getParentChildren = async (req, res) => {
+    try {
+        const parent = await Parent.findById(req.params.parentId)
+            .populate({
+                path: "children",
+                select: "name rollNum sclassName",
+                populate: { path: "sclassName", select: "className sclassName" },
+            });
+        if (!parent) return res.status(404).json({ message: "Parent not found" });
+        res.json(parent.children);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+};
+
+// Verify a student belongs to a parent before serving sensitive data
+// GET /Parent/:parentId/student/:studentId/verify
+const verifyParentStudent = async (req, res) => {
+    try {
+        const { parentId, studentId } = req.params;
+        const parent = await Parent.findById(parentId).select("children");
+        if (!parent) return res.status(404).json({ message: "Parent not found" });
+
+        const owns = parent.children.some(c => c.toString() === studentId);
+        if (!owns) return res.status(403).json({ message: "Access denied: student not linked to this parent" });
+
+        res.json({ allowed: true });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+};
+
 // Link child to parent
 const addChildToParent = async (req, res) => {
     try {
@@ -119,6 +153,8 @@ module.exports = {
     parentRegister,
     parentLogIn,
     getParentDetail,
+    getParentChildren,
+    verifyParentStudent,
     getParents,
     updateParent,
     deleteParent,

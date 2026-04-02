@@ -9,13 +9,16 @@ import {
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer,
     CartesianGrid, LineChart, Line, Legend,
 } from 'recharts';
+import SkeletonChart from '../../../components/SkeletonChart';
 
 const BASE = process.env.REACT_APP_BASE_URL;
 const STALE_MS = 24 * 60 * 60 * 1000;
+const COLORS = ['#1976d2', '#7b1fa2', '#2e7d32', '#e65100', '#c62828', '#00838f', '#558b2f', '#6a1b9a'];
 
 const difficultyLabel = (avg) => {
     if (avg == null) return { label: 'N/A', color: 'default' };
@@ -365,53 +368,317 @@ const LeaderboardSection = ({ leaderboard, subjectDifficulty }) => (
     </Grid>
 );
 
+// ── Grade Distribution ───────────────────────────────────────────────────────
+
+const GradeDistribution = ({ gradeDistribution, loadingGrade, classes, subjects }) => {
+    return (
+        <Box>
+            <Paper sx={{ p: 2, mb: 3 }}>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <FormControl size="small" sx={{ minWidth: 180 }}>
+                        <InputLabel>Class</InputLabel>
+                        <Select defaultValue="" label="Class">
+                            <MenuItem value="">All Classes</MenuItem>
+                            {(classes || []).map(c => <MenuItem key={String(c.classId)} value={String(c.classId)}>{c.className}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 180 }}>
+                        <InputLabel>Subject</InputLabel>
+                        <Select defaultValue="" label="Subject">
+                            <MenuItem value="">All Subjects</MenuItem>
+                            {(subjects || []).map(s => <MenuItem key={String(s.subjectId)} value={String(s.subjectId)}>{s.subjectName}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                </Box>
+            </Paper>
+
+            {loadingGrade ? (
+                <SkeletonChart height={300} />
+            ) : !gradeDistribution ? (
+                <Alert severity="info">No grade distribution data available yet.</Alert>
+            ) : (
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={8}>
+                        <Paper sx={{ p: 2 }}>
+                            <Typography variant="h6" gutterBottom>Score Distribution</Typography>
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart data={gradeDistribution.buckets || []} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="range" tick={{ fontSize: 12 }} />
+                                    <YAxis allowDecimals={false} />
+                                    <RTooltip formatter={v => [v, 'Students']} />
+                                    <Bar dataKey="count" fill="#1976d2" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                        <Grid container spacing={2} direction="column">
+                            {[
+                                { label: 'Mean', value: gradeDistribution.stats?.mean != null ? `${gradeDistribution.stats.mean}%` : 'N/A' },
+                                { label: 'Median', value: gradeDistribution.stats?.median != null ? `${gradeDistribution.stats.median}%` : 'N/A' },
+                                { label: 'Std Dev', value: gradeDistribution.stats?.stddev != null ? `${gradeDistribution.stats.stddev}` : 'N/A' },
+                            ].map(({ label, value }) => (
+                                <Grid item key={label}>
+                                    <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
+                                        <Typography variant="h5" fontWeight={700}>{value}</Typography>
+                                        <Typography variant="caption" color="text.secondary">{label}</Typography>
+                                    </Paper>
+                                </Grid>
+                            ))}
+                            <Grid item>
+                                <Paper variant="outlined" sx={{ p: 2 }}>
+                                    <Typography variant="subtitle2" gutterBottom>Pass / Fail Ratio</Typography>
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                        <Chip label={`Pass: ${gradeDistribution.passFailRatio?.pass ?? 0}%`} color="success" size="small" />
+                                        <Chip label={`Fail: ${gradeDistribution.passFailRatio?.fail ?? 0}%`} color="error" size="small" />
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Threshold: {gradeDistribution.passFailRatio?.threshold ?? 50}%
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            )}
+        </Box>
+    );
+};
+
+// ── Cohort Progression ───────────────────────────────────────────────────────
+
+const CohortProgression = ({ cohortProgression, loadingCohort }) => {
+    const data = cohortProgression;
+    const hasData = data && data.series && data.series.some(s => s.data && s.data.some(v => v != null));
+
+    const chartData = !data ? [] : (data.months || []).map((month, i) => {
+        const point = { month };
+        (data.series || []).forEach(s => { point[s.className] = s.data[i]; });
+        return point;
+    });
+
+    return (
+        <Box>
+            {loadingCohort ? (
+                <SkeletonChart height={320} />
+            ) : !data ? (
+                <Alert severity="info">No cohort progression data available yet.</Alert>
+            ) : !hasData ? (
+                <Alert severity="info">No data available for the selected period.</Alert>
+            ) : (
+                <Paper sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>Monthly Average Score by Class</Typography>
+                    <ResponsiveContainer width="100%" height={320}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                            <YAxis domain={[0, 100]} unit="%" />
+                            <RTooltip formatter={v => v != null ? [`${v}%`, ''] : ['N/A', '']} />
+                            <Legend />
+                            {(data.series || []).map((s, i) => (
+                                <Line
+                                    key={s.classId}
+                                    type="monotone"
+                                    dataKey={s.className}
+                                    stroke={COLORS[i % COLORS.length]}
+                                    strokeWidth={s.classId === 'school' ? 3 : 2}
+                                    strokeDasharray={s.classId === 'school' ? '5 5' : undefined}
+                                    dot={false}
+                                    connectNulls
+                                />
+                            ))}
+                        </LineChart>
+                    </ResponsiveContainer>
+                </Paper>
+            )}
+        </Box>
+    );
+};
+
+// ── Risk Trends ──────────────────────────────────────────────────────────────
+
+const RiskTrends = ({ riskTrends, loadingRisk }) => {
+    const data = riskTrends;
+    const highRiskSet = new Set((data?.highRisk || []).map(String));
+
+    const StudentRow = ({ student }) => {
+        const isHigh = highRiskSet.has(String(student.studentId));
+        const delta = student.delta ?? 0;
+        return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1, borderBottom: '1px solid #f0f0f0' }}>
+                <TrendingDownIcon fontSize="small" color="error" />
+                <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" fontWeight={600}>{student.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">{student.className}</Typography>
+                </Box>
+                <Typography variant="body2" color="error.main" fontWeight={600}>
+                    {Math.abs(delta)}pp
+                </Typography>
+                {isHigh && <Chip label="High Risk" color="error" size="small" sx={{ fontWeight: 700 }} />}
+            </Box>
+        );
+    };
+
+    return (
+        <Box>
+            {loadingRisk ? (
+                <SkeletonChart height={300} />
+            ) : !data ? (
+                <Alert severity="info">No risk trend data available yet.</Alert>
+            ) : (
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                        <Paper sx={{ p: 2 }}>
+                            <Typography variant="h6" gutterBottom>Attendance Decline</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                Students whose attendance dropped &gt;10pp (last 30d vs prior 30d)
+                            </Typography>
+                            {(data.attendanceDecline || []).length === 0 ? (
+                                <Alert severity="success" sx={{ mt: 2 }}>No students at risk.</Alert>
+                            ) : (
+                                <Box sx={{ mt: 1 }}>
+                                    {data.attendanceDecline.map(s => (
+                                        <StudentRow key={String(s.studentId)} student={s} />
+                                    ))}
+                                </Box>
+                            )}
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Paper sx={{ p: 2 }}>
+                            <Typography variant="h6" gutterBottom>Score Decline</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                Students whose avg score dropped &gt;15pp (last 3 tests vs prior 3)
+                            </Typography>
+                            {(data.scoreDecline || []).length === 0 ? (
+                                <Alert severity="success" sx={{ mt: 2 }}>No students at risk.</Alert>
+                            ) : (
+                                <Box sx={{ mt: 1 }}>
+                                    {data.scoreDecline.map(s => (
+                                        <StudentRow key={String(s.studentId)} student={s} />
+                                    ))}
+                                </Box>
+                            )}
+                        </Paper>
+                    </Grid>
+                </Grid>
+            )}
+        </Box>
+    );
+};
+
+// ── Parent Engagement ────────────────────────────────────────────────────────
+
+const ParentEngagement = ({ parentEngagement, loadingParent }) => {
+    const data = parentEngagement;
+
+    return (
+        <Box>
+            {loadingParent ? (
+                <SkeletonChart height={200} />
+            ) : !data ? (
+                <Alert severity="info">No parent engagement data available yet.</Alert>
+            ) : data.totalParents === 0 ? (
+                <Alert severity="info">No parent accounts registered yet.</Alert>
+            ) : (
+                <Grid container spacing={3}>
+                    {[
+                        { label: 'Total Parents', value: data.totalParents, sub: 'registered accounts' },
+                        { label: 'Active (30d)', value: `${data.activePercent ?? 0}%`, sub: `${data.activeParents ?? 0} of ${data.totalParents} logged in` },
+                        { label: 'Notification Read Rate', value: `${data.notificationReadRate ?? 0}%`, sub: `${data.read ?? 0} of ${data.delivered ?? 0} delivered` },
+                    ].map(({ label, value, sub }) => (
+                        <Grid item xs={12} sm={4} key={label}>
+                            <Paper sx={{ p: 3, textAlign: 'center' }}>
+                                <Typography variant="h4" fontWeight={700}>{value}</Typography>
+                                <Typography variant="subtitle1" fontWeight={600} sx={{ mt: 0.5 }}>{label}</Typography>
+                                <Typography variant="caption" color="text.secondary">{sub}</Typography>
+                            </Paper>
+                        </Grid>
+                    ))}
+                </Grid>
+            )}
+        </Box>
+    );
+};
+
+// ── Main Dashboard ───────────────────────────────────────────────────────────
 
 const AnalyticsDashboard = ({ initialTab = 0 }) => {
     const schoolId = useSelector(s => s.user.currentUser._id);
 
-    const [overview, setOverview]           = useState(null);
-    const [leaderboard, setLeaderboard]     = useState([]);
+    const [overview, setOverview]                   = useState(null);
+    const [leaderboard, setLeaderboard]             = useState([]);
     const [subjectDifficulty, setSubjectDifficulty] = useState([]);
-    const [teachers, setTeachers]           = useState([]);
-    const [riskStudents, setRiskStudents]   = useState([]);
-    const [loading, setLoading]             = useState(false);
-    const [error, setError]                 = useState('');
-    const [lastFetched, setLastFetched]     = useState(null);
-    const [tab, setTab]                     = useState(initialTab);
-    const [selectedClass, setSelectedClass] = useState('');
-    const [fromDate, setFromDate]           = useState('');
-    const [toDate, setToDate]               = useState('');
+    const [teachers, setTeachers]                   = useState([]);
+    const [riskStudents, setRiskStudents]           = useState([]);
+    const [gradeDistribution, setGradeDistribution] = useState(null);
+    const [cohortProgression, setCohortProgression] = useState(null);
+    const [riskTrends, setRiskTrends]               = useState(null);
+    const [parentEngagement, setParentEngagement]   = useState(null);
+    const [loading, setLoading]                     = useState(false);
+    const [loadingGrade, setLoadingGrade]           = useState(false);
+    const [loadingCohort, setLoadingCohort]         = useState(false);
+    const [loadingRisk, setLoadingRisk]             = useState(false);
+    const [loadingParent, setLoadingParent]         = useState(false);
+    const [error, setError]                         = useState('');
+    const [lastFetched, setLastFetched]             = useState(null);
+    const [tab, setTab]                             = useState(initialTab);
+    const [selectedClass, setSelectedClass]         = useState('');
+    const [fromDate, setFromDate]                   = useState('');
+    const [toDate, setToDate]                       = useState('');
 
     const isStale = lastFetched && Date.now() - lastFetched > STALE_MS;
 
     const fetchAll = useCallback(async () => {
         setLoading(true); setError('');
+        setLoadingGrade(true); setLoadingCohort(true); setLoadingRisk(true); setLoadingParent(true);
         try {
-            const [ovRes, lbRes, sdRes, tRes, rRes] = await Promise.all([
+            const [ovRes, lbRes, sdRes, tRes, rRes, gdRes, cpRes, rtRes, peRes] = await Promise.all([
                 axios.get(`${BASE}/Admin/analytics/overview/${schoolId}`),
                 axios.get(`${BASE}/Admin/analytics/leaderboard/${schoolId}`),
                 axios.get(`${BASE}/Admin/analytics/subjectDifficulty/${schoolId}`),
                 axios.get(`${BASE}/Admin/analytics/teachers/${schoolId}`),
                 axios.get(`${BASE}/Admin/analytics/risk/${schoolId}`),
+                axios.get(`${BASE}/Admin/analytics/gradeDistribution/${schoolId}`).catch(() => ({ data: null })),
+                axios.get(`${BASE}/Admin/analytics/cohortProgression/${schoolId}`).catch(() => ({ data: null })),
+                axios.get(`${BASE}/Admin/analytics/riskTrends/${schoolId}`).catch(() => ({ data: null })),
+                axios.get(`${BASE}/Admin/analytics/parentEngagement/${schoolId}`).catch(() => ({ data: null })),
             ]);
             setOverview(ovRes.data);
             setLeaderboard(Array.isArray(lbRes.data) ? lbRes.data : []);
             setSubjectDifficulty(Array.isArray(sdRes.data) ? sdRes.data : []);
             setTeachers(Array.isArray(tRes.data) ? tRes.data : []);
             setRiskStudents(Array.isArray(rRes.data) ? rRes.data : []);
+            setGradeDistribution(gdRes.data);
+            setCohortProgression(cpRes.data);
+            setRiskTrends(rtRes.data);
+            setParentEngagement(peRes.data);
             setLastFetched(Date.now());
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to load analytics');
-        } finally { setLoading(false); }
+        } finally {
+            setLoading(false);
+            setLoadingGrade(false); setLoadingCohort(false); setLoadingRisk(false); setLoadingParent(false);
+        }
     }, [schoolId]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
+
+    const classOptions = (overview?.avgScoresByClass || []).map(c => ({ classId: c.classId, className: c.className }));
+    const subjectOptions = (overview?.subjectPerformance || [])
+        .map(s => ({ subjectId: s.subjectId, subjectName: s.subjectName }))
+        .filter((s, i, arr) => arr.findIndex(x => String(x.subjectId) === String(s.subjectId)) === i);
 
     const TABS = [
         { label: 'School Overview' },
         { label: 'Teacher Performance' },
         { label: `Student Risk (${riskStudents.length})` },
         { label: 'Leaderboard' },
+        { label: 'Grade Distribution' },
+        { label: 'Cohort Progression' },
+        { label: 'Risk Trends' },
+        { label: 'Parent Engagement' },
     ];
 
     return (
@@ -429,7 +696,7 @@ const AnalyticsDashboard = ({ initialTab = 0 }) => {
             )}
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }} variant="scrollable" scrollButtons="auto">
                 {TABS.map((t, i) => <Tab key={i} label={t.label} />)}
             </Tabs>
 
@@ -449,6 +716,17 @@ const AnalyticsDashboard = ({ initialTab = 0 }) => {
                     {tab === 1 && <TeacherPerformance teachers={teachers} />}
                     {tab === 2 && <StudentRisk students={riskStudents} />}
                     {tab === 3 && <LeaderboardSection leaderboard={leaderboard} subjectDifficulty={subjectDifficulty} />}
+                    {tab === 4 && (
+                        <GradeDistribution
+                            gradeDistribution={gradeDistribution}
+                            loadingGrade={loadingGrade}
+                            classes={classOptions}
+                            subjects={subjectOptions}
+                        />
+                    )}
+                    {tab === 5 && <CohortProgression cohortProgression={cohortProgression} loadingCohort={loadingCohort} />}
+                    {tab === 6 && <RiskTrends riskTrends={riskTrends} loadingRisk={loadingRisk} />}
+                    {tab === 7 && <ParentEngagement parentEngagement={parentEngagement} loadingParent={loadingParent} />}
                 </>
             )}
         </Container>
