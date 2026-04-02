@@ -15,6 +15,7 @@ const parentSchema = new mongoose.Schema({
         ref: "admin",
         required: true
     },
+    lastLoginAt: { type: Date },
 }, { timestamps: true });
 
 parentSchema.index({ email: 1 });

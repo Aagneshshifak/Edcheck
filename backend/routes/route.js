@@ -35,14 +35,38 @@ const { getSchoolAssignments } = require('../controllers/admin-assignment-contro
 const { getSchoolTests, adminCreateTest, toggleTestStatus } = require('../controllers/admin-test-controller.js');
 const { getSchoolAttendance, getClassAttendance, getStudentAttendance } = require('../controllers/admin-attendance-controller.js');
 const { sendNotification, getSentNotifications, deleteNotification, previewRecipients } = require('../controllers/admin-notification-controller.js');
-const { getAnalyticsOverview, getLeaderboard, getSubjectDifficulty, getTeacherPerformance, getStudentRisk } = require('../controllers/admin-analytics-controller.js');
+const { getAnalyticsOverview, getLeaderboard, getSubjectDifficulty, getTeacherPerformance, getStudentRisk, getGradeDistribution, getCohortProgression, getRiskTrends, getParentEngagement } = require('../controllers/admin-analytics-controller.js');
 const { getStudentPerformance, getClassAttendanceReport, getTeacherActivity, getAssignmentCompletion } = require('../controllers/admin-report-controller.js');
 const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest } = require('../controllers/test-controller.js');
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
 
-const { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance: getTeacherIndividualPerformance } = require('../controllers/admin-teacher-controller.js');
+const { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance: getTeacherIndividualPerformance, bulkDeleteTeachers, updateTeacherStatus, resetTeacherPassword } = require('../controllers/admin-teacher-controller.js');
 const { addClass, updateClass, removeClass, getClassDetail } = require('../controllers/admin-class-controller.js');
-const { addStudent: adminAddStudent, updateStudent: adminUpdateStudent, removeStudent, getStudentPerformance: adminGetStudentPerf } = require('../controllers/admin-student-controller.js');
+const { addStudent: adminAddStudent, updateStudent: adminUpdateStudent, removeStudent, getStudentPerformance: adminGetStudentPerf, bulkDeleteStudents, updateStudentStatus, resetStudentPassword } = require('../controllers/admin-student-controller.js');
+
+const { exportStudents, exportTeachers, exportClasses, exportTestResults, getImportHistory, getOrphans, deleteOrphans } = require('../controllers/admin-data-controller.js');
+const { getActivityLogs } = require('../controllers/activity-log-controller.js');
+const { bulkUploadStudents } = require('../controllers/bulk-upload-controller.js');
+const { getAlerts } = require('../controllers/alerts-controller.js');
+const requireFeature = require('../middleware/requireFeature');
+
+// ── Admin — Activity Logs ─────────────────────────────────────────────────────
+router.get('/Admin/activity/:schoolId', getActivityLogs);
+
+// ── Admin — Data Management ───────────────────────────────────────────────────
+router.get('/Admin/data/export/students/:schoolId', exportStudents);
+router.get('/Admin/data/export/teachers/:schoolId', exportTeachers);
+router.get('/Admin/data/export/classes/:schoolId', exportClasses);
+router.get('/Admin/data/export/testResults/:schoolId', exportTestResults);
+router.get('/Admin/data/importHistory/:schoolId', getImportHistory);
+router.get('/Admin/data/orphans/:schoolId', getOrphans);
+router.delete('/Admin/data/orphans/:schoolId', deleteOrphans);
+
+// ── Admin — Real-time Alerts ──────────────────────────────────────────────────
+router.get('/Admin/alerts/:schoolId', getAlerts);
+
+// ── Admin — Bulk Upload ───────────────────────────────────────────────────────
+router.post('/Admin/bulk/students', upload.single('file'), bulkUploadStudents);
 
 const { addSubject, removeSubject, getSubjectsDetail, updateTopics, assignTeacher } = require('../controllers/admin-subject-controller.js');
 
@@ -62,6 +86,9 @@ router.post('/Admin/teacher/add', addTeacher);
 router.put('/Admin/teacher/:id', updateTeacher);
 router.delete('/Admin/teacher/:id', removeTeacher);
 router.get('/Admin/teacher/:id/performance', getTeacherIndividualPerformance);
+router.delete('/Admin/teachers/bulk', bulkDeleteTeachers);
+router.put('/Admin/teacher/:id/status', updateTeacherStatus);
+router.post('/Admin/teacher/:id/resetPassword', resetTeacherPassword);
 
 // ── Admin — Class Management ──────────────────────────────────────────────────
 router.post('/Admin/class/add', addClass);
@@ -74,11 +101,23 @@ router.post('/Admin/student/add', adminAddStudent);
 router.put('/Admin/student/:id', adminUpdateStudent);
 router.delete('/Admin/student/:id', removeStudent);
 router.get('/Admin/student/:id/performance', adminGetStudentPerf);
+router.delete('/Admin/students/bulk', bulkDeleteStudents);
+router.put('/Admin/student/:id/status', updateStudentStatus);
+router.post('/Admin/student/:id/resetPassword', resetStudentPassword);
 
 const { getDashboardSummary } = require('../controllers/admin-dashboard-controller.js');
+const { getHealthMetrics } = require('../controllers/admin-health-controller');
+const { getConfig, updateConfig } = require('../controllers/admin-config-controller');
 
 // ── Admin — Dashboard summary ─────────────────────────────────────────────────
 router.get('/Admin/dashboard/:schoolId', getDashboardSummary);
+
+// ── Admin — Health metrics ────────────────────────────────────────────────────
+router.get('/Admin/health/:schoolId', getHealthMetrics);
+
+// ── Admin — School config ─────────────────────────────────────────────────────
+router.get('/Admin/config/:schoolId', getConfig);
+router.put('/Admin/config/:schoolId', updateConfig);
 
 // ── Admin ────────────────────────────────────────────────────────────────────
 router.post('/AdminReg', adminRegister);
@@ -138,8 +177,8 @@ router.get('/ComplainList/:id', complainList);
 // ── Class ────────────────────────────────────────────────────────────────────
 router.post('/SclassCreate', sclassCreate);
 router.get('/SclassList/:id', sclassList);
+router.get("/Sclass/Students/:id", getSclassStudents);   // must be before /Sclass/:id
 router.get("/Sclass/:id", getSclassDetail);
-router.get("/Sclass/Students/:id", getSclassStudents);
 router.delete("/Sclasses/:id", deleteSclasses);
 router.delete("/Sclass/:id", deleteSclass);
 
@@ -166,10 +205,14 @@ router.get('/Admin/attendance/student/:studentId', getStudentAttendance);
 
 // ── Admin — Analytics ─────────────────────────────────────────────────────────
 router.get('/Admin/analytics/overview/:schoolId', getAnalyticsOverview);
-router.get('/Admin/analytics/leaderboard/:schoolId', getLeaderboard);
+router.get('/Admin/analytics/leaderboard/:schoolId', requireFeature('leaderboard'), getLeaderboard);
 router.get('/Admin/analytics/subjectDifficulty/:schoolId', getSubjectDifficulty);
 router.get('/Admin/analytics/teachers/:schoolId', getTeacherPerformance);
 router.get('/Admin/analytics/risk/:schoolId', getStudentRisk);
+router.get('/Admin/analytics/gradeDistribution/:schoolId', getGradeDistribution);
+router.get('/Admin/analytics/cohortProgression/:schoolId', getCohortProgression);
+router.get('/Admin/analytics/riskTrends/:schoolId', getRiskTrends);
+router.get('/Admin/analytics/parentEngagement/:schoolId', getParentEngagement);
 
 // ── Admin — Reports ───────────────────────────────────────────────────────────
 router.get('/Admin/reports/studentPerformance/:schoolId', getStudentPerformance);
@@ -190,7 +233,7 @@ router.get('/AssignmentsBySubject/:subjectId', getAssignmentsBySubject);
 router.delete('/Assignment/:id', deleteAssignment);
 
 // ── Submissions ───────────────────────────────────────────────────────────────
-router.post('/SubmitAssignment', cloudinaryUpload.single('file'), submitAssignment);
+router.post('/SubmitAssignment', requireFeature('fileUploads'), cloudinaryUpload.single('file'), submitAssignment);
 router.get('/StudentSubmissions/:studentId', getStudentSubmissions);
 router.get('/AssignmentSubmissions/:assignmentId', getAssignmentSubmissions);
 router.put('/GradeSubmission/:id', gradeSubmission);
@@ -219,7 +262,7 @@ router.put('/Test/:id', updateTest);
 router.delete('/Test/:id', deleteTest);
 
 // ── Test Attempts ────────────────────────────────────────────────────────────
-router.post('/SubmitAttempt', submitAttempt);
+router.post('/SubmitAttempt', requireFeature('testRetake'), submitAttempt);
 router.get('/AttemptsByTest/:testId', getAttemptsByTest);
 router.get('/AttemptsByStudent/:studentId', getAttemptsByStudent);
 router.get('/Attempt/:id', getAttemptById);

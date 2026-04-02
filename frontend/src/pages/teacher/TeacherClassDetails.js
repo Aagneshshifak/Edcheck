@@ -15,10 +15,14 @@ const TeacherClassDetails = () => {
 
     const { currentUser } = useSelector((state) => state.user);
     const classID = currentUser.teachSclass?._id
+        || currentUser.teachClasses?.[0]?._id
+        || currentUser.teachClasses?.[0]
     const subjectID = currentUser.teachSubject?._id
+        || currentUser.teachSubjects?.[0]?._id
+        || currentUser.teachSubjects?.[0]
 
     useEffect(() => {
-        dispatch(getClassStudents(classID));
+        if (classID) dispatch(getClassStudents(classID));
     }, [dispatch, classID])
 
     if (error) {

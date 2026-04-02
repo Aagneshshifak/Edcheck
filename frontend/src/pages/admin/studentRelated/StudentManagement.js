@@ -6,17 +6,20 @@ import {
     DialogTitle, DialogContent, DialogActions, Table, TableHead,
     TableBody, TableRow, TableCell, TableContainer, IconButton,
     Chip, MenuItem, Select, FormControl, InputLabel, CircularProgress,
-    Alert, Tooltip, Grid, Divider,
+    Alert, Tooltip, Grid, Divider, Checkbox,
 } from '@mui/material';
-import AddIcon        from '@mui/icons-material/Add';
-import DeleteIcon     from '@mui/icons-material/Delete';
-import EditIcon       from '@mui/icons-material/Edit';
-import BarChartIcon   from '@mui/icons-material/BarChart';
-import PeopleIcon     from '@mui/icons-material/People';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import AddIcon            from '@mui/icons-material/Add';
+import DeleteIcon         from '@mui/icons-material/Delete';
+import EditIcon           from '@mui/icons-material/Edit';
+import BarChartIcon       from '@mui/icons-material/BarChart';
+import PeopleIcon         from '@mui/icons-material/People';
+import NavigateNextIcon   from '@mui/icons-material/NavigateNext';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import LockResetIcon      from '@mui/icons-material/LockReset';
+import ContentCopyIcon    from '@mui/icons-material/ContentCopy';
+import { useToast } from '../../../context/ToastContext';
 
-const BASE = process.env.REACT_APP_BASE_URL;
+const BASE  = process.env.REACT_APP_BASE_URL;
 const LIMIT = 20;
 
 const STATUS_OPTIONS = ['active', 'inactive', 'suspended'];
@@ -29,6 +32,7 @@ const EMPTY_FORM = {
 
 const StudentManagement = () => {
     const schoolId = useSelector(s => s.user.currentUser._id);
+    const { showSuccess, showError } = useToast();
 
     const [students, setStudents] = useState([]);
     const [classes, setClasses]   = useState([]);
@@ -40,7 +44,6 @@ const StudentManagement = () => {
     const [total, setTotal]           = useState(0);
     const [hasMore, setHasMore]       = useState(false);
     const [nextCursor, setNextCursor] = useState(null);
-    // Stack of cursors for "previous" navigation: index 0 = first page (null cursor)
     const cursorStack = useRef([null]);
     const [pageIndex, setPageIndex]   = useState(0);
 
@@ -56,7 +59,16 @@ const StudentManagement = () => {
     const [filterClass, setFilterClass]   = useState('');
     const [filterStatus, setFilterStatus] = useState('');
 
-    // Fetch a page using a specific cursor
+    // Bulk selection state
+    const [selected, setSelected]           = useState(new Set());
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [bulkDeleting, setBulkDeleting]   = useState(false);
+
+    // Reset password state
+    const [resetPwdOpen, setResetPwdOpen] = useState(false);
+    const [tempPassword, setTempPassword] = useState('');
+    const [resetLoading, setResetLoading] = useState(false);
+
     const fetchPage = useCallback(async (cursor) => {
         setLoading(true); setError('');
         try {
@@ -75,28 +87,27 @@ const StudentManagement = () => {
         } finally { setLoading(false); }
     }, [schoolId, filterClass, filterStatus]);
 
-    // Fetch classes once
     useEffect(() => {
         axios.get(`${BASE}/SclassList/${schoolId}`)
             .then(r => setClasses(Array.isArray(r.data) ? r.data : []))
             .catch(() => {});
     }, [schoolId]);
 
-    // Reset to first page when filters change
     useEffect(() => {
         cursorStack.current = [null];
         setPageIndex(0);
+        setSelected(new Set());
         fetchPage(null);
-    }, [fetchPage]); // fetchPage already depends on filters
+    }, [fetchPage]);
 
     const goNext = () => {
         if (!hasMore || !nextCursor) return;
         const newIndex = pageIndex + 1;
-        // Push next cursor onto stack if not already there
         if (cursorStack.current.length <= newIndex) {
             cursorStack.current.push(nextCursor);
         }
         setPageIndex(newIndex);
+        setSelected(new Set());
         fetchPage(nextCursor);
     };
 
@@ -104,16 +115,113 @@ const StudentManagement = () => {
         if (pageIndex === 0) return;
         const newIndex = pageIndex - 1;
         setPageIndex(newIndex);
+        setSelected(new Set());
         fetchPage(cursorStack.current[newIndex]);
     };
 
     const refresh = () => {
         cursorStack.current = [null];
         setPageIndex(0);
+        setSelected(new Set());
         fetchPage(null);
     };
 
-    const openAdd = () => { setEditId(null); setForm(EMPTY_FORM); setFormOpen(true); };
+    // ── Selection helpers ──────────────────────────────────────────────────────
+    const allSelected = students.length > 0 && students.every(s => selected.has(s._id));
+    const someSelected = students.some(s => selected.has(s._id));
+
+    const toggleSelectAll = () => {
+        if (allSelected) {
+            setSelected(prev => {
+                const next = new Set(prev);
+                students.forEach(s => next.delete(s._id));
+                return next;
+            });
+        } else {
+            setSelected(prev => {
+                const next = new Set(prev);
+                students.forEach(s => next.add(s._id));
+                return next;
+            });
+        }
+    };
+
+    const toggleSelect = (id) => {
+        setSelected(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+    // ── Bulk delete ────────────────────────────────────────────────────────────
+    const handleBulkDelete = async () => {
+        setBulkDeleting(true);
+        try {
+            const studentIds = Array.from(selected);
+            const { data } = await axios.delete(`${BASE}/Admin/students/bulk`, {
+                data: { studentIds, schoolId },
+            });
+            showSuccess(data.message || `${data.deleted} students removed`);
+            setBulkDeleteOpen(false);
+            refresh();
+        } catch (e) {
+            showError(e.response?.data?.message || 'Bulk delete failed');
+        } finally { setBulkDeleting(false); }
+    };
+
+    // ── CSV export ─────────────────────────────────────────────────────────────
+    const handleExportCSV = () => {
+        const selectedStudents = students.filter(s => selected.has(s._id));
+        const header = 'Name,Roll No,Class,Email';
+        const rows = selectedStudents.map(s => {
+            const name      = `"${(s.name || '').replace(/"/g, '""')}"`;
+            const rollNum   = s.rollNum || '';
+            const className = `"${(s.sclassName?.sclassName || '').replace(/"/g, '""')}"`;
+            const email     = s.email || '';
+            return `${name},${rollNum},${className},${email}`;
+        });
+        const csv = [header, ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `students_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    // ── Status toggle ──────────────────────────────────────────────────────────
+    const handleStatusToggle = async (student) => {
+        const newStatus = student.status === 'active' ? 'suspended' : 'active';
+        try {
+            const { data } = await axios.put(`${BASE}/Admin/student/${student._id}/status`, { status: newStatus });
+            setStudents(prev => prev.map(s => s._id === student._id ? { ...s, status: data.status } : s));
+            showSuccess(`Student ${data.status === 'active' ? 'activated' : 'suspended'}`);
+        } catch (e) {
+            showError(e.response?.data?.message || 'Status update failed');
+        }
+    };
+
+    // ── Reset password ─────────────────────────────────────────────────────────
+    const handleResetPassword = async (id) => {
+        setResetLoading(true);
+        try {
+            const { data } = await axios.post(`${BASE}/Admin/student/${id}/resetPassword`);
+            setTempPassword(data.tempPassword);
+            setResetPwdOpen(true);
+        } catch (e) {
+            showError(e.response?.data?.message || 'Password reset failed');
+        } finally { setResetLoading(false); }
+    };
+
+    const handleCloseResetDialog = () => {
+        setResetPwdOpen(false);
+        setTempPassword('');
+    };
+
+    // ── Add / Edit ─────────────────────────────────────────────────────────────
+    const openAdd  = () => { setEditId(null); setForm(EMPTY_FORM); setFormOpen(true); };
     const openEdit = (s) => {
         setEditId(s._id);
         setForm({
@@ -201,6 +309,31 @@ const StudentManagement = () => {
                 </Typography>
             </Box>
 
+            {/* Bulk Action Bar */}
+            {selected.size > 0 && (
+                <Paper sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2, py: 1, mb: 2, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {selected.size} selected
+                    </Typography>
+                    <Button
+                        size="small" variant="outlined" color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => setBulkDeleteOpen(true)}
+                    >
+                        Delete Selected
+                    </Button>
+                    <Button
+                        size="small" variant="outlined"
+                        onClick={handleExportCSV}
+                    >
+                        Export CSV
+                    </Button>
+                    <Button size="small" onClick={() => setSelected(new Set())} sx={{ ml: 'auto' }}>
+                        Clear
+                    </Button>
+                </Paper>
+            )}
+
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>
             ) : (
@@ -209,6 +342,15 @@ const StudentManagement = () => {
                         <Table size="small">
                             <TableHead sx={{ bgcolor: 'grey.100' }}>
                                 <TableRow>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox
+                                            size="small"
+                                            checked={allSelected}
+                                            indeterminate={someSelected && !allSelected}
+                                            onChange={toggleSelectAll}
+                                            disabled={students.length === 0}
+                                        />
+                                    </TableCell>
                                     {['Name', 'Roll No', 'Class', 'Parent', 'Phone', 'Status', 'Actions'].map(h => (
                                         <TableCell key={h}><strong>{h}</strong></TableCell>
                                     ))}
@@ -217,20 +359,31 @@ const StudentManagement = () => {
                             <TableBody>
                                 {students.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center">No students found</TableCell>
+                                        <TableCell colSpan={8} align="center">No students found</TableCell>
                                     </TableRow>
                                 ) : students.map(s => (
-                                    <TableRow key={s._id} hover>
+                                    <TableRow key={s._id} hover selected={selected.has(s._id)}>
+                                        <TableCell padding="checkbox">
+                                            <Checkbox
+                                                size="small"
+                                                checked={selected.has(s._id)}
+                                                onChange={() => toggleSelect(s._id)}
+                                            />
+                                        </TableCell>
                                         <TableCell>{s.name}</TableCell>
                                         <TableCell>{s.rollNum}</TableCell>
                                         <TableCell>{s.sclassName?.sclassName || '—'}</TableCell>
                                         <TableCell>{s.parentName  || '—'}</TableCell>
                                         <TableCell>{s.parentPhone || '—'}</TableCell>
                                         <TableCell>
-                                            <Chip
-                                                label={s.status || 'active'} size="small"
-                                                color={STATUS_COLORS[s.status || 'active']}
-                                            />
+                                            <Tooltip title={`Click to ${s.status === 'active' ? 'suspend' : 'activate'}`}>
+                                                <Chip
+                                                    label={s.status || 'active'} size="small"
+                                                    color={STATUS_COLORS[s.status || 'active']}
+                                                    onClick={() => handleStatusToggle(s)}
+                                                    sx={{ cursor: 'pointer' }}
+                                                />
+                                            </Tooltip>
                                         </TableCell>
                                         <TableCell>
                                             <Tooltip title="Performance">
@@ -238,6 +391,13 @@ const StudentManagement = () => {
                                             </Tooltip>
                                             <Tooltip title="Edit">
                                                 <IconButton size="small" onClick={() => openEdit(s)}><EditIcon /></IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Reset Password">
+                                                <span>
+                                                    <IconButton size="small" onClick={() => handleResetPassword(s._id)} disabled={resetLoading}>
+                                                        <LockResetIcon />
+                                                    </IconButton>
+                                                </span>
                                             </Tooltip>
                                             <Tooltip title="Remove">
                                                 <IconButton size="small" color="error" onClick={() => handleDelete(s._id, s.name)}><DeleteIcon /></IconButton>
@@ -263,6 +423,51 @@ const StudentManagement = () => {
                     </Box>
                 </Paper>
             )}
+
+            {/* Bulk Delete Confirmation Dialog */}
+            <Dialog open={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Delete {selected.size} Student{selected.size !== 1 ? 's' : ''}?</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        This will permanently remove {selected.size} student{selected.size !== 1 ? 's' : ''} and all associated records. This action cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setBulkDeleteOpen(false)} disabled={bulkDeleting}>Cancel</Button>
+                    <Button variant="contained" color="error" onClick={handleBulkDelete} disabled={bulkDeleting}>
+                        {bulkDeleting ? <CircularProgress size={20} /> : `Delete ${selected.size}`}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Reset Password Dialog */}
+            <Dialog open={resetPwdOpen} onClose={handleCloseResetDialog} maxWidth="xs" fullWidth>
+                <DialogTitle>Temporary Password</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                        Share this password with the student. It will not be shown again after closing this dialog.
+                    </Typography>
+                    <Box sx={{
+                        display: 'flex', alignItems: 'center', gap: 1,
+                        bgcolor: 'grey.100', borderRadius: 1, px: 2, py: 1.5,
+                    }}>
+                        <Typography sx={{ fontFamily: 'monospace', fontSize: '1.1rem', flexGrow: 1, letterSpacing: 2 }}>
+                            {tempPassword}
+                        </Typography>
+                        <Tooltip title="Copy">
+                            <IconButton size="small" onClick={() => {
+                                navigator.clipboard.writeText(tempPassword);
+                                showSuccess('Password copied to clipboard');
+                            }}>
+                                <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button variant="contained" onClick={handleCloseResetDialog}>Close</Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Add / Edit Dialog */}
             <Dialog open={formOpen} onClose={() => setFormOpen(false)} maxWidth="sm" fullWidth>

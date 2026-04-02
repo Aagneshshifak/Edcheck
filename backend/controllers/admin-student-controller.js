@@ -1,10 +1,13 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const Student = require('../models/studentSchema.js');
 const Sclass = require('../models/sclassSchema.js');
 const Parent = require('../models/parentSchema.js');
 const TestAttempt = require('../models/testAttemptSchema.js');
 const Test = require('../models/testSchema.js');
+const Submission = require('../models/submissionSchema.js');
 const { logger } = require('../utils/serverLogger.js');
+const { logActivity } = require('../utils/activityLogger.js');
 
 // POST /Admin/student/add
 const addStudent = async (req, res) => {
@@ -37,6 +40,7 @@ const addStudent = async (req, res) => {
 
         student.password = undefined;
         logger.info(`Student added: ${name}`, { schoolId, classId });
+        logActivity({ schoolId, actorName: 'Admin', actorRole: 'Admin', action: 'added student', target: name, targetType: 'student' });
         res.status(201).json(student);
     } catch (err) {
         logger.error('addStudent failed', { message: err.message });
@@ -113,4 +117,71 @@ const getStudentPerformance = async (req, res) => {
     }
 };
 
-module.exports = { addStudent, updateStudent, removeStudent, getStudentPerformance };
+// POST /Admin/students/bulk-delete
+const bulkDeleteStudents = async (req, res) => {
+    try {
+        const { studentIds, schoolId } = req.body;
+        if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+            return res.status(400).json({ message: 'studentIds must be a non-empty array' });
+        }
+
+        // Validate all students belong to the school
+        const students = await Student.find({ _id: { $in: studentIds }, schoolId });
+        if (students.length !== studentIds.length) {
+            return res.status(403).json({ message: 'Some student IDs do not belong to this school' });
+        }
+
+        const ids = students.map(s => s._id);
+
+        await Submission.deleteMany({ studentId: { $in: ids } });
+        await TestAttempt.deleteMany({ studentId: { $in: ids } });
+        await Sclass.updateMany({ students: { $in: ids } }, { $pull: { students: { $in: ids } } });
+        await Student.deleteMany({ _id: { $in: ids } });
+
+        const N = ids.length;
+        logger.info(`Bulk deleted ${N} students`, { schoolId });
+        res.json({ deleted: N, message: `${N} students removed` });
+    } catch (err) {
+        logger.error('bulkDeleteStudents failed', { message: err.message });
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// PATCH /Admin/student/:id/status
+const updateStudentStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!['active', 'suspended'].includes(status)) {
+            return res.status(400).json({ message: "status must be 'active' or 'suspended'" });
+        }
+
+        const student = await Student.findByIdAndUpdate(
+            req.params.id,
+            { $set: { status } },
+            { new: true, select: '_id name status' }
+        );
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+
+        res.json({ _id: student._id, name: student.name, status: student.status });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// POST /Admin/student/:id/reset-password
+const resetStudentPassword = async (req, res) => {
+    try {
+        const tempPassword = crypto.randomBytes(6).toString('base64').slice(0, 8);
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(tempPassword, salt);
+
+        const student = await Student.findByIdAndUpdate(req.params.id, { $set: { password: hashed } });
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+
+        res.json({ tempPassword });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = { addStudent, updateStudent, removeStudent, getStudentPerformance, bulkDeleteStudents, updateStudentStatus, resetStudentPassword };

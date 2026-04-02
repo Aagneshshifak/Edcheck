@@ -31,6 +31,8 @@ const parentLogIn = async (req, res) => {
         const validated = await bcrypt.compare(req.body.password, parent.password);
         if (!validated) return res.send({ message: "Invalid password" });
 
+        await Parent.findByIdAndUpdate(parent._id, { lastLoginAt: new Date() });
+
         const result = await Parent.findById(parent._id)
             .populate("children", "name rollNum sclassName")
             .populate("school", "schoolName");

@@ -17,11 +17,15 @@ const TeacherHomePage = () => {
     const { subjectDetails, sclassStudents } = useSelector((state) => state.sclass);
 
     const classID = currentUser.teachSclass?._id
+        || currentUser.teachClasses?.[0]?._id
+        || currentUser.teachClasses?.[0]
     const subjectID = currentUser.teachSubject?._id
+        || currentUser.teachSubjects?.[0]?._id
+        || currentUser.teachSubjects?.[0]
 
     useEffect(() => {
-        dispatch(getSubjectDetails(subjectID, "Subject"));
-        dispatch(getClassStudents(classID));
+        if (subjectID) dispatch(getSubjectDetails(subjectID, "Subject"));
+        if (classID) dispatch(getClassStudents(classID));
     }, [dispatch, subjectID, classID]);
 
     const numberOfStudents = sclassStudents && sclassStudents.length;

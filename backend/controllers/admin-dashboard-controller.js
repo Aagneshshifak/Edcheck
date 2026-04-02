@@ -33,8 +33,9 @@ const getDashboardSummary = async (req, res) => {
                 { $sort: { className: 1 } },
             ]);
 
-            const teachers = await Teacher.find(schoolQ, '_id name').lean();
-            const teacherPerf = await Promise.all(teachers.slice(0, 8).map(async (t) => {
+            // Teacher performance — lean + limit to 8
+            const teachers = await Teacher.find(schoolQ, '_id name').lean().limit(8);
+            const teacherPerf = await Promise.all(teachers.map(async (t) => {
                 const testIds = await Test.find({ createdBy: t._id }).distinct('_id');
                 const agg = await TestAttempt.aggregate([
                     { $match: { testId: { $in: testIds } } },
@@ -44,17 +45,29 @@ const getDashboardSummary = async (req, res) => {
                 return { name: t.name, score };
             }));
 
-            const students = await Student.find(schoolQ, 'name rollNum classId sclassName attendance').lean();
-            const riskList = students.map(s => {
+            // Student risk — cursor-based streaming with .lean() to avoid loading all 450 docs at once
+            const riskList = [];
+            const cursor = Student
+                .find(schoolQ, 'name rollNum attendance')
+                .lean()
+                .cursor();
+
+            for await (const s of cursor) {
                 const total   = s.attendance?.length || 0;
                 const present = s.attendance?.filter(a => a.status === 'Present').length || 0;
                 const rate    = total > 0 ? (present / total) * 100 : null;
                 const risk    = rate != null ? Math.round(100 - rate) : null;
-                return { name: s.name, rollNum: s.rollNum, attendanceRate: rate != null ? Math.round(rate) : null, riskScore: risk };
-            })
-            .filter(s => s.riskScore != null && s.riskScore > 30)
-            .sort((a, b) => b.riskScore - a.riskScore)
-            .slice(0, 5);
+                if (risk != null && risk > 30) {
+                    riskList.push({
+                        name: s.name,
+                        rollNum: s.rollNum,
+                        attendanceRate: Math.round(rate),
+                        riskScore: risk,
+                    });
+                }
+            }
+            riskList.sort((a, b) => b.riskScore - a.riskScore);
+            const topRisk = riskList.slice(0, 5);
 
             const recentNotices = await Notice.find({ $or: [{ school: oid }, { schoolId: oid }] })
                 .sort({ date: -1 })
@@ -66,10 +79,10 @@ const getDashboardSummary = async (req, res) => {
                 stats: { totalStudents, totalTeachers, totalClasses, activeTests },
                 classPerformance,
                 teacherPerformance: teacherPerf.filter(t => t.score != null),
-                studentRisk: riskList,
+                studentRisk: topRisk,
                 recentNotices,
             };
-        }, 60); // 60s TTL — dashboard refreshes frequently
+        }, 60);
 
         res.json(data);
     } catch (err) {
