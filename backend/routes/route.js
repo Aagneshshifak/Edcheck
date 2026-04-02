@@ -131,6 +131,9 @@ router.delete('/Admin/student/:id/enroll', unenrollStudent);
 const { getDashboardSummary } = require('../controllers/admin-dashboard-controller.js');
 const { getHealthMetrics } = require('../controllers/admin-health-controller');
 const { getConfig, updateConfig } = require('../controllers/admin-config-controller');
+const { getConfig: getTimetableConfig, createDayTimetable, getDayTimetable, getWeeklyTimetable, updatePeriod, deleteDayTimetable, markTeacherAttendance, getTeacherAttendance, getTeacherDaySchedule } = require('../controllers/timetable-controller.js');
+const { getSubstitutesByClassDate, getSubstitutesByTeacher } = require('../controllers/substitute-controller.js');
+const { autoGenerateTimetables } = require('../controllers/timetable-generator-controller.js');
 
 // ── Admin — Dashboard summary ─────────────────────────────────────────────────
 router.get('/Admin/dashboard/:schoolId', getDashboardSummary);
@@ -291,5 +294,23 @@ router.post('/SubmitAttempt', requireFeature('testRetake'), submitAttempt);
 router.get('/AttemptsByTest/:testId', getAttemptsByTest);
 router.get('/AttemptsByStudent/:studentId', getAttemptsByStudent);
 router.get('/Attempt/:id', getAttemptById);
+
+// ── Timetable ─────────────────────────────────────────────────────────────────
+router.get('/Timetable/config/:schoolId', getTimetableConfig);
+router.post('/Timetable/auto-generate/:schoolId', autoGenerateTimetables);
+router.post('/Timetable/:classId/:day', createDayTimetable);
+router.get('/Timetable/:classId/:day', getDayTimetable);
+router.get('/Timetable/:classId', getWeeklyTimetable);
+router.put('/Timetable/:classId/:day/period/:periodNumber', updatePeriod);
+router.delete('/Timetable/:classId/:day', deleteDayTimetable);
+
+// ── Teacher Attendance (Timetable) ────────────────────────────────────────────
+router.post('/TeacherAttendance', markTeacherAttendance);
+router.get('/TeacherAttendance/:teacherId/:date', getTeacherAttendance);
+router.get('/TeacherSchedule/:teacherId/:day', getTeacherDaySchedule);
+
+// ── Substitute Assignments ────────────────────────────────────────────────────
+router.get('/Substitute/teacher/:teacherId/:date', getSubstitutesByTeacher);
+router.get('/Substitute/:classId/:date', getSubstitutesByClassDate);
 
 module.exports = router;

@@ -8,6 +8,7 @@ import { complainReducer } from './complainRelated/complainSlice';
 import deadlinesReducer from './deadlinesRelated/deadlinesSlice';
 import progressReducer from './progressRelated/progressSlice';
 import notificationReducer from './notificationRelated/notificationSlice';
+import timetableReducer from './timetableRelated/timetableSlice';
 
 const store = configureStore({
     reducer: {
@@ -20,6 +21,7 @@ const store = configureStore({
         deadlines: deadlinesReducer,
         progress: progressReducer,
         notifications: notificationReducer,
+        timetable: timetableReducer,
     },
 });
 

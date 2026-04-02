@@ -32,6 +32,7 @@ import TakeAttendance from './TakeAttendance';
 import WeakStudentsPanel from './WeakStudentsPanel';
 import TeacherAssignments from './TeacherAssignments';
 import TeacherAnalytics from './TeacherAnalytics';
+import TeacherTimetable from './TeacherTimetable';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -106,6 +107,7 @@ const TeacherDashboard = () => {
                         <Route path="/Teacher/attendance" element={<TakeAttendance />} />
                         <Route path="/Teacher/weak-students" element={<WeakStudentsPanel />} />
                         <Route path="/Teacher/analytics" element={<TeacherAnalytics />} />
+                        <Route path="/Teacher/timetable" element={<TeacherTimetable />} />
 
                         <Route path="/logout" element={<Logout />} />
                     </Routes>

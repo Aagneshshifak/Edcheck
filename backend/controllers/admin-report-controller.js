@@ -60,7 +60,7 @@ const getStudentPerformance = async (req, res) => {
                     as: 'classInfo',
                 }
             },
-            { $unwind: { path: '$classInfo', preserveNullAndEmpty: true } },
+            { $unwind: { path: '$classInfo', preserveNullAndEmptyArrays: true } },
             {
                 $lookup: {
                     from: 'subjects',
@@ -69,7 +69,7 @@ const getStudentPerformance = async (req, res) => {
                     as: 'subjectInfo',
                 }
             },
-            { $unwind: { path: '$subjectInfo', preserveNullAndEmpty: true } },
+            { $unwind: { path: '$subjectInfo', preserveNullAndEmptyArrays: true } },
             {
                 $group: {
                     _id: {
@@ -143,7 +143,7 @@ const getClassAttendanceReport = async (req, res) => {
                     as: 'classInfo',
                 }
             },
-            { $unwind: { path: '$classInfo', preserveNullAndEmpty: true } },
+            { $unwind: { path: '$classInfo', preserveNullAndEmptyArrays: true } },
             {
                 $lookup: {
                     from: 'subjects',
@@ -152,7 +152,7 @@ const getClassAttendanceReport = async (req, res) => {
                     as: 'subjectInfo',
                 }
             },
-            { $unwind: { path: '$subjectInfo', preserveNullAndEmpty: true } },
+            { $unwind: { path: '$subjectInfo', preserveNullAndEmptyArrays: true } },
             {
                 $group: {
                     _id: {
