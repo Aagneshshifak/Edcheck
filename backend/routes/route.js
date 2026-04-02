@@ -177,8 +177,8 @@ router.get('/ComplainList/:id', complainList);
 // ── Class ────────────────────────────────────────────────────────────────────
 router.post('/SclassCreate', sclassCreate);
 router.get('/SclassList/:id', sclassList);
+router.get("/Sclass/Students/:id", getSclassStudents);   // must be before /Sclass/:id
 router.get("/Sclass/:id", getSclassDetail);
-router.get("/Sclass/Students/:id", getSclassStudents);
 router.delete("/Sclasses/:id", deleteSclasses);
 router.delete("/Sclass/:id", deleteSclass);
 

@@ -19,7 +19,11 @@ const TeacherViewStudent = () => {
     const address = "Student"
     const studentID = params.id
     const teachSubject = currentUser.teachSubject?.subName
+        || currentUser.teachSubjects?.[0]?.subName
+        || ''
     const teachSubjectID = currentUser.teachSubject?._id
+        || currentUser.teachSubjects?.[0]?._id
+        || currentUser.teachSubjects?.[0]
 
     useEffect(() => {
         dispatch(getUserDetails(studentID, address));
@@ -174,28 +178,29 @@ const TeacherViewStudent = () => {
                     {subjectMarks && Array.isArray(subjectMarks) && subjectMarks.length > 0 &&
                         <>
                             {subjectMarks.map((result, index) => {
-                                if (result.subName.subName === teachSubject) {
-                                    return (
-                                        <Table key={index}>
-                                            <TableHead>
-                                                <StyledTableRow>
-                                                    <StyledTableCell>Subject</StyledTableCell>
-                                                    <StyledTableCell>Marks</StyledTableCell>
-                                                </StyledTableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                <StyledTableRow>
-                                                    <StyledTableCell>{result.subName.subName}</StyledTableCell>
-                                                    <StyledTableCell>{result.marksObtained}</StyledTableCell>
-                                                </StyledTableRow>
-                                            </TableBody>
-                                        </Table>
-                                    )
-                                }
-                                else if (!result.subName || !result.marksObtained) {
-                                    return null;
-                                }
-                                return null
+                                // Support both old schema (result.subName) and new schema (result.subjectId)
+                                const sub = result.subName || result.subjectId;
+                                if (!sub) return null;
+                                const subNameStr = sub.subName || sub.subjectName || '';
+                                const marks = result.marksObtained ?? result.marks;
+                                if (!subNameStr || marks == null) return null;
+                                if (subNameStr !== teachSubject) return null;
+                                return (
+                                    <Table key={index}>
+                                        <TableHead>
+                                            <StyledTableRow>
+                                                <StyledTableCell>Subject</StyledTableCell>
+                                                <StyledTableCell>Marks</StyledTableCell>
+                                            </StyledTableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            <StyledTableRow>
+                                                <StyledTableCell>{subNameStr}</StyledTableCell>
+                                                <StyledTableCell>{marks}</StyledTableCell>
+                                            </StyledTableRow>
+                                        </TableBody>
+                                    </Table>
+                                );
                             })}
                         </>
                     }

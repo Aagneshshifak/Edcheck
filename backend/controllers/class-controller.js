@@ -85,15 +85,22 @@ const getSclassDetail = async (req, res) => {
 
 const getSclassStudents = async (req, res) => {
     try {
-        let students = await Student.find({ sclassName: req.params.id })
-        if (students.length > 0) {
-            let modifiedStudents = students.map((student) => {
-                return { ...student._doc, password: undefined };
-            });
-            res.send(modifiedStudents);
-        } else {
-            res.send({ message: "No students found" });
+        // First try the students array on the class document (most reliable after seed)
+        const sclass = await Sclass.findById(req.params.id).populate('students', '-password -attendance -examResult -learningFlags -conceptMastery').lean();
+        if (sclass && sclass.students && sclass.students.length > 0) {
+            return res.send(sclass.students);
         }
+
+        // Fallback: query students by classId or sclassName field
+        let students = await Student.find({
+            $or: [{ sclassName: req.params.id }, { classId: req.params.id }]
+        }).select('-password -attendance -examResult -learningFlags -conceptMastery').lean();
+
+        if (students.length > 0) {
+            return res.send(students);
+        }
+
+        res.send({ message: "No students found" });
     } catch (err) {
         res.status(500).json(err);
     }
