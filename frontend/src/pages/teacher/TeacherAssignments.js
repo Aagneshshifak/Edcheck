@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
     Container, Typography, Box, Button, Paper, Table, TableHead,
@@ -10,6 +11,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const BASE = process.env.REACT_APP_BASE_URL;
 const EMPTY_FORM = { title: '', topic: '', description: '', dueDate: '', subjectId: '', classId: '' };
@@ -17,6 +19,7 @@ const EMPTY_FORM = { title: '', topic: '', description: '', dueDate: '', subject
 const TeacherAssignments = () => {
     const { currentUser } = useSelector(s => s.user);
     const schoolId = currentUser.school?._id || currentUser.schoolId || currentUser.school;
+    const navigate = useNavigate();
 
     const [subjects, setSubjects]       = useState([]);
     const [classes, setClasses]         = useState([]);
@@ -52,19 +55,15 @@ const TeacherAssignments = () => {
     }, [currentUser._id]);
 
     const fetchAssignments = useCallback(async () => {
-        if (!classes.length) return;
+        if (!currentUser._id) return;
         setLoading(true);
         try {
-            const results = await Promise.all(
-                classes.map(c => axios.get(`${BASE}/AssignmentsByClass/${c._id || c}`).then(r => r.data))
-            );
-            const all  = results.flatMap(r => Array.isArray(r) ? r : (r.assignments || []));
-            const mine = all.filter(a => !a.createdBy || String(a.createdBy) === String(currentUser._id));
-            setAssignments(mine);
+            const { data } = await axios.get(`${BASE}/AssignmentsByTeacher/${currentUser._id}`);
+            setAssignments(Array.isArray(data) ? data : []);
         } catch {
             setError('Failed to load assignments');
         } finally { setLoading(false); }
-    }, [currentUser._id, classes]);
+    }, [currentUser._id]);
 
     useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
 
@@ -112,13 +111,14 @@ const TeacherAssignments = () => {
     const subjectName  = a => a.subject?.subName || a.subject?.subjectName || '—';
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 6, bgcolor: '#0f172a', minHeight: '100vh', pt: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AssignmentIcon />
-                    <Typography variant="h5">Assignments</Typography>
+                    <AssignmentIcon sx={{ color: '#0ea5e9' }} />
+                    <Typography variant="h5" sx={{ color: '#f1f5f9' }}>Assignments</Typography>
                 </Box>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}
+                    sx={{ bgcolor: '#0ea5e9', '&:hover': { bgcolor: '#0284c7' } }}>
                     Create Assignment
                 </Button>
             </Box>
@@ -127,37 +127,47 @@ const TeacherAssignments = () => {
             {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>{success}</Alert>}
 
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress /></Box>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress sx={{ color: '#0ea5e9' }} /></Box>
             ) : (
-                <TableContainer component={Paper}>
+                <TableContainer component={Paper} sx={{ bgcolor: '#111827' }}>
                     <Table size="small">
-                        <TableHead sx={{ bgcolor: 'grey.100' }}>
+                        <TableHead sx={{ bgcolor: '#1e293b' }}>
                             <TableRow>
-                                {['Title', 'Subject', 'Topic', 'Due Date', 'Actions'].map(h => (
-                                    <TableCell key={h}><strong>{h}</strong></TableCell>
+                                {['Title', 'Subject', 'Topic', 'Submissions', 'Due Date', 'Actions'].map(h => (
+                                    <TableCell key={h} sx={{ color: '#94a3b8', fontWeight: 'bold' }}>{h}</TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {assignments.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                    <TableCell colSpan={6} align="center" sx={{ py: 4, color: '#64748b', bgcolor: '#111827' }}>
                                         No assignments yet. Click "Create Assignment" to get started.
                                     </TableCell>
                                 </TableRow>
                             ) : assignments.map(a => (
-                                <TableRow key={a._id} hover>
-                                    <TableCell>{a.title}</TableCell>
-                                    <TableCell>{subjectName(a)}</TableCell>
-                                    <TableCell>{a.topic}</TableCell>
+                                <TableRow key={a._id} hover sx={{ '&:hover': { bgcolor: '#1e293b' } }}>
+                                    <TableCell sx={{ color: '#f1f5f9' }}>{a.title}</TableCell>
+                                    <TableCell sx={{ color: '#cbd5e1' }}>{subjectName(a)}</TableCell>
+                                    <TableCell sx={{ color: '#cbd5e1' }}>{a.topic}</TableCell>
+                                    <TableCell sx={{ color: '#cbd5e1' }}>
+                                        {a.submissionCount ?? 0} / {a.totalStudents ?? 0}
+                                    </TableCell>
                                     <TableCell>
                                         <Chip
                                             label={new Date(a.dueDate).toLocaleDateString()}
                                             size="small"
                                             color={new Date(a.dueDate) < new Date() ? 'error' : 'default'}
+                                            sx={new Date(a.dueDate) >= new Date() ? { bgcolor: '#0ea5e9', color: '#fff' } : {}}
                                         />
                                     </TableCell>
                                     <TableCell>
+                                        <Tooltip title="View Submissions">
+                                            <IconButton size="small" sx={{ color: '#0ea5e9' }}
+                                                onClick={() => navigate(`/Teacher/assignments/${a._id}`)}>
+                                                <VisibilityIcon />
+                                            </IconButton>
+                                        </Tooltip>
                                         <Tooltip title="Delete">
                                             <IconButton size="small" color="error" onClick={() => handleDelete(a._id)}>
                                                 <DeleteIcon />

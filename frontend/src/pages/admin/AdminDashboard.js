@@ -65,6 +65,7 @@ import ActivityLog from './activityRelated/ActivityLog';
 import BulkUpload from './studentRelated/BulkUpload';
 import TeacherManagement from './teacherRelated/TeacherManagement';
 import ClassManagement from './classRelated/ClassManagement';
+import ClassDetail from './classRelated/ClassDetail';
 import StudentManagement from './studentRelated/StudentManagement';
 import SubjectManagement from './subjectRelated/SubjectManagement';
 
@@ -216,6 +217,7 @@ const AdminDashboardInner = () => {
                         {/* Enhanced management pages */}
                         <Route path="/Admin/manage/teachers" element={<TeacherManagement />} />
                         <Route path="/Admin/manage/classes" element={<ClassManagement />} />
+                        <Route path="/Admin/manage/classes/:id" element={<ClassDetail />} />
                         <Route path="/Admin/manage/students" element={<StudentManagement />} />
                         <Route path="/Admin/manage/subjects" element={<SubjectManagement />} />
 

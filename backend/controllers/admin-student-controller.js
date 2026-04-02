@@ -55,16 +55,39 @@ const updateStudent = async (req, res) => {
         const update = {};
         if (name)         update.name        = name;
         if (rollNum)      update.rollNum      = rollNum;
-        if (classId)      { update.classId = classId; update.sclassName = classId; }
         if (parentId)     update.parentId     = parentId;
         if (parentName)   update.parentName   = parentName;
         if (parentPhone)  update.parentPhone  = parentPhone;
         if (status)       update.status       = status;
 
+        // Handle class transfer: remove from old class, add to new
+        const existing = await Student.findById(req.params.id).select('classId sclassName');
+        if (!existing) return res.status(404).json({ message: 'Student not found' });
+
+        if (classId !== undefined) {
+            const oldClassId = existing.classId || existing.sclassName;
+            const newClassId = classId || null;
+
+            // Remove from old class roster
+            if (oldClassId && String(oldClassId) !== String(newClassId)) {
+                await Sclass.findByIdAndUpdate(oldClassId, { $pull: { students: existing._id } });
+            }
+
+            if (newClassId) {
+                update.classId    = newClassId;
+                update.sclassName = newClassId;
+                // Add to new class roster
+                await Sclass.findByIdAndUpdate(newClassId, { $addToSet: { students: existing._id } });
+            } else {
+                // Explicitly clearing class assignment
+                update.classId    = null;
+                update.sclassName = null;
+            }
+        }
+
         const student = await Student.findByIdAndUpdate(req.params.id, { $set: update }, { new: true })
             .populate('classId', 'sclassName')
             .populate('parentId', 'name phone');
-        if (!student) return res.status(404).json({ message: 'Student not found' });
 
         student.password = undefined;
         res.json(student);
@@ -184,4 +207,69 @@ const resetStudentPassword = async (req, res) => {
     }
 };
 
-module.exports = { addStudent, updateStudent, removeStudent, getStudentPerformance, bulkDeleteStudents, updateStudentStatus, resetStudentPassword };
+// POST /Admin/student/:id/enroll  — enroll student into a class (one class at a time)
+const enrollStudent = async (req, res) => {
+    try {
+        const { classId } = req.body;
+        if (!classId) return res.status(400).json({ message: 'classId is required' });
+
+        const student = await Student.findById(req.params.id).select('classId sclassName name');
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+
+        const targetClass = await Sclass.findById(classId);
+        if (!targetClass) return res.status(404).json({ message: 'Class not found' });
+
+        const oldClassId = student.classId || student.sclassName;
+
+        // Already in this class — idempotent
+        if (oldClassId && String(oldClassId) === String(classId)) {
+            return res.json({ message: 'Student is already enrolled in this class' });
+        }
+
+        // Remove from previous class
+        if (oldClassId) {
+            await Sclass.findByIdAndUpdate(oldClassId, { $pull: { students: student._id } });
+        }
+
+        // Update student
+        await Student.findByIdAndUpdate(req.params.id, {
+            $set: { classId, sclassName: classId },
+        });
+
+        // Add to new class roster
+        await Sclass.findByIdAndUpdate(classId, { $addToSet: { students: student._id } });
+
+        logger.info(`Student ${student.name} enrolled into class ${targetClass.sclassName}`);
+        res.json({ message: `${student.name} enrolled into ${targetClass.sclassName}` });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// DELETE /Admin/student/:id/enroll  — remove student from their current class
+const unenrollStudent = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id).select('classId sclassName name');
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+
+        const currentClassId = student.classId || student.sclassName;
+        if (!currentClassId) {
+            return res.json({ message: 'Student is not enrolled in any class' });
+        }
+
+        // Remove from class roster
+        await Sclass.findByIdAndUpdate(currentClassId, { $pull: { students: student._id } });
+
+        // Clear class reference on student
+        await Student.findByIdAndUpdate(req.params.id, {
+            $set: { classId: null, sclassName: null },
+        });
+
+        logger.info(`Student ${student.name} unenrolled from class ${currentClassId}`);
+        res.json({ message: `${student.name} removed from class` });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = { addStudent, updateStudent, removeStudent, getStudentPerformance, bulkDeleteStudents, updateStudentStatus, resetStudentPassword, enrollStudent, unenrollStudent };

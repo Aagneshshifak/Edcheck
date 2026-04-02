@@ -17,6 +17,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import TopicIcon      from '@mui/icons-material/Topic';
 import PersonIcon     from '@mui/icons-material/Person';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import ClassIcon      from '@mui/icons-material/Class';
 
 const BASE = process.env.REACT_APP_BASE_URL;
 
@@ -51,6 +52,12 @@ const SubjectManagement = () => {
     const [teacherSubject, setTeacherSubject] = useState(null);
     const [selTeacher,     setSelTeacher]     = useState('');
     const [savingTeacher,  setSavingTeacher]  = useState(false);
+
+    // Assign class dialog
+    const [classOpen,    setClassOpen]    = useState(false);
+    const [classSubject, setClassSubject] = useState(null);
+    const [selClass,     setSelClass]     = useState('');
+    const [savingClass,  setSavingClass]  = useState(false);
 
     const fetchAll = useCallback(() => {
         setLoading(true);
@@ -139,6 +146,29 @@ const SubjectManagement = () => {
         } finally { setSavingTeacher(false); }
     };
 
+    // ── Assign class ─────────────────────────────────────────────────────────
+    const openClass = (s) => {
+        setClassSubject(s);
+        setSelClass(String(s.classId?._id || s.classId || ''));
+        setClassOpen(true);
+    };
+
+    const saveClass = async () => {
+        setSavingClass(true);
+        try {
+            if (selClass) {
+                await axios.post(`${BASE}/Admin/subjects/${classSubject._id}/assign-class`, { classId: selClass });
+            } else {
+                await axios.delete(`${BASE}/Admin/subjects/${classSubject._id}/assign-class`);
+            }
+            setSuccess('Class assignment updated');
+            setClassOpen(false);
+            fetchAll();
+        } catch (e) {
+            setError(e.response?.data?.message || 'Save failed');
+        } finally { setSavingClass(false); }
+    };
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -207,6 +237,9 @@ const SubjectManagement = () => {
                                             </Tooltip>
                                             <Tooltip title="Assign Handling Teacher">
                                                 <IconButton size="small" color="primary" onClick={() => openTeacher(s)}><PersonIcon fontSize="small" /></IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Assign to Class">
+                                                <IconButton size="small" color="secondary" onClick={() => openClass(s)}><ClassIcon fontSize="small" /></IconButton>
                                             </Tooltip>
                                             <Tooltip title="Delete Subject">
                                                 <IconButton size="small" color="error" onClick={() => handleDelete(s._id, s.subName)}><DeleteIcon fontSize="small" /></IconButton>
@@ -352,6 +385,37 @@ const SubjectManagement = () => {
                     <Button onClick={() => setTeacherOpen(false)}>Cancel</Button>
                     <Button variant="contained" onClick={saveTeacher} disabled={savingTeacher}>
                         {savingTeacher ? <CircularProgress size={20} /> : 'Assign'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* ── Assign Class Dialog ── */}
+            <Dialog open={classOpen} onClose={() => setClassOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Assign Subject to Class</DialogTitle>
+                <DialogContent sx={{ pt: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Subject: <strong>{classSubject?.subName}</strong>
+                        {classSubject?.classId?.sclassName && (
+                            <> &nbsp;·&nbsp; Currently in: <strong>{classSubject.classId.sclassName}</strong></>
+                        )}
+                    </Typography>
+                    <FormControl fullWidth>
+                        <InputLabel>Assign to Class</InputLabel>
+                        <Select value={selClass} label="Assign to Class" onChange={e => setSelClass(e.target.value)}>
+                            <MenuItem value=""><em>None (unassign from class)</em></MenuItem>
+                            {classes.map(c => (
+                                <MenuItem key={c._id} value={c._id}>
+                                    {c.sclassName || c.className}
+                                    {c.section ? ` — ${c.section}` : ''}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setClassOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={saveClass} disabled={savingClass}>
+                        {savingClass ? <CircularProgress size={20} /> : 'Save'}
                     </Button>
                 </DialogActions>
             </Dialog>
