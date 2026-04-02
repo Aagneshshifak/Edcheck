@@ -14,7 +14,7 @@ const {
 } = require('../controllers/student_controller.js');
 const { subjectCreate, classSubjects, deleteSubjectsByClass, getSubjectDetail, deleteSubject, freeSubjectList, allSubjects, deleteSubjects } = require('../controllers/subject-controller.js');
 const { teacherRegister, teacherLogIn, getTeachers, getTeacherDetail, deleteTeachers, deleteTeachersByClass, deleteTeacher, updateTeacherSubject, teacherAttendance } = require('../controllers/teacher-controller.js');
-const { parentRegister, parentLogIn, getParentDetail, getParents, updateParent, deleteParent, addChildToParent } = require('../controllers/parent-controller.js');
+const { parentRegister, parentLogIn, getParentDetail, getParentChildren, verifyParentStudent, getParents, updateParent, deleteParent, addChildToParent } = require('../controllers/parent-controller.js');
 const {
     createAssignment, getAssignmentsByClass, getAssignmentsBySubject,
     getAssignmentsByTeacher, deleteAssignment, submitAssignment,
@@ -184,6 +184,8 @@ router.post('/TeacherAttendance/:id', teacherAttendance);
 router.post('/ParentReg', parentRegister);
 router.post('/ParentLogin', parentLogIn);
 router.get("/Parents/:id", getParents);
+router.get("/Parent/children/:parentId", getParentChildren);
+router.get("/Parent/:parentId/student/:studentId/verify", verifyParentStudent);
 router.get("/Parent/:id", getParentDetail);
 router.put("/Parent/:id", updateParent);
 router.delete("/Parent/:id", deleteParent);
@@ -268,6 +270,13 @@ router.put('/GradeSubmission/:id', gradeSubmission);
 
 // ── Attendance Analytics ──────────────────────────────────────────────────────
 router.get('/attendance-analytics/:studentId', getAttendanceAnalytics);
+
+// ── Period-wise Attendance ────────────────────────────────────────────────────
+const { markPeriodAttendance, checkPeriodAttendance, getClassAttendancePeriod, getStudentAttendancePeriod } = require('../controllers/period-attendance-controller');
+router.post('/api/attendance/mark',                  markPeriodAttendance);
+router.get('/api/attendance/check',                  checkPeriodAttendance);
+router.get('/api/attendance/class/:classId',         getClassAttendancePeriod);
+router.get('/api/attendance/student/:studentId',     getStudentAttendancePeriod);
 
 // ── Upcoming Deadlines ────────────────────────────────────────────────────────
 router.get('/UpcomingDeadlines/:studentId', getUpcomingDeadlines);

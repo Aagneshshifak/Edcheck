@@ -120,7 +120,7 @@ const LoginPage = ({ role }) => {
             if (currentRole === 'Admin')        navigate('/Admin/dashboard');
             else if (currentRole === 'Student') navigate('/Student/dashboard');
             else if (currentRole === 'Teacher') navigate('/Teacher/dashboard');
-            else if (currentRole === 'Parent')  navigate('/Parent/dashboard');
+            else if (currentRole === 'Parent')  navigate('/Parent/mychildren');
         }
         else if (status === 'failed') {
             setMessage(response)
