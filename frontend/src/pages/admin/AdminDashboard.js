@@ -65,8 +65,11 @@ import ActivityLog from './activityRelated/ActivityLog';
 import BulkUpload from './studentRelated/BulkUpload';
 import TeacherManagement from './teacherRelated/TeacherManagement';
 import ClassManagement from './classRelated/ClassManagement';
+import ClassDetail from './classRelated/ClassDetail';
 import StudentManagement from './studentRelated/StudentManagement';
 import SubjectManagement from './subjectRelated/SubjectManagement';
+import TimetableBuilder from './timetableRelated/TimetableBuilder';
+import TeacherAttendanceManager from './timetableRelated/TeacherAttendanceManager';
 
 const AdminDashboardInner = () => {
     const [open, setOpen] = useState(true);
@@ -216,6 +219,7 @@ const AdminDashboardInner = () => {
                         {/* Enhanced management pages */}
                         <Route path="/Admin/manage/teachers" element={<TeacherManagement />} />
                         <Route path="/Admin/manage/classes" element={<ClassManagement />} />
+                        <Route path="/Admin/manage/classes/:id" element={<ClassDetail />} />
                         <Route path="/Admin/manage/students" element={<StudentManagement />} />
                         <Route path="/Admin/manage/subjects" element={<SubjectManagement />} />
 
@@ -224,6 +228,8 @@ const AdminDashboardInner = () => {
                         <Route path="/Admin/config" element={<SystemConfig />} />
                         <Route path="/Admin/data" element={<DataManager />} />
                         <Route path="/Admin/analytics" element={<AnalyticsDashboard />} />
+                        <Route path="/Admin/timetable" element={<TimetableBuilder />} />
+                        <Route path="/Admin/teacher-attendance" element={<TeacherAttendanceManager />} />
                     </Routes>
                 </Box>
             </Box>

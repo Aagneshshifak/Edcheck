@@ -147,6 +147,8 @@ const SideBar = () => (
             <NavItem icon={<AssignmentIcon fontSize="small" />} label="Assignments" path="/Admin/assignments" />
             <NavItem icon={<QuizIcon       fontSize="small" />} label="Tests"       path="/Admin/tests"       />
             <NavItem icon={<EventNoteIcon  fontSize="small" />} label="Attendance"  path="/Admin/attendance"  />
+            <NavItem icon={<EventNoteIcon  fontSize="small" />} label="Timetable"   path="/Admin/timetable"   />
+            <NavItem icon={<EventNoteIcon  fontSize="small" />} label="Teacher Attendance" path="/Admin/teacher-attendance" />
 
             <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
 

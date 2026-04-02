@@ -11,6 +11,9 @@ const Subject = require("../models/subjectSchema");
 const Teacher = require("../models/teacherSchema");
 const Student = require("../models/studentSchema");
 const Parent  = require("../models/parentSchema");
+const Timetable       = require("../models/timetableSchema");
+const TeacherSchedule = require("../models/teacherScheduleSchema");
+const { getDailySchedule } = require("../utils/scheduleConfig");
 
 const h = pw => bcrypt.hash(pw, 10);
 
@@ -293,6 +296,92 @@ async function seed() {
     console.log("Students: Roll 1-45 per class  |  student123");
     console.log("Parents:  parent.{roll}.class{n}@school.com  |  parent123");
     console.log(`Classes: ${classes.length} | Subjects: ${subjects.length} (${SUBJECT_DEFS.length}/class) | Teachers: ${teachers.length} | Students: ${totalStudents} | Parents: ${totalParents}`);
+
+    // ── Generate timetables for all classes ──────────────────────────────────
+    console.log("\nGenerating timetables...");
+    await Timetable.deleteMany({ schoolId: admin._id });
+    await TeacherSchedule.deleteMany({ schoolId: admin._id });
+
+    const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const schedule = getDailySchedule();
+    const lectureSlots = schedule.filter(s => s.type === "lecture");
+
+    // teacherUsage[day][periodNumber] = Set of teacherIds already assigned
+    const teacherUsage = {};
+    for (const day of DAYS) {
+        teacherUsage[day] = {};
+        for (const slot of lectureSlots) teacherUsage[day][slot.periodNumber] = new Set();
+    }
+
+    let ttCreated = 0;
+    for (let ci = 0; ci < classes.length; ci++) {
+        const cls = classes[ci];
+        const classSubjects = subjects.slice(ci * SUBJECT_DEFS.length, (ci + 1) * SUBJECT_DEFS.length);
+
+        for (let dayIdx = 0; dayIdx < DAYS.length; dayIdx++) {
+            const day = DAYS[dayIdx];
+            // Rotate subjects: each class+day gets a different starting subject
+            const offset = (ci * 3 + dayIdx * 2) % classSubjects.length;
+            const rotated = [...classSubjects.slice(offset), ...classSubjects.slice(0, offset)];
+
+            const periods = [];
+            let lectureCount = 0;
+
+            for (const slot of schedule) {
+                if (slot.type !== "lecture") {
+                    periods.push({ periodNumber: null, startTime: slot.startTime, endTime: slot.endTime, type: slot.type });
+                    continue;
+                }
+
+                // Try to find a subject whose teacher is free at this period
+                let assigned = null;
+                for (let attempt = 0; attempt < rotated.length; attempt++) {
+                    const sub = rotated[(lectureCount + attempt) % rotated.length];
+                    const tid = sub.teacherId ? String(sub.teacherId) : null;
+                    if (!tid || !teacherUsage[day][slot.periodNumber].has(tid)) {
+                        assigned = { sub, tid };
+                        break;
+                    }
+                }
+                if (!assigned) {
+                    const sub = rotated[lectureCount % rotated.length];
+                    assigned = { sub, tid: sub.teacherId ? String(sub.teacherId) : null };
+                }
+
+                const { sub, tid } = assigned;
+                if (tid) teacherUsage[day][slot.periodNumber].add(tid);
+
+                periods.push({
+                    periodNumber: slot.periodNumber,
+                    startTime: slot.startTime,
+                    endTime: slot.endTime,
+                    type: "lecture",
+                    subjectId: sub._id,
+                    teacherId: tid || null,
+                });
+                lectureCount++;
+            }
+
+            await Timetable.create({ classId: cls._id, dayOfWeek: day, schoolId: admin._id, periods });
+
+            // Sync teacherSchedule
+            for (const p of periods) {
+                if (p.type === "lecture" && p.teacherId) {
+                    await TeacherSchedule.findOneAndUpdate(
+                        { teacherId: p.teacherId, dayOfWeek: day },
+                        {
+                            $set: { schoolId: admin._id },
+                            $push: { periods: { classId: cls._id, subjectId: p.subjectId, periodNumber: p.periodNumber, startTime: p.startTime, endTime: p.endTime } },
+                        },
+                        { upsert: true }
+                    );
+                }
+            }
+            ttCreated++;
+        }
+        console.log(`  Timetable: ${className(CLASS_DEFS[ci])} — 6 days done`);
+    }
+    console.log(`Generated ${ttCreated} timetable documents (${classes.length} classes × 6 days)`);
 
     await mongoose.disconnect();
     process.exit(0);

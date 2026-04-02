@@ -22,7 +22,7 @@ const getAnalyticsOverview = async (req, res) => {
             { $match: { "test.school": schoolObjectId } },
             { $group: { _id: "$test.classId", avgScore: { $avg: "$score" } } },
             { $lookup: { from: "sclasses", localField: "_id", foreignField: "_id", as: "classInfo" } },
-            { $unwind: { path: "$classInfo", preserveNullAndEmpty: true } },
+            { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
             { $project: { classId: "$_id", className: { $ifNull: ["$classInfo.className", "$classInfo.sclassName"] }, avgScore: { $round: ["$avgScore", 2] } } },
             { $sort: { className: 1 } }
         ]);
@@ -56,9 +56,9 @@ const getAnalyticsOverview = async (req, res) => {
             { $match: { "test.school": schoolObjectId, "test.subject": { $exists: true, $ne: null } } },
             { $group: { _id: { subject: "$test.subject", class: "$test.classId" }, avgScore: { $avg: "$score" }, count: { $sum: 1 } } },
             { $lookup: { from: "subjects", localField: "_id.subject", foreignField: "_id", as: "subjectInfo" } },
-            { $unwind: { path: "$subjectInfo", preserveNullAndEmpty: true } },
+            { $unwind: { path: "$subjectInfo", preserveNullAndEmptyArrays: true } },
             { $lookup: { from: "sclasses", localField: "_id.class", foreignField: "_id", as: "classInfo" } },
-            { $unwind: { path: "$classInfo", preserveNullAndEmpty: true } },
+            { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
             { $project: {
                 subjectName: { $ifNull: ["$subjectInfo.subjectName", "$subjectInfo.subName"] },
                 className:   { $ifNull: ["$classInfo.className", "$classInfo.sclassName"] },
@@ -89,7 +89,7 @@ const getLeaderboard = async (req, res) => {
             { $lookup: { from: "students", localField: "_id", foreignField: "_id", as: "student" } },
             { $unwind: "$student" },
             { $lookup: { from: "sclasses", localField: "student.classId", foreignField: "_id", as: "classInfo" } },
-            { $unwind: { path: "$classInfo", preserveNullAndEmpty: true } },
+            { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
             { $project: { studentId: "$_id", studentName: "$student.name", rollNum: "$student.rollNum", className: { $ifNull: ["$classInfo.className", "$classInfo.sclassName"] }, avgScore: { $round: ["$avgScore", 2] }, attemptCount: 1 } }
         ]);
         res.status(200).json(leaderboard);
@@ -109,7 +109,7 @@ const getSubjectDifficulty = async (req, res) => {
             { $match: { "test.school": schoolObjectId, "test.subject": { $exists: true, $ne: null } } },
             { $group: { _id: "$test.subject", avgScore: { $avg: "$score" }, attemptCount: { $sum: 1 } } },
             { $lookup: { from: "subjects", localField: "_id", foreignField: "_id", as: "subject" } },
-            { $unwind: { path: "$subject", preserveNullAndEmpty: true } },
+            { $unwind: { path: "$subject", preserveNullAndEmptyArrays: true } },
             { $project: { subjectId: "$_id", subjectName: { $ifNull: ["$subject.subjectName", "$subject.subName"] }, avgScore: { $round: ["$avgScore", 2] }, attemptCount: 1 } },
             { $sort: { avgScore: 1 } }
         ]);

@@ -142,6 +142,28 @@ const getAssignmentSubmissions = async (req, res) => {
     }
 };
 
+// Get assignments by teacher — enriched with submissionCount and totalStudents
+const getAssignmentsByTeacher = async (req, res) => {
+    try {
+        const assignments = await Assignment.find({ createdBy: req.params.teacherId, isActive: true })
+            .populate('subject', 'subName subjectName')
+            .populate('sclassName', 'sclassName className')
+            .sort({ dueDate: -1 });
+
+        const enriched = await Promise.all(assignments.map(async (a) => {
+            const [submissionCount, totalStudents] = await Promise.all([
+                Submission.countDocuments({ assignmentId: a._id }),
+                Student.countDocuments({ sclassName: a.sclassName }),
+            ]);
+            return { ...a.toObject(), submissionCount, totalStudents };
+        }));
+
+        res.json(enriched);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // Grade a submission
 const gradeSubmission = async (req, res) => {
     try {
@@ -182,6 +204,7 @@ module.exports = {
     createAssignment,
     getAssignmentsByClass,
     getAssignmentsBySubject,
+    getAssignmentsByTeacher,
     deleteAssignment,
     submitAssignment,
     getStudentSubmissions,

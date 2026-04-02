@@ -20,7 +20,8 @@
     "react-scripts": "5.0.1",
     "recharts": "^2.6.2",
     "redux": "^4.2.1",
-    "styled-components": "^5.3.10"
+    "styled-components": "^5.3.10",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",

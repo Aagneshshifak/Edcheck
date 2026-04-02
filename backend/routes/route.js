@@ -17,8 +17,8 @@ const { teacherRegister, teacherLogIn, getTeachers, getTeacherDetail, deleteTeac
 const { parentRegister, parentLogIn, getParentDetail, getParents, updateParent, deleteParent, addChildToParent } = require('../controllers/parent-controller.js');
 const {
     createAssignment, getAssignmentsByClass, getAssignmentsBySubject,
-    deleteAssignment, submitAssignment, getStudentSubmissions,
-    getAssignmentSubmissions, gradeSubmission
+    getAssignmentsByTeacher, deleteAssignment, submitAssignment,
+    getStudentSubmissions, getAssignmentSubmissions, gradeSubmission
 } = require('../controllers/assignment-controller.js');
 const { getAttendanceAnalytics } = require('../controllers/attendanceAnalyticsController.js');
 const { getUpcomingDeadlines } = require('../controllers/deadlines-controller.js');
@@ -41,8 +41,9 @@ const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest 
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
 
 const { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance: getTeacherIndividualPerformance, bulkDeleteTeachers, updateTeacherStatus, resetTeacherPassword } = require('../controllers/admin-teacher-controller.js');
-const { addClass, updateClass, removeClass, getClassDetail } = require('../controllers/admin-class-controller.js');
-const { addStudent: adminAddStudent, updateStudent: adminUpdateStudent, removeStudent, getStudentPerformance: adminGetStudentPerf, bulkDeleteStudents, updateStudentStatus, resetStudentPassword } = require('../controllers/admin-student-controller.js');
+const { addClass, updateClass, removeClass, getClassDetail, toggleClassStatus } = require('../controllers/admin-class-controller.js');
+const { recomputeClassAnalytics, getClassAnalytics, getSchoolAnalytics } = require('../controllers/admin-analytics-class-controller.js');
+const { addStudent: adminAddStudent, updateStudent: adminUpdateStudent, removeStudent, getStudentPerformance: adminGetStudentPerf, bulkDeleteStudents, updateStudentStatus, resetStudentPassword, enrollStudent, unenrollStudent } = require('../controllers/admin-student-controller.js');
 
 const { exportStudents, exportTeachers, exportClasses, exportTestResults, getImportHistory, getOrphans, deleteOrphans } = require('../controllers/admin-data-controller.js');
 const { getActivityLogs } = require('../controllers/activity-log-controller.js');
@@ -68,14 +69,17 @@ router.get('/Admin/alerts/:schoolId', getAlerts);
 // ── Admin — Bulk Upload ───────────────────────────────────────────────────────
 router.post('/Admin/bulk/students', upload.single('file'), bulkUploadStudents);
 
-const { addSubject, removeSubject, getSubjectsDetail, updateTopics, assignTeacher } = require('../controllers/admin-subject-controller.js');
+const { addSubject, removeSubject, getSubjectsDetail, updateTopics, assignTeacher, updateSubject, assignSubjectToClass, unassignSubjectFromClass } = require('../controllers/admin-subject-controller.js');
 
 // ── Admin — Subject Management ────────────────────────────────────────────────
 router.post('/Admin/subjects/add', addSubject);
 router.delete('/Admin/subjects/:id', removeSubject);
+router.put('/Admin/subjects/:id', updateSubject);
 router.get('/Admin/subjects/detail/:schoolId', getSubjectsDetail);
 router.put('/Admin/subjects/:id/topics', updateTopics);
 router.put('/Admin/subjects/:id/teacher', assignTeacher);
+router.post('/Admin/subjects/:id/assign-class',    assignSubjectToClass);
+router.delete('/Admin/subjects/:id/assign-class',  unassignSubjectFromClass);
 
 // ── Admin — Test Management ───────────────────────────────────────────────────
 router.post('/Admin/tests/create', adminCreateTest);
@@ -88,13 +92,30 @@ router.delete('/Admin/teacher/:id', removeTeacher);
 router.get('/Admin/teacher/:id/performance', getTeacherIndividualPerformance);
 router.delete('/Admin/teachers/bulk', bulkDeleteTeachers);
 router.put('/Admin/teacher/:id/status', updateTeacherStatus);
+
+// ── Teacher — Class Insights ──────────────────────────────────────────────────
+const { getClassInsights } = require('../controllers/teacher-insights-controller');
+router.get('/Teacher/class/:classId/insights', getClassInsights);
 router.post('/Admin/teacher/:id/resetPassword', resetTeacherPassword);
+
+// ── Class API (public-style CRUD) ─────────────────────────────────────────────
+const { createClass, getAllClasses, getClassById, updateClassById, deleteClassById, getClassTree, checkClassIntegrity } = require('../controllers/class-api-controller.js');
+router.post('/api/class/create',              createClass);
+router.get('/api/class/all',                  getAllClasses);
+router.get('/api/class/:id/tree',             getClassTree);
+router.get('/api/class/:id/integrity',        checkClassIntegrity);
+router.get('/api/class/:id',                  getClassById);
+router.put('/api/class/update/:id',           updateClassById);
+router.delete('/api/class/delete/:id',        deleteClassById);
 
 // ── Admin — Class Management ──────────────────────────────────────────────────
 router.post('/Admin/class/add', addClass);
 router.put('/Admin/class/:id', updateClass);
 router.delete('/Admin/class/:id', removeClass);
 router.get('/Admin/class/:id/detail', getClassDetail);
+router.put('/Admin/class/:id/status', toggleClassStatus);
+router.post('/Admin/class/:id/analytics/recompute', recomputeClassAnalytics);
+router.get('/Admin/class/:id/analytics', getClassAnalytics);
 
 // ── Admin — Student Management ────────────────────────────────────────────────
 router.post('/Admin/student/add', adminAddStudent);
@@ -104,10 +125,15 @@ router.get('/Admin/student/:id/performance', adminGetStudentPerf);
 router.delete('/Admin/students/bulk', bulkDeleteStudents);
 router.put('/Admin/student/:id/status', updateStudentStatus);
 router.post('/Admin/student/:id/resetPassword', resetStudentPassword);
+router.post('/Admin/student/:id/enroll',   enrollStudent);
+router.delete('/Admin/student/:id/enroll', unenrollStudent);
 
 const { getDashboardSummary } = require('../controllers/admin-dashboard-controller.js');
 const { getHealthMetrics } = require('../controllers/admin-health-controller');
 const { getConfig, updateConfig } = require('../controllers/admin-config-controller');
+const { getConfig: getTimetableConfig, createDayTimetable, getDayTimetable, getWeeklyTimetable, updatePeriod, deleteDayTimetable, markTeacherAttendance, getTeacherAttendance, getTeacherDaySchedule } = require('../controllers/timetable-controller.js');
+const { getSubstitutesByClassDate, getSubstitutesByTeacher } = require('../controllers/substitute-controller.js');
+const { autoGenerateTimetables } = require('../controllers/timetable-generator-controller.js');
 
 // ── Admin — Dashboard summary ─────────────────────────────────────────────────
 router.get('/Admin/dashboard/:schoolId', getDashboardSummary);
@@ -213,6 +239,7 @@ router.get('/Admin/analytics/gradeDistribution/:schoolId', getGradeDistribution)
 router.get('/Admin/analytics/cohortProgression/:schoolId', getCohortProgression);
 router.get('/Admin/analytics/riskTrends/:schoolId', getRiskTrends);
 router.get('/Admin/analytics/parentEngagement/:schoolId', getParentEngagement);
+router.get('/Admin/school/:schoolId/analytics', getSchoolAnalytics);
 
 // ── Admin — Reports ───────────────────────────────────────────────────────────
 router.get('/Admin/reports/studentPerformance/:schoolId', getStudentPerformance);
@@ -230,6 +257,7 @@ router.delete('/Admin/notifications/:id', deleteNotification);
 router.post('/AssignmentCreate', createAssignment);
 router.get('/AssignmentsByClass/:classId', getAssignmentsByClass);
 router.get('/AssignmentsBySubject/:subjectId', getAssignmentsBySubject);
+router.get('/AssignmentsByTeacher/:teacherId', getAssignmentsByTeacher);
 router.delete('/Assignment/:id', deleteAssignment);
 
 // ── Submissions ───────────────────────────────────────────────────────────────
@@ -266,5 +294,23 @@ router.post('/SubmitAttempt', requireFeature('testRetake'), submitAttempt);
 router.get('/AttemptsByTest/:testId', getAttemptsByTest);
 router.get('/AttemptsByStudent/:studentId', getAttemptsByStudent);
 router.get('/Attempt/:id', getAttemptById);
+
+// ── Timetable ─────────────────────────────────────────────────────────────────
+router.get('/Timetable/config/:schoolId', getTimetableConfig);
+router.post('/Timetable/auto-generate/:schoolId', autoGenerateTimetables);
+router.post('/Timetable/:classId/:day', createDayTimetable);
+router.get('/Timetable/:classId/:day', getDayTimetable);
+router.get('/Timetable/:classId', getWeeklyTimetable);
+router.put('/Timetable/:classId/:day/period/:periodNumber', updatePeriod);
+router.delete('/Timetable/:classId/:day', deleteDayTimetable);
+
+// ── Teacher Attendance (Timetable) ────────────────────────────────────────────
+router.post('/TeacherAttendance', markTeacherAttendance);
+router.get('/TeacherAttendance/:teacherId/:date', getTeacherAttendance);
+router.get('/TeacherSchedule/:teacherId/:day', getTeacherDaySchedule);
+
+// ── Substitute Assignments ────────────────────────────────────────────────────
+router.get('/Substitute/teacher/:teacherId/:date', getSubstitutesByTeacher);
+router.get('/Substitute/:classId/:date', getSubstitutesByClassDate);
 
 module.exports = router;
