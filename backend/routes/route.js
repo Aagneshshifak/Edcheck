@@ -271,6 +271,13 @@ router.put('/GradeSubmission/:id', gradeSubmission);
 // ── Attendance Analytics ──────────────────────────────────────────────────────
 router.get('/attendance-analytics/:studentId', getAttendanceAnalytics);
 
+// ── Period-wise Attendance ────────────────────────────────────────────────────
+const { markPeriodAttendance, checkPeriodAttendance, getClassAttendancePeriod, getStudentAttendancePeriod } = require('../controllers/period-attendance-controller');
+router.post('/api/attendance/mark',                  markPeriodAttendance);
+router.get('/api/attendance/check',                  checkPeriodAttendance);
+router.get('/api/attendance/class/:classId',         getClassAttendancePeriod);
+router.get('/api/attendance/student/:studentId',     getStudentAttendancePeriod);
+
 // ── Upcoming Deadlines ────────────────────────────────────────────────────────
 router.get('/UpcomingDeadlines/:studentId', getUpcomingDeadlines);
 
