@@ -46,7 +46,7 @@ const MarksEntry = () => {
                 if (sub[0]) setSubjectId(sub[0]._id || sub[0]);
             })
             .catch(() => setError('Failed to load teacher data.'));
-    }, [currentUser?._id, BASE]);
+    }, [currentUser?._id]);
 
     // Load students when class changes
     useEffect(() => {
@@ -65,7 +65,7 @@ const MarksEntry = () => {
             })
             .catch(() => setError('Failed to load students.'))
             .finally(() => setLoading(false));
-    }, [classId, BASE]);
+    }, [classId]);
 
     const handleSave = async () => {
         if (!subjectId) return setError('Please select a subject.');

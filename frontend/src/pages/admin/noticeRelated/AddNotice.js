@@ -62,13 +62,13 @@ const AddNotice = () => {
         const ep = endpoints[targetType];
         if (!ep) return;
 
-        axiosInstance.get(`${BASE}${ep}`)
+        axiosInstance.get(ep)
             .then(({ data }) => {
                 const list = Array.isArray(data) ? data : [];
                 setTargets(list);
             })
             .catch(() => setTargets([]));
-    }, [targetType, adminID, BASE]);
+    }, [targetType, adminID]);
 
     const getTargetLabel = (item) => {
         if (targetType === 'class')   return item.className || item.sclassName || item._id;
@@ -104,7 +104,7 @@ const AddNotice = () => {
             Array.from(attachFiles).forEach(f => formData.append('attachments', f));
         }
 
-        axiosInstance.post(`${process.env.REACT_APP_BASE_URL}/NoticeCreate`, formData, {
+        axiosInstance.post(`/NoticeCreate`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         })
             .then(() => { navigate('/Admin/notices'); })

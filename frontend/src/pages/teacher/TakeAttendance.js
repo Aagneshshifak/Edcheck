@@ -62,7 +62,7 @@ const TakeAttendance = () => {
             })
             .catch(() => setError("Could not load today's schedule."))
             .finally(() => setLoading(false));
-    }, [currentUser?._id, todayAbbr, BASE]);
+    }, [currentUser?._id, todayAbbr]);
 
     // ── Load students + duplicate check when period changes ───────────────────
     const loadStudentsAndCheck = useCallback(async () => {
@@ -99,7 +99,7 @@ const TakeAttendance = () => {
         } finally {
             setLoading(false);
         }
-    }, [activePeriod, todayISO, BASE]);
+    }, [activePeriod, todayISO]);
 
     useEffect(() => { loadStudentsAndCheck(); }, [loadStudentsAndCheck]);
 

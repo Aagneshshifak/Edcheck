@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js",
-    "dev": "node index.js",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "seed": "node scripts/seed.js",
     "seed:timetables": "node scripts/seed-timetables.js",
     "build": "npm i",
@@ -26,11 +26,11 @@
     "multer-storage-cloudinary": "^4.0.0",
     "node-cache": "^5.1.2",
     "node-cron": "^4.2.1",
-    "nodemon": "^2.0.22",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "fast-check": "^4.6.0",
-    "jest": "^30.3.0"
+    "jest": "^30.3.0",
+    "nodemon": "^2.0.22"
   }
 }
