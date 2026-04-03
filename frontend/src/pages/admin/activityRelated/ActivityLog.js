@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Table, TableHead, TableBody,
     TableRow, TableCell, TableContainer, CircularProgress, Alert,
@@ -13,7 +13,6 @@ import PersonIcon     from '@mui/icons-material/Person';
 import SchoolIcon     from '@mui/icons-material/School';
 import SmartToyIcon   from '@mui/icons-material/SmartToy';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const ROLE_COLORS = { Admin: 'primary', Teacher: 'secondary', System: 'default' };
 const ROLE_ICONS  = { Admin: <PersonIcon fontSize="small" />, Teacher: <SchoolIcon fontSize="small" />, System: <SmartToyIcon fontSize="small" /> };
@@ -47,7 +46,7 @@ const ActivityLog = () => {
             const params = { limit: LIMIT, page: page + 1 };
             if (roleFilter) params.actorRole  = roleFilter;
             if (typeFilter) params.targetType = typeFilter;
-            const { data } = await axios.get(`${BASE}/Admin/activity/${schoolId}`, { params });
+            const { data } = await axiosInstance.get(`/Admin/activity/${schoolId}`, { params });
             setLogs(data.logs || []);
             setTotal(data.total || 0);
         } catch { setError('Failed to load activity logs'); }

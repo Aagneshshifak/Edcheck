@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, Chip, CircularProgress, Alert,
@@ -11,7 +11,6 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const AssignmentOversight = () => {
     const navigate  = useNavigate();
@@ -26,7 +25,7 @@ const AssignmentOversight = () => {
 
     const fetchAssignments = () => {
         setLoading(true); setError('');
-        axios.get(`${BASE}/Admin/assignments/${schoolId}`)
+        axiosInstance.get(`/Admin/assignments/${schoolId}`)
             .then(res => setAssignments(Array.isArray(res.data) ? res.data : []))
             .catch(err => setError(err.response?.data?.message || 'Failed to load assignments'))
             .finally(() => setLoading(false));
@@ -38,7 +37,7 @@ const AssignmentOversight = () => {
         e.stopPropagation();
         if (!window.confirm('Delete this assignment and all its submissions?')) return;
         try {
-            await axios.delete(`${BASE}/Assignment/${id}`);
+            await axiosInstance.delete(`/Assignment/${id}`);
             setAssignments(prev => prev.filter(a => a._id !== id));
         } catch (err) { alert(err.response?.data?.message || 'Delete failed'); }
     };

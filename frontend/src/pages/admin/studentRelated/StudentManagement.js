@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Table, TableHead,
@@ -19,7 +19,6 @@ import LockResetIcon      from '@mui/icons-material/LockReset';
 import ContentCopyIcon    from '@mui/icons-material/ContentCopy';
 import { useToast } from '../../../context/ToastContext';
 
-const BASE  = process.env.REACT_APP_BASE_URL;
 const LIMIT = 20;
 
 const STATUS_OPTIONS = ['active', 'inactive', 'suspended'];
@@ -77,7 +76,7 @@ const StudentManagement = () => {
             if (filterClass)  params.classId = filterClass;
             if (filterStatus) params.status  = filterStatus;
 
-            const { data } = await axios.get(`${BASE}/Students/${schoolId}`, { params });
+            const { data } = await axiosInstance.get(`/Students/${schoolId}`, { params });
             setStudents(data.students || []);
             setTotal(data.total ?? 0);
             setHasMore(data.hasMore ?? false);
@@ -88,7 +87,7 @@ const StudentManagement = () => {
     }, [schoolId, filterClass, filterStatus]);
 
     useEffect(() => {
-        axios.get(`${BASE}/SclassList/${schoolId}`)
+        axiosInstance.get(`/SclassList/${schoolId}`)
             .then(r => setClasses(Array.isArray(r.data) ? r.data : []))
             .catch(() => {});
     }, [schoolId]);
@@ -159,7 +158,7 @@ const StudentManagement = () => {
         setBulkDeleting(true);
         try {
             const studentIds = Array.from(selected);
-            const { data } = await axios.delete(`${BASE}/Admin/students/bulk`, {
+            const { data } = await axiosInstance.delete(`/Admin/students/bulk`, {
                 data: { studentIds, schoolId },
             });
             showSuccess(data.message || `${data.deleted} students removed`);
@@ -195,7 +194,7 @@ const StudentManagement = () => {
     const handleStatusToggle = async (student) => {
         const newStatus = student.status === 'active' ? 'suspended' : 'active';
         try {
-            const { data } = await axios.put(`${BASE}/Admin/student/${student._id}/status`, { status: newStatus });
+            const { data } = await axiosInstance.put(`/Admin/student/${student._id}/status`, { status: newStatus });
             setStudents(prev => prev.map(s => s._id === student._id ? { ...s, status: data.status } : s));
             showSuccess(`Student ${data.status === 'active' ? 'activated' : 'suspended'}`);
         } catch (e) {
@@ -207,7 +206,7 @@ const StudentManagement = () => {
     const handleResetPassword = async (id) => {
         setResetLoading(true);
         try {
-            const { data } = await axios.post(`${BASE}/Admin/student/${id}/resetPassword`);
+            const { data } = await axiosInstance.post(`/Admin/student/${id}/resetPassword`);
             setTempPassword(data.tempPassword);
             setResetPwdOpen(true);
         } catch (e) {
@@ -242,10 +241,10 @@ const StudentManagement = () => {
         setSaving(true); setError('');
         try {
             if (editId) {
-                await axios.put(`${BASE}/Admin/student/${editId}`, form);
+                await axiosInstance.put(`/Admin/student/${editId}`, form);
                 setSuccess('Student updated');
             } else {
-                await axios.post(`${BASE}/Admin/student/add`, { ...form, schoolId });
+                await axiosInstance.post(`/Admin/student/add`, { ...form, schoolId });
                 setSuccess('Student added');
             }
             setFormOpen(false);
@@ -258,7 +257,7 @@ const StudentManagement = () => {
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Remove student "${name}"?`)) return;
         try {
-            await axios.delete(`${BASE}/Admin/student/${id}`);
+            await axiosInstance.delete(`/Admin/student/${id}`);
             setSuccess('Student removed');
             refresh();
         } catch (e) { setError(e.response?.data?.message || 'Delete failed'); }
@@ -267,7 +266,7 @@ const StudentManagement = () => {
     const openPerf = async (id) => {
         setPerfOpen(true); setPerfLoading(true); setPerfData(null);
         try {
-            const { data } = await axios.get(`${BASE}/Admin/student/${id}/performance`);
+            const { data } = await axiosInstance.get(`/Admin/student/${id}/performance`);
             setPerfData(data);
         } catch { setPerfData(null); }
         finally { setPerfLoading(false); }

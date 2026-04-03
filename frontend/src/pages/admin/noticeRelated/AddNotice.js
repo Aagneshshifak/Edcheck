@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Box, Typography, Paper, TextField, Button, CircularProgress,
     FormControl, InputLabel, Select, MenuItem, Alert,
@@ -11,7 +11,6 @@ import SendIcon      from '@mui/icons-material/Send';
 import { addStuff } from '../../../redux/userRelated/userHandle';
 import { underControl } from '../../../redux/userRelated/userSlice';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const TARGET_TYPES = [
     { value: 'all',     label: 'Everyone' },
@@ -63,7 +62,7 @@ const AddNotice = () => {
         const ep = endpoints[targetType];
         if (!ep) return;
 
-        axios.get(`${BASE}${ep}`)
+        axiosInstance.get(`${BASE}${ep}`)
             .then(({ data }) => {
                 const list = Array.isArray(data) ? data : [];
                 setTargets(list);
@@ -105,7 +104,7 @@ const AddNotice = () => {
             Array.from(attachFiles).forEach(f => formData.append('attachments', f));
         }
 
-        axios.post(`${process.env.REACT_APP_BASE_URL}/NoticeCreate`, formData, {
+        axiosInstance.post(`${process.env.REACT_APP_BASE_URL}/NoticeCreate`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         })
             .then(() => { navigate('/Admin/notices'); })

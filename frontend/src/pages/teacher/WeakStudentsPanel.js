@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Table, TableHead, TableBody,
     TableRow, TableCell, TableContainer, Chip, LinearProgress,
@@ -13,7 +13,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const riskLevel = (score) => {
     if (score == null) return { label: 'Unknown', color: 'default' };
@@ -138,7 +137,7 @@ const WeakStudentsPanel = () => {
         if (!classId) return;
         setLoading(true); setError('');
         try {
-            const { data } = await axios.get(`${BASE}/Teacher/class/${classId}/insights`);
+            const { data } = await axiosInstance.get(`/Teacher/class/${classId}/insights`);
             setStudents(Array.isArray(data) ? data : []);
         } catch {
             setError('Failed to load student insights');

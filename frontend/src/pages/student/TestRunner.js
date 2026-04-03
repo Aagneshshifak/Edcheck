@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { theme } from '../../theme/studentTheme';
 import VideocamIcon      from '@mui/icons-material/Videocam';
 import VideocamOffIcon   from '@mui/icons-material/VideocamOff';
@@ -65,7 +65,7 @@ const TestRunner = () => {
 
         setSubmitting(true);
         try {
-            await axios.post(`${BASE}/SubmitAttempt`, {
+            await axiosInstance.post(`/SubmitAttempt`, {
                 studentId: currentUser._id,
                 testId,
                 answers: remapped,
@@ -82,7 +82,7 @@ const TestRunner = () => {
 
     // Fetch test on mount
     useEffect(() => {
-        axios.get(`${BASE}/TestsForStudent/${currentUser._id}`)
+        axiosInstance.get(`/TestsForStudent/${currentUser._id}`)
             .then(res => {
                 const found = (res.data || []).find(t => t._id === testId);
                 if (!found) { setError('Test not found or not available.'); setLoading(false); return; }

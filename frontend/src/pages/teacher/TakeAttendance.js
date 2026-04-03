@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Box, Typography, Paper, Table, TableHead, TableBody,
     TableRow, TableCell, TableContainer, Button, Chip,
@@ -14,7 +14,6 @@ import ClassIcon        from '@mui/icons-material/Class';
 import MenuBookIcon     from '@mui/icons-material/MenuBook';
 import ScheduleIcon     from '@mui/icons-material/Schedule';
 
-const BASE  = process.env.REACT_APP_BASE_URL;
 const DAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const nowHHMM = () => {
@@ -54,7 +53,7 @@ const TakeAttendance = () => {
     useEffect(() => {
         if (!currentUser?._id) return;
         setLoading(true);
-        axios.get(`${BASE}/TeacherSchedule/${currentUser._id}/${todayAbbr}`)
+        axiosInstance.get(`/TeacherSchedule/${currentUser._id}/${todayAbbr}`)
             .then(({ data }) => {
                 const periods = (data.periods || []).filter(p => p.type !== 'interval' && p.type !== 'lunch');
                 setSchedule(periods);
@@ -78,8 +77,8 @@ const TakeAttendance = () => {
 
         try {
             const [studRes, checkRes] = await Promise.all([
-                axios.get(`${BASE}/Sclass/Students/${classId}`),
-                axios.get(`${BASE}/api/attendance/check`, {
+                axiosInstance.get(`/Sclass/Students/${classId}`),
+                axiosInstance.get(`/api/attendance/check`, {
                     params: { classId, date: todayISO, periodNumber: activePeriod.periodNumber, subjectId },
                 }),
             ]);
@@ -121,7 +120,7 @@ const TakeAttendance = () => {
         }));
 
         try {
-            const { data } = await axios.post(`${BASE}/api/attendance/mark`, {
+            const { data } = await axiosInstance.post(`/api/attendance/mark`, {
                 classId, subjectId,
                 teacherId:    currentUser._id,
                 date:         todayISO,

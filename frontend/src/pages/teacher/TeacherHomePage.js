@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Container, Grid, Paper, Typography, Box, Chip,
     CircularProgress, Divider, List, ListItem, ListItemText,
@@ -13,7 +13,6 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import CountUp from 'react-countup';
 import { getClassStudents } from '../../redux/sclassRelated/sclassHandle';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const StatCard = ({ icon, label, value, color, suffix = '' }) => (
     <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -50,7 +49,7 @@ const TeacherHomePage = () => {
     // Tests count
     useEffect(() => {
         if (!classId) return;
-        axios.get(`${BASE}/TestsByClass/${classId}`)
+        axiosInstance.get(`/TestsByClass/${classId}`)
             .then(({ data }) => setTests(Array.isArray(data) ? data.length : 0))
             .catch(() => setTests(0));
     }, [classId]);
@@ -58,7 +57,7 @@ const TeacherHomePage = () => {
     // Assignments count
     useEffect(() => {
         if (!classId) return;
-        axios.get(`${BASE}/AssignmentsByClass/${classId}`)
+        axiosInstance.get(`/AssignmentsByClass/${classId}`)
             .then(({ data }) => {
                 const list = Array.isArray(data) ? data : (data.assignments || []);
                 setAssignments(list.length);
@@ -69,7 +68,7 @@ const TeacherHomePage = () => {
     // Notices
     useEffect(() => {
         if (!schoolId) return;
-        axios.get(`${BASE}/NoticeList/${schoolId}`)
+        axiosInstance.get(`/NoticeList/${schoolId}`)
             .then(({ data }) => setNotices(Array.isArray(data) ? data.slice(0, 5) : []))
             .catch(() => setNotices([]));
     }, [schoolId]);

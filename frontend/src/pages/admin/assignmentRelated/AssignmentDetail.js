@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, Chip, CircularProgress, Alert,
@@ -27,7 +27,7 @@ const AssignmentDetail = () => {
     const [gradeInputs, setGradeInputs] = useState({});
 
     useEffect(() => {
-        axios.get(`${process.env.REACT_APP_BASE_URL}/AssignmentSubmissions/${id}`)
+        axiosInstance.get(`${process.env.REACT_APP_BASE_URL}/AssignmentSubmissions/${id}`)
             .then(res => setSubmissions(res.data))
             .catch(err => setError(err.response?.data?.message || 'Failed to load submissions'))
             .finally(() => setLoading(false));
@@ -50,7 +50,7 @@ const AssignmentDetail = () => {
             [submissionId]: { ...prev[submissionId], saving: true, error: null },
         }));
         try {
-            await axios.put(
+            await axiosInstance.put(
                 `${process.env.REACT_APP_BASE_URL}/GradeSubmission/${submissionId}`,
                 { grade: input.grade, feedback: input.feedback }
             );

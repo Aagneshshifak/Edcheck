@@ -21,8 +21,9 @@ const attendanceSchema = new mongoose.Schema({
         ref: "subject",
         required: true
     },
-    status:      { type: String, enum: ["Present", "Absent"], required: true },
-    sessionType: { type: String, enum: ["lecture", "lab", "exam"], default: "lecture" },
+    status:       { type: String, enum: ["Present", "Absent", "Late"], required: true },
+    sessionType:  { type: String, enum: ["lecture", "lab", "exam"], default: "lecture" },
+    periodNumber: { type: Number },   // period slot (1–8) for period-wise attendance
 }, { _id: false });
 
 // ── Student ──────────────────────────────────────────────────────────────────
@@ -114,5 +115,8 @@ studentSchema.index({ classId: 1, name: 1 });
 studentSchema.index({ "examResult.subjectId": 1 });
 // Attendance subject lookup (multikey on embedded array)
 studentSchema.index({ "attendance.subjectId": 1 });
+// Period-wise attendance duplicate guard (date + period + subject)
+studentSchema.index({ "attendance.date": 1 });
+studentSchema.index({ "attendance.periodNumber": 1 });
 
 module.exports = mongoose.model("student", studentSchema);

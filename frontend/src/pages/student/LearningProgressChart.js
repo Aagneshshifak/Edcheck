@@ -8,7 +8,7 @@ import {
     CircularProgress,
     Alert,
 } from '@mui/material';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 
 import { fetchProgress } from '../../redux/progressRelated/progressHandle';
 import { generateSubjectColors } from './progressUtils';
@@ -41,8 +41,8 @@ const LearningProgressChart = ({ studentId: studentIdProp, viewerRole }) => {
     // Fetch student name + class for teacher view
     useEffect(() => {
         if (viewerRole !== 'Teacher' || !targetStudentId) return;
-        axios
-            .get(`${process.env.REACT_APP_BASE_URL}/Student/${targetStudentId}`)
+        axiosInstance
+            .get(`/Student/${targetStudentId}`)
             .then((res) => setStudentInfo(res.data))
             .catch(() => setStudentInfo(null));
     }, [viewerRole, targetStudentId]);

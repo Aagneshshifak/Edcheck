@@ -20,7 +20,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import AddIcon from '@mui/icons-material/Add';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 
 const TestList = () => {
     const { currentUser } = useSelector((state) => state.user);
@@ -38,7 +38,7 @@ const TestList = () => {
     const fetchTests = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(
+            const res = await axiosInstance.get(
                 `${process.env.REACT_APP_BASE_URL}/TestsByClass/${classId}?school=${schoolId}`
             );
             setTests(Array.isArray(res.data) ? res.data : []);
@@ -56,7 +56,7 @@ const TestList = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${process.env.REACT_APP_BASE_URL}/Test/${id}`);
+            await axiosInstance.delete(`${process.env.REACT_APP_BASE_URL}/Test/${id}`);
             setSnackbar({ open: true, message: 'Test deleted', severity: 'success' });
             fetchTests();
         } catch (err) {

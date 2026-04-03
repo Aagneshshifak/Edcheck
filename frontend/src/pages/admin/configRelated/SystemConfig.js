@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Tabs, Tab,
     TextField, Button, Switch, FormControlLabel,
@@ -11,7 +11,6 @@ import AddIcon from '@mui/icons-material/Add';
 import SkeletonTable from '../../../components/SkeletonTable';
 import { useToast } from '../../../context/ToastContext';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const DEFAULT_GRADING_SCALE = [
     { letter: 'A', min: 90, max: 100 },
@@ -60,7 +59,7 @@ const SystemConfig = () => {
     const fetchConfig = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${BASE}/Admin/config/${schoolId}`);
+            const res = await axiosInstance.get(`/Admin/config/${schoolId}`);
             const cfg = res.data;
             setAcademicYear(cfg.academicYear || '');
             setTermStart(cfg.termStart ? cfg.termStart.slice(0, 10) : '');
@@ -88,7 +87,7 @@ const SystemConfig = () => {
             return;
         }
         try {
-            await axios.put(`${BASE}/Admin/config/${schoolId}`, { academicYear, termStart, termEnd });
+            await axiosInstance.put(`/Admin/config/${schoolId}`, { academicYear, termStart, termEnd });
             showSuccess('School year settings saved.');
         } catch (err) {
             showError(err.response?.data?.message || 'Failed to save school year settings.');
@@ -116,7 +115,7 @@ const SystemConfig = () => {
     const handleSaveGradingScale = async () => {
         setScaleError('');
         try {
-            await axios.put(`${BASE}/Admin/config/${schoolId}`, { gradingScale: bands });
+            await axiosInstance.put(`/Admin/config/${schoolId}`, { gradingScale: bands });
             showSuccess('Grading scale saved.');
         } catch (err) {
             const msg = err.response?.data?.message || 'Failed to save grading scale.';
@@ -129,7 +128,7 @@ const SystemConfig = () => {
         const prev = toggles[key];
         setToggles(t => ({ ...t, [key]: newValue }));
         try {
-            await axios.put(`${BASE}/Admin/config/${schoolId}`, {
+            await axiosInstance.put(`/Admin/config/${schoolId}`, {
                 featureToggles: { [key]: newValue },
             });
             showSuccess('Feature toggle updated.');

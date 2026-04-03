@@ -10,7 +10,7 @@ import {
     ArrowBack, SwitchAccount, School, Tag,
     EventAvailable, Assignment, Quiz, BarChart, Lock,
 } from '@mui/icons-material';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { fetchWeeklyTimetable } from '../../redux/timetableRelated/timetableSlice';
 import ReportCard from '../../components/ReportCard';
 import AcademicPerformanceDashboard from '../student/AcademicPerformanceDashboard';
@@ -97,14 +97,13 @@ const ChildDashboard = () => {
     const [ttDay,       setTtDay]       = useState(JS_DAY[new Date().getDay()] || 'Mon');
 
     const children = currentUser?.children || [];
-    const BASE     = process.env.REACT_APP_BASE_URL;
 
     useEffect(() => {
         if (!studentId) return;
         setLoading(true);
         setAccessDenied(false);
 
-        axios.get(`${BASE}/Student/${studentId}`)
+        axiosInstance.get(`/Student/${studentId}`)
             .then(res => {
                 const s = res.data;
 
@@ -123,12 +122,12 @@ const ChildDashboard = () => {
                 const classId = s?.sclassName?._id || s?.sclassName || s?.classId?._id || s?.classId;
 
                 return Promise.all([
-                    axios.get(`${BASE}/attendance-analytics/${studentId}`).catch(() => ({ data: [] })),
+                    axiosInstance.get(`/attendance-analytics/${studentId}`).catch(() => ({ data: [] })),
                     classId
-                        ? axios.get(`${BASE}/AssignmentsByClass/${classId}`).catch(() => ({ data: [] }))
+                        ? axiosInstance.get(`/AssignmentsByClass/${classId}`).catch(() => ({ data: [] }))
                         : Promise.resolve({ data: [] }),
-                    axios.get(`${BASE}/StudentSubmissions/${studentId}`).catch(() => ({ data: [] })),
-                    axios.get(`${BASE}/AttemptsByStudent/${studentId}`).catch(() => ({ data: [] })),
+                    axiosInstance.get(`/StudentSubmissions/${studentId}`).catch(() => ({ data: [] })),
+                    axiosInstance.get(`/AttemptsByStudent/${studentId}`).catch(() => ({ data: [] })),
                     classId ? dispatch(fetchWeeklyTimetable(classId)) : Promise.resolve(),
                 ]);
             })
@@ -153,7 +152,7 @@ const ChildDashboard = () => {
             })
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, [studentId, BASE, dispatch, currentUser?._id]); // eslint-disable-line
+    }, [studentId, dispatch, currentUser?._id]); // eslint-disable-line
 
     // ── Derived stats ─────────────────────────────────────────────────────────
     const totalAtt   = attendance.reduce((s, v) => s + v.attendedClasses, 0);

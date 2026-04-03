@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, CircularProgress, Alert, Box, Button,
@@ -35,8 +35,8 @@ const SchoolView = ({ schoolId, onSelectClass }) => {
     useEffect(() => {
         setLoading(true);
         setError('');
-        axios
-            .get(`${process.env.REACT_APP_BASE_URL}/Admin/attendance/school/${schoolId}`)
+        axiosInstance
+            .get(`/Admin/attendance/school/${schoolId}`)
             .then((res) => setRows(res.data))
             .catch((err) => setError(err.response?.data?.message || 'Failed to load school attendance'))
             .finally(() => setLoading(false));
@@ -105,8 +105,8 @@ const ClassView = ({ classId, className, onBack, onSelectStudent }) => {
     useEffect(() => {
         setLoading(true);
         setError('');
-        axios
-            .get(`${process.env.REACT_APP_BASE_URL}/Admin/attendance/class/${classId}`)
+        axiosInstance
+            .get(`/Admin/attendance/class/${classId}`)
             .then((res) => setRows(res.data))
             .catch((err) => setError(err.response?.data?.message || 'Failed to load class attendance'))
             .finally(() => setLoading(false));
@@ -188,8 +188,8 @@ const StudentView = ({ studentId, studentName, onBack }) => {
         const params = {};
         if (fromDate) params.from = fromDate;
         if (toDate) params.to = toDate;
-        axios
-            .get(`${process.env.REACT_APP_BASE_URL}/Admin/attendance/student/${studentId}`, { params })
+        axiosInstance
+            .get(`/Admin/attendance/student/${studentId}`, { params })
             .then((res) => setRows(res.data))
             .catch((err) => setError(err.response?.data?.message || 'Failed to load student attendance'))
             .finally(() => setLoading(false));

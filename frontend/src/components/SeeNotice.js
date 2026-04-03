@@ -90,7 +90,7 @@ const SeeNotice = () => {
                         <Box key={notice._id} sx={{
                             background: isNew ? 'rgba(14,165,233,0.08)' : 'rgba(14,165,233,0.03)',
                             border: `1px solid ${isNew ? 'rgba(14,165,233,0.3)' : 'rgba(14,165,233,0.12)'}`,
-                            borderLeft: `3px solid ${isNew ? '#0ea5e9' : 'rgba(14,165,233,0.35)'}`,
+                            borderLeft: `3px solid ${notice.priority === 'urgent' ? '#ef4444' : isNew ? '#0ea5e9' : 'rgba(14,165,233,0.35)'}`,
                             borderRadius: 2, p: 2,
                             transition: 'background 0.2s',
                             '&:hover': { background: 'rgba(14,165,233,0.1)' },
@@ -100,6 +100,13 @@ const SeeNotice = () => {
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
                                     {isNew && (
                                         <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#0ea5e9', flexShrink: 0 }} />
+                                    )}
+                                    {notice.priority === 'urgent' && (
+                                        <Chip label="URGENT" size="small" sx={{
+                                            bgcolor: 'rgba(239,68,68,0.15)', color: '#ef4444',
+                                            border: '1px solid rgba(239,68,68,0.4)',
+                                            fontWeight: 800, fontSize: '0.62rem', height: 18, flexShrink: 0,
+                                        }} />
                                     )}
                                     <Typography sx={{
                                         color: '#e8f4fd', fontWeight: 600, fontSize: '0.88rem',

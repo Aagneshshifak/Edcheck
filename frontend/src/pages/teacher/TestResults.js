@@ -13,7 +13,7 @@ import {
     Chip,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 
 const TestResults = () => {
     const { testId } = useParams();
@@ -24,7 +24,7 @@ const TestResults = () => {
     useEffect(() => {
         const fetchAttempts = async () => {
             try {
-                const res = await axios.get(
+                const res = await axiosInstance.get(
                     `${process.env.REACT_APP_BASE_URL}/AttemptsByTest/${testId}`
                 );
                 setAttempts(Array.isArray(res.data) ? res.data : []);

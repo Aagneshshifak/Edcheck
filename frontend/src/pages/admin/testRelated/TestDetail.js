@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, CircularProgress, Alert, Box, Button,
@@ -16,7 +16,7 @@ const TestDetail = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        axios.get(`${process.env.REACT_APP_BASE_URL}/AttemptsByTest/${id}`)
+        axiosInstance.get(`${process.env.REACT_APP_BASE_URL}/AttemptsByTest/${id}`)
             .then(res => setAttempts(res.data))
             .catch(err => setError(err.response?.data?.message || 'Failed to load attempts'))
             .finally(() => setLoading(false));

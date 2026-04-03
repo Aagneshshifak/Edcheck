@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Grid, Tabs, Tab,
     List, ListItem, ListItemText, Divider, TextField, Button,
@@ -10,7 +10,6 @@ import AnnouncementOutlinedIcon from '@mui/icons-material/AnnouncementOutlined';
 import MessageIcon from '@mui/icons-material/Message';
 import SendIcon from '@mui/icons-material/Send';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 // ── Notices tab ───────────────────────────────────────────────────────────────
 
@@ -22,7 +21,7 @@ const NoticesTab = ({ schoolId }) => {
     useEffect(() => {
         if (!schoolId) return;
         setLoading(true);
-        axios.get(`${BASE}/NoticeList/${schoolId}`)
+        axiosInstance.get(`/NoticeList/${schoolId}`)
             .then(({ data }) => setNotices(Array.isArray(data) ? data : []))
             .catch(() => setError('Failed to load notices'))
             .finally(() => setLoading(false));
@@ -70,7 +69,7 @@ const MessagesTab = ({ currentUser, schoolId }) => {
     const fetchComplains = useCallback(() => {
         if (!schoolId) return;
         setLoading(true);
-        axios.get(`${BASE}/ComplainList/${schoolId}`)
+        axiosInstance.get(`/ComplainList/${schoolId}`)
             .then(({ data }) => setComplains(Array.isArray(data) ? data : []))
             .catch(() => setError('Failed to load messages'))
             .finally(() => setLoading(false));
@@ -82,7 +81,7 @@ const MessagesTab = ({ currentUser, schoolId }) => {
         if (!message.trim()) return;
         setSending(true); setError(''); setSuccess('');
         try {
-            await axios.post(`${BASE}/ComplainCreate`, {
+            await axiosInstance.post(`/ComplainCreate`, {
                 user:    currentUser._id,
                 school:  schoolId,
                 complaint: message.trim(),

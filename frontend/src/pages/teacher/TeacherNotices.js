@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Box, Typography, Paper, TextField, Button, CircularProgress,
     Alert, Chip, Divider,
@@ -9,7 +9,6 @@ import CampaignIcon  from '@mui/icons-material/Campaign';
 import SendIcon      from '@mui/icons-material/Send';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const fieldSx = {
     '& .MuiOutlinedInput-root': {
@@ -40,7 +39,7 @@ const TeacherNotices = () => {
     useEffect(() => {
         if (!schoolId) return;
         setLoading(true);
-        axios.get(`${BASE}/NoticeList/${schoolId}`)
+        axiosInstance.get(`/NoticeList/${schoolId}`)
             .then(r => setNotices(Array.isArray(r.data) ? r.data : []))
             .catch(() => {})
             .finally(() => setLoading(false));
@@ -57,7 +56,7 @@ const TeacherNotices = () => {
         setSuccess('');
 
         try {
-            const { data } = await axios.post(`${BASE}/NoticeCreate`, {
+            const { data } = await axiosInstance.post(`/NoticeCreate`, {
                 title,
                 details,
                 date,

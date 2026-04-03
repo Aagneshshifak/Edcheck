@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Table, TableHead, TableBody,
     TableRow, TableCell, TableContainer, IconButton, Chip, Tooltip,
@@ -19,7 +19,6 @@ import PersonIcon     from '@mui/icons-material/Person';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import ClassIcon      from '@mui/icons-material/Class';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const EMPTY_FORM = { subName: '', subCode: '', sessions: 30, classId: '', teacherId: '', topics: [] };
 
@@ -62,9 +61,9 @@ const SubjectManagement = () => {
     const fetchAll = useCallback(() => {
         setLoading(true);
         Promise.all([
-            axios.get(`${BASE}/Admin/subjects/detail/${schoolId}`),
-            axios.get(`${BASE}/Teachers/${schoolId}`),
-            axios.get(`${BASE}/SclassList/${schoolId}`),
+            axiosInstance.get(`/Admin/subjects/detail/${schoolId}`),
+            axiosInstance.get(`/Teachers/${schoolId}`),
+            axiosInstance.get(`/SclassList/${schoolId}`),
         ]).then(([s, t, c]) => {
             setSubjects(Array.isArray(s.data) ? s.data : []);
             setTeachers(Array.isArray(t.data) ? t.data : []);
@@ -88,7 +87,7 @@ const SubjectManagement = () => {
         if (!addForm.subName) return setError('Subject name is required');
         setSaving(true); setError('');
         try {
-            await axios.post(`${BASE}/Admin/subjects/add`, { ...addForm, schoolId });
+            await axiosInstance.post(`/Admin/subjects/add`, { ...addForm, schoolId });
             setSuccess('Subject added');
             setAddOpen(false);
             fetchAll();
@@ -101,7 +100,7 @@ const SubjectManagement = () => {
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Delete subject "${name}"?`)) return;
         try {
-            await axios.delete(`${BASE}/Admin/subjects/${id}`);
+            await axiosInstance.delete(`/Admin/subjects/${id}`);
             setSuccess('Subject deleted');
             fetchAll();
         } catch (e) { setError(e.response?.data?.message || 'Delete failed'); }
@@ -118,7 +117,7 @@ const SubjectManagement = () => {
     const saveTopics = async () => {
         setSavingTopics(true);
         try {
-            await axios.put(`${BASE}/Admin/subjects/${topicsSubject._id}/topics`, { topics: editTopics });
+            await axiosInstance.put(`/Admin/subjects/${topicsSubject._id}/topics`, { topics: editTopics });
             setSuccess('Topics saved');
             setTopicsOpen(false);
             fetchAll();
@@ -137,7 +136,7 @@ const SubjectManagement = () => {
     const saveTeacher = async () => {
         setSavingTeacher(true);
         try {
-            await axios.put(`${BASE}/Admin/subjects/${teacherSubject._id}/teacher`, { teacherId: selTeacher || null });
+            await axiosInstance.put(`/Admin/subjects/${teacherSubject._id}/teacher`, { teacherId: selTeacher || null });
             setSuccess('Teacher assigned');
             setTeacherOpen(false);
             fetchAll();
@@ -157,9 +156,9 @@ const SubjectManagement = () => {
         setSavingClass(true);
         try {
             if (selClass) {
-                await axios.post(`${BASE}/Admin/subjects/${classSubject._id}/assign-class`, { classId: selClass });
+                await axiosInstance.post(`/Admin/subjects/${classSubject._id}/assign-class`, { classId: selClass });
             } else {
-                await axios.delete(`${BASE}/Admin/subjects/${classSubject._id}/assign-class`);
+                await axiosInstance.delete(`/Admin/subjects/${classSubject._id}/assign-class`);
             }
             setSuccess('Class assignment updated');
             setClassOpen(false);

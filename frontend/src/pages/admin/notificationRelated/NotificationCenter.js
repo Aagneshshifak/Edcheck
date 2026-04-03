@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, TextField, Button,
     FormControl, InputLabel, Select, MenuItem, Alert,
@@ -17,7 +17,6 @@ import PersonIcon from '@mui/icons-material/Person';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import GroupsIcon from '@mui/icons-material/Groups';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const RECIPIENT_OPTIONS = [
     { value: 'All',      label: 'Whole School', icon: <SchoolIcon />,          color: '#1976d2' },
@@ -53,14 +52,14 @@ const NotificationCenter = () => {
     const [listError, setListError]       = useState('');
 
     const fetchClasses = useCallback(() => {
-        axios.get(`${BASE}/SclassList/${schoolId}`)
+        axiosInstance.get(`/SclassList/${schoolId}`)
             .then(res => setClasses(Array.isArray(res.data) ? res.data : []))
             .catch(() => setClasses([]));
     }, [schoolId]);
 
     const fetchNotifications = useCallback(() => {
         setListLoading(true); setListError('');
-        axios.get(`${BASE}/Admin/notifications/sent/${schoolId}`)
+        axiosInstance.get(`/Admin/notifications/sent/${schoolId}`)
             .then(res => setNotifications(Array.isArray(res.data) ? res.data : []))
             .catch(err => setListError(err.response?.data?.message || 'Failed to load notifications'))
             .finally(() => setListLoading(false));
@@ -77,7 +76,7 @@ const NotificationCenter = () => {
         setPreviewing(true);
         const params = { recipientType, schoolId };
         if (classId) params.classId = classId;
-        axios.get(`${BASE}/Admin/notifications/preview`, { params })
+        axiosInstance.get(`/Admin/notifications/preview`, { params })
             .then(res => setPreviewCount(res.data.count))
             .catch(() => setPreviewCount(null))
             .finally(() => setPreviewing(false));
@@ -94,7 +93,7 @@ const NotificationCenter = () => {
         try {
             const payload = { title: title.trim(), message: message.trim(), recipientType, schoolId };
             if (classId) payload.classId = classId;
-            const res = await axios.post(`${BASE}/Admin/notifications/send`, payload);
+            const res = await axiosInstance.post(`/Admin/notifications/send`, payload);
             setSendSuccess(`Sent to ${res.data.count} recipient(s).`);
             setTitle(''); setMessage(''); setRecipientType('All'); setClassId('');
             fetchNotifications();
@@ -106,7 +105,7 @@ const NotificationCenter = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Delete this notification for all recipients?')) return;
         try {
-            await axios.delete(`${BASE}/Admin/notifications/${id}`);
+            await axiosInstance.delete(`/Admin/notifications/${id}`);
             setNotifications(prev => prev.filter(n => (n.notificationId || n._id) !== id));
         } catch (err) { alert(err.response?.data?.message || 'Delete failed.'); }
     };

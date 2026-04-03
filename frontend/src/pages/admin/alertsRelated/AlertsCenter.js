@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Alert, Button, CircularProgress,
     Card, CardContent, Chip, LinearProgress, Grid,
@@ -11,7 +11,6 @@ import ErrorIcon        from '@mui/icons-material/Error';
 import GroupsIcon       from '@mui/icons-material/Groups';
 import PersonIcon       from '@mui/icons-material/Person';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const AlertsCenter = () => {
     const schoolId = useSelector(s => s.user.currentUser._id);
@@ -24,7 +23,7 @@ const AlertsCenter = () => {
     const fetchAlerts = useCallback(async () => {
         setLoading(true); setError('');
         try {
-            const { data } = await axios.get(`${BASE}/Admin/alerts/${schoolId}`);
+            const { data } = await axiosInstance.get(`/Admin/alerts/${schoolId}`);
             setAlerts(data.alerts || []);
         } catch { setError('Failed to load alerts'); }
         finally { setLoading(false); }

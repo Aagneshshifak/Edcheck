@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { Box, Typography, Grid, CircularProgress, Paper } from '@mui/material';
 import {
     RadialBarChart, RadialBar, Legend, ResponsiveContainer, Tooltip,
@@ -9,7 +9,6 @@ import {
 } from 'recharts';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 // ── Colour helpers ────────────────────────────────────────────────────────────
 const SUBJECT_PALETTE = ['#0ea5e9','#a78bfa','#34d399','#f59e0b','#f472b6','#60a5fa','#fb923c','#4ade80'];
@@ -54,7 +53,7 @@ const AttendanceChart = ({ studentId }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get(`${BASE}/attendance-analytics/${studentId}`)
+        axiosInstance.get(`/attendance-analytics/${studentId}`)
             .then(r => setData(r.data || []))
             .catch(() => {})
             .finally(() => setLoading(false));
@@ -103,7 +102,7 @@ const MarksChart = ({ studentId }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get(`${BASE}/api/report/student/${studentId}`)
+        axiosInstance.get(`/api/report/student/${studentId}`)
             .then(r => {
                 const subjects = (r.data?.subjects || [])
                     .filter(s => s.totalMarks !== null)
@@ -141,14 +140,14 @@ const AssignmentChart = ({ studentId }) => {
 
     useEffect(() => {
         // Get student's class, then fetch assignments + submissions
-        axios.get(`${BASE}/Student/${studentId}`)
+        axiosInstance.get(`/Student/${studentId}`)
             .then(async r => {
                 const classId = r.data?.sclassName?._id || r.data?.sclassName || r.data?.classId;
                 if (!classId) { setData({ submitted: 0, pending: 0, overdue: 0 }); return; }
 
                 const [asgRes, subRes] = await Promise.all([
-                    axios.get(`${BASE}/AssignmentsByClass/${classId}`).catch(() => ({ data: [] })),
-                    axios.get(`${BASE}/StudentSubmissions/${studentId}`).catch(() => ({ data: [] })),
+                    axiosInstance.get(`/AssignmentsByClass/${classId}`).catch(() => ({ data: [] })),
+                    axiosInstance.get(`/StudentSubmissions/${studentId}`).catch(() => ({ data: [] })),
                 ]);
 
                 const assignments = Array.isArray(asgRes.data) ? asgRes.data : (asgRes.data?.assignments || []);

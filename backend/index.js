@@ -14,7 +14,27 @@ const { startReminderScheduler } = require("./services/reminder-scheduler");
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json({ limit: "10mb" }));
-app.use(cors());
+
+// ── CORS ──────────────────────────────────────────────────────────────────────
+// In production set FRONTEND_URL (and optionally ALLOWED_ORIGINS) in .env
+// e.g. FRONTEND_URL=https://yourschool.netlify.app
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : [process.env.FRONTEND_URL || 'http://localhost:3000'];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow server-to-server / curl (no origin) and whitelisted origins
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS: origin ${origin} not allowed`));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Response time tracking middleware (before routes)
 app.use((req, res, next) => {

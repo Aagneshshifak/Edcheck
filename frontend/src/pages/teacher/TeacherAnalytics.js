@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Grid, CircularProgress,
     Alert, Button, Chip, LinearProgress, Divider, Tab, Tabs,
@@ -13,7 +13,6 @@ import {
     CartesianGrid, LineChart, Line, Legend,
 } from 'recharts';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const ACCENT = '#0ea5e9';
 
@@ -254,7 +253,7 @@ const TeacherAnalytics = () => {
         if (!classId) return;
         setLoading(true); setError('');
         try {
-            const { data } = await axios.get(`${BASE}/Teacher/class/${classId}/insights`);
+            const { data } = await axiosInstance.get(`/Teacher/class/${classId}/insights`);
             setStudents(Array.isArray(data) ? data : []);
         } catch {
             setError('Failed to load analytics data');

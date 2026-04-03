@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     CssBaseline,
     Box,
@@ -85,7 +85,7 @@ const AdminDashboardInner = () => {
     // Validate session — if admin _id no longer exists in DB, clear stale session
     useEffect(() => {
         if (!schoolId) return;
-        axios.get(`${process.env.REACT_APP_BASE_URL}/Admin/${schoolId}`)
+        axiosInstance.get(`${process.env.REACT_APP_BASE_URL}/Admin/${schoolId}`)
             .catch(err => {
                 if (err.response?.status === 404) {
                     localStorage.removeItem('user');
