@@ -13,6 +13,7 @@ import {
 import axios from 'axios';
 import { fetchWeeklyTimetable } from '../../redux/timetableRelated/timetableSlice';
 import ReportCard from '../../components/ReportCard';
+import AcademicPerformanceDashboard from '../student/AcademicPerformanceDashboard';
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
 const BG     = '#0b1120';
@@ -430,6 +431,12 @@ const ChildDashboard = () => {
             <SectionHeader>Report Card</SectionHeader>
             <Box sx={{ mb: 4 }}>
                 <ReportCard studentId={studentId} compact />
+            </Box>
+
+            {/* ── Performance Charts ── */}
+            <SectionHeader>Academic Performance</SectionHeader>
+            <Box sx={{ mb: 4, mx: -3 }}>
+                <AcademicPerformanceDashboard studentId={studentId} />
             </Box>
 
             {/* ── Timetable ── */}

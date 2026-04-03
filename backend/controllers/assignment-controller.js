@@ -92,24 +92,40 @@ const deleteAssignment = async (req, res) => {
 
 // ── Submissions ──────────────────────────────────────────────────────────────
 
-// Submit assignment (student uploads file — supports both local and Cloudinary)
+// Submit assignment (student uploads file — supports single or multiple files, local or Cloudinary)
 const submitAssignment = async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-
         const { studentId, assignmentId, school } = req.body;
 
-        // Cloudinary gives req.file.path as the secure URL; local gives a filename
-        const fileUrl  = req.file.path || `/uploads/${req.file.filename}`;
-        const fileName = req.file.originalname;
-        const fileType = fileName.split(".").pop().toLowerCase();
+        // Build files array from req.files (multiple) or req.file (single)
+        const rawFiles = req.files?.length ? req.files : req.file ? [req.file] : [];
+        if (!rawFiles.length) return res.status(400).json({ message: 'No file uploaded' });
+
+        const files = rawFiles.map(f => ({
+            fileName: f.originalname,
+            fileUrl:  f.path || `/uploads/${f.filename}`,   // Cloudinary URL or local path
+            fileType: f.originalname.split('.').pop().toLowerCase(),
+            publicId: f.filename || null,
+            size:     f.size || null,
+        }));
+
+        // Legacy single-file fields — use first file for backward compat
+        const primary = files[0];
 
         const assignment = await Assignment.findById(assignmentId).lean();
         const isLate = assignment && new Date() > new Date(assignment.dueDate);
 
         const submission = await Submission.findOneAndUpdate(
             { studentId, assignmentId },
-            { studentId, assignmentId, fileUrl, fileName, fileType, submittedAt: new Date(), school, status: isLate ? "late" : "submitted" },
+            {
+                studentId, assignmentId, school,
+                files,
+                fileUrl:     primary.fileUrl,
+                fileName:    primary.fileName,
+                fileType:    primary.fileType,
+                submittedAt: new Date(),
+                status:      isLate ? 'late' : 'submitted',
+            },
             { upsert: true, new: true }
         );
 

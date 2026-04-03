@@ -16,6 +16,8 @@ import StudentTestResult from './StudentTestResult';
 import LearningProgressChart from './LearningProgressChart';
 import StudentTimetable from './StudentTimetable';
 import StudentReportCard from './StudentReportCard';
+import AcademicPerformanceDashboard from './AcademicPerformanceDashboard';
+import StudentDocuments from './StudentDocuments';
 import Logout from '../Logout';
 import AccountMenu from '../../components/AccountMenu';
 import NotificationBell from '../../components/NotificationBell';
@@ -87,6 +89,8 @@ const StudentDashboard = () => {
                     <Route path="/Student/progress" element={<LearningProgressChart viewerRole="Student" />} />
                     <Route path="/Student/timetable" element={<StudentTimetable />} />
                     <Route path="/Student/report" element={<StudentReportCard />} />
+                    <Route path="/Student/performance" element={<AcademicPerformanceDashboard />} />
+                    <Route path="/Student/documents" element={<StudentDocuments />} />
                     <Route path="/logout" element={<Logout />} />
                     <Route path='*' element={<Navigate to="/" />} />
                 </Routes>

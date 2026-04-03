@@ -192,7 +192,7 @@ router.delete("/Parent/:id", deleteParent);
 router.put("/ParentAddChild", addChildToParent);
 
 // ── Notice ───────────────────────────────────────────────────────────────────
-router.post('/NoticeCreate', noticeCreate);
+router.post('/NoticeCreate', cloudinaryUpload.array('attachments', 5), noticeCreate);
 router.get('/NoticeList/:id', noticeList);
 router.delete("/Notices/:id", deleteNotices);
 router.delete("/Notice/:id", deleteNotice);
@@ -263,7 +263,7 @@ router.get('/AssignmentsByTeacher/:teacherId', getAssignmentsByTeacher);
 router.delete('/Assignment/:id', deleteAssignment);
 
 // ── Submissions ───────────────────────────────────────────────────────────────
-router.post('/SubmitAssignment', requireFeature('fileUploads'), cloudinaryUpload.single('file'), submitAssignment);
+router.post('/SubmitAssignment', requireFeature('fileUploads'), cloudinaryUpload.array('files', 5), submitAssignment);
 router.get('/StudentSubmissions/:studentId', getStudentSubmissions);
 router.get('/AssignmentSubmissions/:assignmentId', getAssignmentSubmissions);
 router.put('/GradeSubmission/:id', gradeSubmission);
@@ -281,6 +281,17 @@ router.get('/api/attendance/student/:studentId',     getStudentAttendancePeriod)
 // ── Report Card ───────────────────────────────────────────────────────────────
 const { getReportCard } = require('../controllers/report-card-controller');
 router.get('/api/report/student/:studentId', getReportCard);
+
+// ── Generic File Upload (Cloudinary) ─────────────────────────────────────────
+const { uploadFiles, deleteFile } = require('../controllers/upload-controller');
+router.post('/api/upload/files',                cloudinaryUpload.array('files', 10), uploadFiles);
+router.delete('/api/upload/delete/:publicId',   deleteFile);
+
+// ── Student Documents ─────────────────────────────────────────────────────────
+const { getStudentDocuments, uploadStudentDocuments, deleteStudentDocument } = require('../controllers/student-document-controller');
+router.get('/api/student-docs/:studentId',                    getStudentDocuments);
+router.post('/api/student-docs/:studentId',                   cloudinaryUpload.array('documents', 10), uploadStudentDocuments);
+router.delete('/api/student-docs/:studentId/:publicId',       deleteStudentDocument);
 
 // ── Upcoming Deadlines ────────────────────────────────────────────────────────
 router.get('/UpcomingDeadlines/:studentId', getUpcomingDeadlines);

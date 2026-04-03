@@ -16,6 +16,34 @@
     rel="stylesheet"> -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <title>School Management System</title>
+  <style>
+    @media print {
+      /* Hide everything except the report card content */
+      body > * { display: none !important; }
+      #root > * { display: none !important; }
+      .print-report-card { display: block !important; }
+
+      /* Force light background for printing */
+      .print-report-card,
+      .print-report-card * {
+        background: #fff !important;
+        color: #111 !important;
+        border-color: #ccc !important;
+        box-shadow: none !important;
+      }
+
+      /* Hide nav, buttons, sidebar during print */
+      nav, header, aside, footer,
+      [class*="MuiDrawer"],
+      [class*="MuiAppBar"],
+      button { display: none !important; }
+
+      @page {
+        size: A4;
+        margin: 15mm;
+      }
+    }
+  </style>
 </head>
 
 <body>

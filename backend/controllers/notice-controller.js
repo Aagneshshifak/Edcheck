@@ -3,10 +3,19 @@ const { withCache, invalidate } = require('../utils/cache');
 
 const noticeCreate = async (req, res) => {
     try {
+        // Build attachments array from any uploaded files
+        const attachments = (req.files || []).map(f => ({
+            fileName: f.originalname,
+            fileUrl:  f.path || `/uploads/${f.filename}`,
+            fileType: f.originalname.split('.').pop().toLowerCase(),
+            publicId: f.filename || null,
+        }));
+
         const notice = new Notice({
             ...req.body,
-            school:   req.body.adminID || req.body.school || req.body.schoolId,
-            schoolId: req.body.adminID || req.body.school || req.body.schoolId,
+            school:      req.body.adminID || req.body.school || req.body.schoolId,
+            schoolId:    req.body.adminID || req.body.school || req.body.schoolId,
+            attachments: attachments.length ? attachments : (req.body.attachments || []),
         });
         const result = await notice.save();
         invalidate(`notices:${result.schoolId}`);

@@ -25,6 +25,15 @@ const noticeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         default: null,
     },
+
+    // File attachments
+    attachments: [{
+        fileName: { type: String, required: true },
+        fileUrl:  { type: String, required: true },
+        fileType: { type: String },
+        publicId: { type: String },
+        _id: false,
+    }],
 }, { timestamps: true });
 
 noticeSchema.pre("save", function (next) {

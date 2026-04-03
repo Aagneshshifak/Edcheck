@@ -63,7 +63,7 @@ const ReportCard = ({ studentId, compact = false }) => {
     if (!data) return null;
 
     return (
-        <Box>
+        <Box className="print-report-card">
             {/* ── Header ── */}
             {!compact && (
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, mb: 3 }}>
