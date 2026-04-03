@@ -1,12 +1,15 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
     Box, Typography, Radio, RadioGroup, FormControlLabel,
-    Button, CircularProgress, Alert, LinearProgress
+    Button, CircularProgress, Alert, LinearProgress, Chip,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { theme } from '../../theme/studentTheme';
+import VideocamIcon      from '@mui/icons-material/Videocam';
+import VideocamOffIcon   from '@mui/icons-material/VideocamOff';
+import WarningAmberIcon  from '@mui/icons-material/WarningAmber';
 
 // Fisher-Yates shuffle — returns a permutation array [0..n-1] shuffled
 function buildPermutation(n) {
@@ -25,9 +28,9 @@ const TestRunner = () => {
     const BASE = process.env.REACT_APP_BASE_URL;
 
     const [test, setTest] = useState(null);
-    const [questions, setQuestions] = useState([]); // shuffled order
-    const [permutation, setPermutation] = useState([]); // permutation[shuffledIdx] = originalIdx
-    const [answers, setAnswers] = useState([]); // answers[shuffledIdx] = selected option index or -1
+    const [questions, setQuestions] = useState([]);
+    const [permutation, setPermutation] = useState([]);
+    const [answers, setAnswers] = useState([]);
     const [timeLeft, setTimeLeft] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -35,9 +38,18 @@ const TestRunner = () => {
     const [showFsWarning, setShowFsWarning] = useState(false);
     const [startedAt] = useState(new Date().toISOString());
 
-    const intervalRef = useRef(null);
-    const containerRef = useRef(null);
-    const submittedRef = useRef(false);
+    const intervalRef    = useRef(null);
+    const containerRef   = useRef(null);
+    const submittedRef   = useRef(false);
+
+    // ── Proctoring state ──────────────────────────────────────────────────────
+    const videoRef          = useRef(null);
+    const streamRef         = useRef(null);
+    const [camReady,    setCamReady]    = useState(false);   // camera granted + streaming
+    const [camBlocked,  setCamBlocked]  = useState(false);   // user denied camera
+    const [tabWarnings, setTabWarnings] = useState(0);       // tab-switch count
+    const [tabAlert,    setTabAlert]    = useState(false);   // show warning banner
+    const MAX_TAB_WARNINGS = 3;
 
     // handleSubmit defined with useCallback so it can be referenced in timer effect
     const handleSubmit = useCallback(async (type) => {
@@ -114,6 +126,46 @@ const TestRunner = () => {
         return () => window.removeEventListener('beforeunload', onBeforeUnload);
     }, []);
 
+    // ── Webcam: request on mount, stop on unmount ─────────────────────────────
+    useEffect(() => {
+        let active = true;
+        navigator.mediaDevices?.getUserMedia({ video: true, audio: false })
+            .then(stream => {
+                if (!active) { stream.getTracks().forEach(t => t.stop()); return; }
+                streamRef.current = stream;
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                    videoRef.current.play().catch(() => {});
+                }
+                setCamReady(true);
+            })
+            .catch(() => {
+                if (active) setCamBlocked(true);
+            });
+        return () => {
+            active = false;
+            streamRef.current?.getTracks().forEach(t => t.stop());
+        };
+    }, []);
+
+    // ── Tab-switch detection via Page Visibility API ───────────────────────────
+    useEffect(() => {
+        const onVisibilityChange = () => {
+            if (document.hidden && !submittedRef.current) {
+                setTabWarnings(prev => {
+                    const next = prev + 1;
+                    setTabAlert(true);
+                    if (next >= MAX_TAB_WARNINGS) {
+                        handleSubmit('auto');
+                    }
+                    return next;
+                });
+            }
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+    }, [handleSubmit]);
+
     // Disable copy/cut/paste/contextmenu on container
     useEffect(() => {
         const el = containerRef.current;
@@ -154,6 +206,21 @@ const TestRunner = () => {
         </Box>
     );
 
+    // ── Camera blocked gate ───────────────────────────────────────────────────
+    if (camBlocked) return (
+        <Box sx={{ minHeight: '100vh', background: theme.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, p: 3 }}>
+            <VideocamOffIcon sx={{ color: '#ff5252', fontSize: '3.5rem' }} />
+            <Typography sx={{ color: '#ff5252', fontWeight: 700, fontSize: '1.2rem' }}>Camera Access Required</Typography>
+            <Typography sx={{ color: theme.textMuted, textAlign: 'center', maxWidth: 400, fontSize: '0.9rem' }}>
+                This test requires webcam access for proctoring. Please allow camera access in your browser and reload the page.
+            </Typography>
+            <Button onClick={() => window.location.reload()}
+                sx={{ background: 'linear-gradient(135deg,#0050c8,#1e90ff)', color: '#fff', borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600 }}>
+                Reload &amp; Allow Camera
+            </Button>
+        </Box>
+    );
+
     if (error && !test) return (
         <Box sx={{ minHeight: '100vh', background: theme.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
             <Alert severity="error">{error}</Alert>
@@ -184,11 +251,65 @@ const TestRunner = () => {
                 </Box>
             )}
 
+            {/* ── Webcam PiP — fixed bottom-right ── */}
+            <Box sx={{
+                position: 'fixed', bottom: 20, right: 20, zIndex: 1000,
+                width: 160, borderRadius: 2, overflow: 'hidden',
+                border: `2px solid ${camReady ? 'rgba(0,230,118,0.6)' : 'rgba(255,82,82,0.5)'}`,
+                boxShadow: `0 4px 20px ${camReady ? 'rgba(0,230,118,0.2)' : 'rgba(255,82,82,0.2)'}`,
+                bgcolor: '#0a1628',
+            }}>
+                <video
+                    ref={videoRef}
+                    muted
+                    playsInline
+                    style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
+                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.5, bgcolor: 'rgba(0,0,0,0.6)' }}>
+                    {camReady
+                        ? <VideocamIcon sx={{ color: '#00e676', fontSize: '0.9rem' }} />
+                        : <VideocamOffIcon sx={{ color: '#ff5252', fontSize: '0.9rem' }} />}
+                    <Typography sx={{ color: camReady ? '#00e676' : '#ff5252', fontSize: '0.65rem', fontWeight: 700 }}>
+                        {camReady ? 'Proctored' : 'No Camera'}
+                    </Typography>
+                </Box>
+            </Box>
+
+            {/* ── Tab-switch warning banner ── */}
+            {tabAlert && (
+                <Alert
+                    severity="warning"
+                    icon={<WarningAmberIcon />}
+                    onClose={() => setTabAlert(false)}
+                    sx={{ mb: 2, bgcolor: 'rgba(255,171,64,0.12)', border: '1px solid rgba(255,171,64,0.4)', color: '#ffab40' }}
+                >
+                    Tab switching detected — Warning {tabWarnings}/{MAX_TAB_WARNINGS}.
+                    {tabWarnings >= MAX_TAB_WARNINGS - 1 && ' Next violation will auto-submit your test.'}
+                </Alert>
+            )}
+
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, background: theme.card, border: theme.cardBorder, borderRadius: 2, p: 2 }}>
                 <Box>
                     <Typography sx={{ color: theme.text, fontWeight: 700, fontSize: '1.1rem' }}>{test?.title}</Typography>
-                    <Typography sx={{ color: theme.textMuted, fontSize: '0.78rem' }}>{questions.length} questions</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <Typography sx={{ color: theme.textMuted, fontSize: '0.78rem' }}>{questions.length} questions</Typography>
+                        <Chip
+                            size="small"
+                            icon={camReady ? <VideocamIcon sx={{ fontSize: '0.75rem !important' }} /> : <VideocamOffIcon sx={{ fontSize: '0.75rem !important' }} />}
+                            label={camReady ? 'Proctored' : 'No Camera'}
+                            sx={{
+                                height: 20, fontSize: '0.65rem',
+                                bgcolor: camReady ? 'rgba(0,230,118,0.12)' : 'rgba(255,82,82,0.12)',
+                                color:   camReady ? '#00e676' : '#ff5252',
+                                border:  `1px solid ${camReady ? 'rgba(0,230,118,0.3)' : 'rgba(255,82,82,0.3)'}`,
+                            }}
+                        />
+                        {tabWarnings > 0 && (
+                            <Chip size="small" label={`${tabWarnings} tab switch${tabWarnings > 1 ? 'es' : ''}`}
+                                sx={{ height: 20, fontSize: '0.65rem', bgcolor: 'rgba(255,171,64,0.12)', color: '#ffab40', border: '1px solid rgba(255,171,64,0.3)' }} />
+                        )}
+                    </Box>
                 </Box>
                 <Box sx={{ textAlign: 'right' }}>
                     <Typography sx={{ color: timeLeft < 60 ? '#ff5252' : theme.accent, fontWeight: 700, fontSize: '1.5rem', fontFamily: 'monospace' }}>

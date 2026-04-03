@@ -129,7 +129,9 @@ const StudentAssignments = () => {
         if (!file) return;
         setUploading(true);
         var formData = new FormData();
-        formData.append('file', file);
+        // Support multiple files — append each under the "files" field name
+        var fileList = file instanceof FileList ? Array.from(file) : [file];
+        fileList.forEach(function(f) { formData.append('files', f); });
         formData.append('studentId', currentUser._id);
         formData.append('assignmentId', selectedAssignment._id);
         formData.append('school', currentUser.school ? currentUser.school._id || currentUser.school : currentUser.schoolId);
@@ -174,9 +176,15 @@ const StudentAssignments = () => {
                 <DialogContent sx={{ pt: 3 }}>
                     <Box sx={{ border: '2px dashed ' + (file ? theme.accent : 'rgba(30,144,255,.25)'), borderRadius: 2, p: 3, textAlign: 'center', cursor: 'pointer' }} onClick={() => document.getElementById('file-input').click()}>
                         <UploadFileIcon sx={{ color: theme.accent, fontSize: 36, mb: 1 }} />
-                        <Typography sx={{ color: file ? theme.text : theme.textMuted, fontSize: '0.88rem' }}>{file ? file.name : 'Click to select file'}</Typography>
-                        <Typography sx={{ color: theme.textMuted, fontSize: '0.7rem', mt: 0.5 }}>PDF, PPT, PPTX, DOC, DOCX, JPG, PNG - max 20MB</Typography>
-                        <input id="file-input" type="file" accept={ALLOWED} hidden onChange={function(e) { setFile(e.target.files[0]); }} />
+                        <Typography sx={{ color: file ? theme.text : theme.textMuted, fontSize: '0.88rem' }}>
+                            {file
+                                ? (file instanceof FileList
+                                    ? `${file.length} file${file.length > 1 ? 's' : ''} selected`
+                                    : file.name)
+                                : 'Click to select files (up to 5)'}
+                        </Typography>
+                        <Typography sx={{ color: theme.textMuted, fontSize: '0.7rem', mt: 0.5 }}>PDF, PPT, PPTX, DOC, DOCX, JPG, PNG - max 20MB each</Typography>
+                        <input id="file-input" type="file" accept={ALLOWED} multiple hidden onChange={function(e) { setFile(e.target.files); }} />
                     </Box>
                     {uploading && <Box sx={{ mt: 2 }}><LinearProgress variant="determinate" value={uploadProgress} sx={{ height: 5, borderRadius: 3 }} /><Typography sx={{ color: theme.textMuted, fontSize: '0.72rem', mt: 0.5, textAlign: 'center' }}>{uploadProgress}%</Typography></Box>}
                 </DialogContent>
