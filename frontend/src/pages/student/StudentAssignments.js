@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, LinearProgress, CircularProgress, Alert, Collapse } from '@mui/material';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -86,13 +86,11 @@ const StudentAssignments = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [alert, setAlert] = useState(null);
     const classID = currentUser && currentUser.sclassName ? currentUser.sclassName._id : (currentUser && currentUser.classId ? currentUser.classId._id : null);
-    const BASE = process.env.REACT_APP_BASE_URL;
 
     const loadAssignments = async (pageNum, append = false) => {
         if (!classID) { setLoading(false); return; }
         try {
-            const res = await axios.get(`${BASE}/AssignmentsByClass/${classID}?page=${pageNum}&limit=10`);
-            // Handle both paginated { assignments, totalPages } and legacy flat array
+            const res = await axiosInstance.get(`/AssignmentsByClass/${classID}?page=${pageNum}&limit=10`);
             const data = res.data;
             const list = Array.isArray(data) ? data : (data.assignments || []);
             const more = Array.isArray(data) ? false : page < (data.totalPages || 1);
@@ -105,7 +103,7 @@ const StudentAssignments = () => {
         if (!classID) { setLoading(false); return; }
         Promise.all([
             loadAssignments(1),
-            axios.get(`${BASE}/StudentSubmissions/${currentUser._id}`).catch(() => ({ data: [] }))
+            axiosInstance.get(`/StudentSubmissions/${currentUser._id}`).catch(() => ({ data: [] }))
         ]).then(([, subRes]) => {
             const map = {};
             (subRes.data || []).forEach(s => {
@@ -113,7 +111,7 @@ const StudentAssignments = () => {
             });
             setSubmissions(map);
         }).finally(() => setLoading(false));
-    }, [classID, currentUser._id, BASE]);
+    }, [classID, currentUser._id]);
 
     const handleLoadMore = async () => {
         setLoadingMore(true);
@@ -129,14 +127,13 @@ const StudentAssignments = () => {
         if (!file) return;
         setUploading(true);
         var formData = new FormData();
-        // Support multiple files — append each under the "files" field name
         var fileList = file instanceof FileList ? Array.from(file) : [file];
         fileList.forEach(function(f) { formData.append('files', f); });
         formData.append('studentId', currentUser._id);
         formData.append('assignmentId', selectedAssignment._id);
         formData.append('school', currentUser.school ? currentUser.school._id || currentUser.school : currentUser.schoolId);
         try {
-            var res = await axios.post(BASE + '/SubmitAssignment', formData, { headers: { 'Content-Type': 'multipart/form-data' }, onUploadProgress: function(e) { setUploadProgress(Math.round((e.loaded * 100) / e.total)); } });
+            var res = await axiosInstance.post('/SubmitAssignment', formData, { headers: { 'Content-Type': 'multipart/form-data' }, onUploadProgress: function(e) { setUploadProgress(Math.round((e.loaded * 100) / e.total)); } });
             setSubmissions(function(prev) { var n = Object.assign({}, prev); n[selectedAssignment._id] = res.data; return n; });
             setAlert({ type: 'success', msg: 'Submitted successfully!' });
             setUploadDialog(false);
