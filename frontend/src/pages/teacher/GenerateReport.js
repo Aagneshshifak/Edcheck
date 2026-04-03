@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Box, Typography, Paper, Table, TableHead, TableBody,
     TableRow, TableCell, Button, CircularProgress,
@@ -10,7 +10,6 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import ArrowBackIcon  from '@mui/icons-material/ArrowBack';
 import ReportCard from '../../components/ReportCard';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const GenerateReport = () => {
     const { currentUser } = useSelector(s => s.user);
@@ -24,7 +23,7 @@ const GenerateReport = () => {
     // Load teacher's classes
     useEffect(() => {
         if (!currentUser?._id) return;
-        axios.get(`${BASE}/Teacher/${currentUser._id}`)
+        axiosInstance.get(`/Teacher/${currentUser._id}`)
             .then(({ data }) => {
                 const cls = data.teachClasses?.length ? data.teachClasses : data.teachSclass ? [data.teachSclass] : [];
                 setClasses(cls.filter(Boolean));
@@ -39,7 +38,7 @@ const GenerateReport = () => {
         setLoading(true);
         setStudents([]);
         setSelected(null);
-        axios.get(`${BASE}/Sclass/Students/${classId}`)
+        axiosInstance.get(`/Sclass/Students/${classId}`)
             .then(({ data }) => {
                 const list = Array.isArray(data) ? data : [];
                 list.sort((a, b) => (a.rollNum || 0) - (b.rollNum || 0));

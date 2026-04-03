@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Box, Typography, Paper, Table, TableHead, TableBody,
     TableRow, TableCell, TextField, Button, CircularProgress,
@@ -9,7 +9,6 @@ import {
 import GradeIcon from '@mui/icons-material/Grade';
 import SaveIcon  from '@mui/icons-material/Save';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const GRADE = (v) => {
     if (v >= 90) return { label: 'A+', color: '#34d399' };
@@ -37,7 +36,7 @@ const MarksEntry = () => {
     // Load teacher's classes + subjects
     useEffect(() => {
         if (!currentUser?._id) return;
-        axios.get(`${BASE}/Teacher/${currentUser._id}`)
+        axiosInstance.get(`/Teacher/${currentUser._id}`)
             .then(({ data }) => {
                 const cls = data.teachClasses?.length  ? data.teachClasses  : data.teachSclass  ? [data.teachSclass]  : [];
                 const sub = data.teachSubjects?.length ? data.teachSubjects : data.teachSubject ? [data.teachSubject] : [];
@@ -55,7 +54,7 @@ const MarksEntry = () => {
         setLoading(true);
         setStudents([]);
         setMarks({});
-        axios.get(`${BASE}/Sclass/Students/${classId}`)
+        axiosInstance.get(`/Sclass/Students/${classId}`)
             .then(({ data }) => {
                 const list = Array.isArray(data) ? data : [];
                 list.sort((a, b) => (a.rollNum || 0) - (b.rollNum || 0));
@@ -77,7 +76,7 @@ const MarksEntry = () => {
                 students
                     .filter(s => marks[s._id]?.marks !== '' && marks[s._id]?.marks !== undefined)
                     .map(s =>
-                        axios.put(`${BASE}/UpdateExamResult/${s._id}`, {
+                        axiosInstance.put(`/UpdateExamResult/${s._id}`, {
                             subName:       subjectId,
                             marksObtained: Number(marks[s._id].marks),
                         })

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Box, Button, Chip, CircularProgress, Container, Divider,
     FormControl, FormHelperText, InputLabel, MenuItem, OutlinedInput,
@@ -12,7 +12,6 @@ import ClassIcon      from '@mui/icons-material/Class';
 import ArrowBackIcon  from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
@@ -61,8 +60,8 @@ const AddClass = () => {
     useEffect(() => {
         setLoadingData(true);
         Promise.all([
-            axios.get(`${BASE}/Teachers/${schoolId}`),
-            axios.get(`${BASE}/Admin/subjects/detail/${schoolId}`),
+            axiosInstance.get(`/Teachers/${schoolId}`),
+            axiosInstance.get(`/Admin/subjects/detail/${schoolId}`),
         ]).then(([t, s]) => {
             setTeachers((Array.isArray(t.data) ? t.data : []).map(t => ({ ...t, _id: String(t._id) })));
             setSubjects(Array.isArray(s.data) ? s.data : []);
@@ -92,7 +91,7 @@ const AddClass = () => {
 
         setSaving(true); setApiError('');
         try {
-            const { data } = await axios.post(`${BASE}/api/class/create`, {
+            const { data } = await axiosInstance.post(`/api/class/create`, {
                 className:      form.className.trim(),
                 section:        form.section.trim(),
                 schoolId,

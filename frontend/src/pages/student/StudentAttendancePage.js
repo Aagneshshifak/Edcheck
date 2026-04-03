@@ -3,7 +3,7 @@ import {
     Box, Typography, Grid, LinearProgress, CircularProgress,
     ToggleButtonGroup, ToggleButton, Button
 } from '@mui/material';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { useSelector } from 'react-redux';
 import { theme } from '../../theme/studentTheme';
 import { getColorForPercentage, sortSummariesAscending } from '../../components/attendanceUtils';
@@ -110,7 +110,7 @@ const StudentAttendancePage = () => {
         if (!currentUser?._id) return;
         setLoading(true);
         setError(null);
-        axios.get(`${process.env.REACT_APP_BASE_URL}/attendance-analytics/${currentUser._id}`)
+        axiosInstance.get(`/attendance-analytics/${currentUser._id}`)
             .then(res => {
                 setSummaries(sortSummariesAscending(res.data));
             })

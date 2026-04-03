@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Box, Paper, Typography, Table, TableBody, TableCell,
     TableHead, TableRow, Chip, Alert, CircularProgress,
 } from '@mui/material';
 
-const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 const BG    = '#0f172a';
 const CARD  = '#111827';
@@ -46,7 +45,7 @@ const TeacherTimetable = () => {
         if (!teacherId || !today || today === 'Sun') return;
         setLoading(true);
         setFetchError(null);
-        axios.get(`${BASE_URL}/TeacherSchedule/${teacherId}/${today}`)
+        axiosInstance.get(`/TeacherSchedule/${teacherId}/${today}`)
             .then(({ data }) => setPeriods(Array.isArray(data.periods) ? data.periods : []))
             .catch(() => setFetchError('Failed to load timetable.'))
             .finally(() => setLoading(false));
@@ -56,7 +55,7 @@ const TeacherTimetable = () => {
     useEffect(() => {
         if (!teacherId || !todayDate) return;
         // Fetch substitute assignments where this teacher is the substitute
-        axios.get(`${BASE_URL}/Substitute/teacher/${teacherId}/${todayDate}`)
+        axiosInstance.get(`/Substitute/teacher/${teacherId}/${todayDate}`)
             .then(({ data }) => setSubstituteAlerts(Array.isArray(data) ? data : []))
             .catch(() => setSubstituteAlerts([]));
     }, [teacherId, todayDate]);

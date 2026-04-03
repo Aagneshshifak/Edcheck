@@ -16,6 +16,7 @@ import UpcomingDeadlinesPanel from '../../components/UpcomingDeadlinesPanel';
 import { theme } from '../../theme/studentTheme';
 import { fetchDeadlines } from '../../redux/deadlinesRelated/deadlinesHandle';
 import { fetchProgress } from '../../redux/progressRelated/progressHandle';
+import axiosInstance from '../../utils/axiosInstance';
 import ProgressLineChart from './ProgressLineChart';
 
 // ── Shared card wrapper ───────────────────────────────────────────────────────
@@ -196,9 +197,8 @@ const StudentHomePage = () => {
     // Fetch assignments for the subject panel
     useEffect(() => {
         if (!classID) return;
-        fetch(`${process.env.REACT_APP_BASE_URL}/AssignmentsByClass/${classID}`)
-            .then(r => r.json())
-            .then(d => setAssignments(Array.isArray(d) ? d : []))
+        axiosInstance.get(`/AssignmentsByClass/${classID}`)
+            .then(r => setAssignments(Array.isArray(r.data) ? r.data : (r.data?.assignments || [])))
             .catch(() => {});
     }, [classID]);
 

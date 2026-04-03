@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Tabs, Tab, Button,
     Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
@@ -16,7 +16,6 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import SkeletonTable from '../../../components/SkeletonTable';
 import { useToast } from '../../../context/ToastContext';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 // ── Tab panel helper ──────────────────────────────────────────────────────────
 const TabPanel = ({ children, value, index }) => (
@@ -115,8 +114,8 @@ const DataManager = () => {
     const fetchImportHistory = useCallback(async (page = 1) => {
         setImportLoading(true);
         try {
-            const { data } = await axios.get(
-                `${BASE}/Admin/data/importHistory/${schoolId}?page=${page}&limit=20`
+            const { data } = await axiosInstance.get(
+                `/Admin/data/importHistory/${schoolId}?page=${page}&limit=20`
             );
             setImportLogs(data.logs || []);
             setImportTotal(data.total || 0);
@@ -145,17 +144,17 @@ const DataManager = () => {
     };
 
     const exportButtons = [
-        { label: 'Export Students',    url: `${BASE}/Admin/data/export/students/${schoolId}` },
-        { label: 'Export Teachers',    url: `${BASE}/Admin/data/export/teachers/${schoolId}` },
-        { label: 'Export Classes',     url: `${BASE}/Admin/data/export/classes/${schoolId}` },
-        { label: 'Export Test Results',url: `${BASE}/Admin/data/export/testResults/${schoolId}` },
+        { label: 'Export Students',    url: `/Admin/data/export/students/${schoolId}` },
+        { label: 'Export Teachers',    url: `/Admin/data/export/teachers/${schoolId}` },
+        { label: 'Export Classes',     url: `/Admin/data/export/classes/${schoolId}` },
+        { label: 'Export Test Results',url: `/Admin/data/export/testResults/${schoolId}` },
     ];
 
     // ── Tab 3: Scan orphans ───────────────────────────────────────────────────
     const scanOrphans = async () => {
         setScanning(true);
         try {
-            const { data } = await axios.get(`${BASE}/Admin/data/orphans/${schoolId}`);
+            const { data } = await axiosInstance.get(`/Admin/data/orphans/${schoolId}`);
             setOrphans(data);
         } catch {
             showError('Orphan scan failed. Please try again.');
@@ -167,11 +166,11 @@ const DataManager = () => {
     const handleDeleteOrphans = async () => {
         setDeleting(true);
         try {
-            await axios.delete(`${BASE}/Admin/data/orphans/${schoolId}`);
+            await axiosInstance.delete(`/Admin/data/orphans/${schoolId}`);
             showSuccess('Orphaned records deleted successfully.');
             setDeleteConfirmOpen(false);
             // Re-scan to show updated counts
-            const { data } = await axios.get(`${BASE}/Admin/data/orphans/${schoolId}`);
+            const { data } = await axiosInstance.get(`/Admin/data/orphans/${schoolId}`);
             setOrphans(data);
         } catch {
             showError('Failed to delete orphaned records.');

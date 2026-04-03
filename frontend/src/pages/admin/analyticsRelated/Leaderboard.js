@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Table, TableHead, TableBody,
     TableRow, TableCell, TableContainer, CircularProgress, Alert,
@@ -9,7 +9,6 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 const MEDAL_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
@@ -27,8 +26,8 @@ const Leaderboard = () => {
         setLoading(true); setError('');
         try {
             const [lbRes, clRes] = await Promise.all([
-                axios.get(`${BASE}/Admin/analytics/leaderboard/${schoolId}`),
-                axios.get(`${BASE}/SclassList/${schoolId}`),
+                axiosInstance.get(`/Admin/analytics/leaderboard/${schoolId}`),
+                axiosInstance.get(`/SclassList/${schoolId}`),
             ]);
             setRows(Array.isArray(lbRes.data) ? lbRes.data : []);
             setClasses(Array.isArray(clRes.data) ? clRes.data : []);

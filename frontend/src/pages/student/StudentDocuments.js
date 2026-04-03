@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Box, Typography, Paper, Button, CircularProgress,
     Alert, Chip, IconButton, Tooltip, LinearProgress,
@@ -11,7 +11,6 @@ import DeleteIcon       from '@mui/icons-material/Delete';
 import OpenInNewIcon    from '@mui/icons-material/OpenInNew';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
-const BASE    = process.env.REACT_APP_BASE_URL;
 const ALLOWED = '.pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png';
 
 const FILE_ICON_COLOR = {
@@ -44,7 +43,7 @@ const StudentDocuments = () => {
     // Load documents
     useEffect(() => {
         if (!studentId) return;
-        axios.get(`${BASE}/api/student-docs/${studentId}`)
+        axiosInstance.get(`/api/student-docs/${studentId}`)
             .then(r => setDocs(r.data || []))
             .catch(() => setError('Failed to load documents.'))
             .finally(() => setLoading(false));
@@ -62,8 +61,8 @@ const StudentDocuments = () => {
         Array.from(files).forEach(f => formData.append('documents', f));
 
         try {
-            const { data } = await axios.post(
-                `${BASE}/api/student-docs/${studentId}`,
+            const { data } = await axiosInstance.post(
+                `/api/student-docs/${studentId}`,
                 formData,
                 {
                     headers: { 'Content-Type': 'multipart/form-data' },
@@ -86,8 +85,8 @@ const StudentDocuments = () => {
         if (!window.confirm(`Delete "${docName}"?`)) return;
         setDeleting(publicId);
         try {
-            const { data } = await axios.delete(
-                `${BASE}/api/student-docs/${studentId}/${encodeURIComponent(publicId)}`
+            const { data } = await axiosInstance.delete(
+                `/api/student-docs/${studentId}/${encodeURIComponent(publicId)}`
             );
             setDocs(data);
         } catch {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import axiosInstance from '../../../utils/axiosInstance';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
 import {
     Container, Box, Typography, Paper, Grid, Chip, Button, Divider,
     Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
@@ -18,7 +18,6 @@ import SchoolIcon              from '@mui/icons-material/School';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import VisibilityIcon          from '@mui/icons-material/Visibility';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 // ── Small stat card ───────────────────────────────────────────────────────────
 const StatCard = ({ icon, label, value, color = '#0ea5e9' }) => (
@@ -76,7 +75,7 @@ const ClassDetail = () => {
     const fetchDetail = useCallback(async () => {
         setLoading(true); setError('');
         try {
-            const { data } = await axios.get(`${BASE}/api/class/${id}?studentPage=1&studentLimit=${studentLimit}`);
+            const { data } = await axiosInstance.get(`/api/class/${id}?studentPage=1&studentLimit=${studentLimit}`);
             setDetail(data);
             setStudents(data.students || []);
             setStudentTotal(data.studentTotal || 0);
@@ -89,8 +88,8 @@ const ClassDetail = () => {
     const fetchStudentPage = useCallback(async (page) => {
         setStudentsLoading(true);
         try {
-            const { data } = await axios.get(
-                `${BASE}/api/class/${id}?studentPage=${page + 1}&studentLimit=${studentLimit}`
+            const { data } = await axiosInstance.get(
+                `/api/class/${id}?studentPage=${page + 1}&studentLimit=${studentLimit}`
             );
             setStudents(data.students || []);
             setStudentTotal(data.studentTotal || 0);
@@ -106,7 +105,7 @@ const ClassDetail = () => {
         setEnrollOpen(true);
         if (!pickerLoaded) {
             try {
-                const { data } = await axios.get(`${BASE}/Students/${schoolId}?limit=200`);
+                const { data } = await axiosInstance.get(`/Students/${schoolId}?limit=200`);
                 const list = Array.isArray(data) ? data : (data.students || []);
                 setPickerStudents(list);
                 setPickerLoaded(true);
@@ -119,7 +118,7 @@ const ClassDetail = () => {
         if (!enrollTarget) return;
         setEnrolling(true); setError('');
         try {
-            await axios.post(`${BASE}/Admin/student/${enrollTarget._id}/enroll`, { classId: id });
+            await axiosInstance.post(`/Admin/student/${enrollTarget._id}/enroll`, { classId: id });
             setSuccess(`${enrollTarget.name} enrolled successfully`);
             setEnrollOpen(false);
             setEnrollTarget(null);
@@ -134,7 +133,7 @@ const ClassDetail = () => {
     const handleRemoveStudent = async (studentId, studentName) => {
         if (!window.confirm(`Remove ${studentName} from this class?`)) return;
         try {
-            await axios.delete(`${BASE}/Admin/student/${studentId}/enroll`);
+            await axiosInstance.delete(`/Admin/student/${studentId}/enroll`);
             setSuccess(`${studentName} removed from class`);
             setPickerLoaded(false); // invalidate picker cache
             // If last student on page, go back one

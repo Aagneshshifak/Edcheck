@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Grid, Paper, Chip, LinearProgress,
     Button, Alert, Box,
@@ -8,7 +8,6 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SkeletonTable from '../../../components/SkeletonTable';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 // Custom hook: calls `callback` immediately and then every `delay` ms
 function useInterval(callback, delay) {
@@ -47,7 +46,7 @@ const SystemHealth = () => {
         setLoading(true);
         setError('');
         try {
-            const res = await axios.get(`${BASE}/Admin/health/${schoolId}`);
+            const res = await axiosInstance.get(`/Admin/health/${schoolId}`);
             setData(res.data);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to load health metrics');

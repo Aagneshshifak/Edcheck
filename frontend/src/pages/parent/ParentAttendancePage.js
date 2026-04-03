@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography, Grid, CircularProgress, Button } from '@mui/material';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { useSelector } from 'react-redux';
 import { theme } from '../../theme/studentTheme';
 import { sortSummariesAscending } from '../../components/attendanceUtils';
@@ -19,7 +19,7 @@ const ParentAttendancePage = () => {
         if (!childId) return;
         setLoading(true);
         setError(null);
-        axios.get(`${process.env.REACT_APP_BASE_URL}/attendance-analytics/${childId}`)
+        axiosInstance.get(`${process.env.REACT_APP_BASE_URL}/attendance-analytics/${childId}`)
             .then(res => {
                 setSummaries(sortSummariesAscending(res.data));
             })

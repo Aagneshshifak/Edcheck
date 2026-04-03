@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosInstance';
 import {
     Box, Typography, CircularProgress, Paper,
     Table, TableHead, TableBody, TableRow, TableCell,
@@ -8,7 +8,6 @@ import {
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DownloadIcon   from '@mui/icons-material/Download';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const GRADE_COLOR = {
     'A+': '#34d399', A: '#34d399', B: '#0ea5e9',
@@ -42,7 +41,7 @@ const ReportCard = ({ studentId, compact = false }) => {
     useEffect(() => {
         if (!studentId) return;
         setLoading(true);
-        axios.get(`${BASE}/api/report/student/${studentId}`)
+        axiosInstance.get(`/api/report/student/${studentId}`)
             .then(r => setData(r.data))
             .catch(() => setError('Failed to load report card.'))
             .finally(() => setLoading(false));

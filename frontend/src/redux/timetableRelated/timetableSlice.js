@@ -1,13 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const BASE_URL = process.env.REACT_APP_BASE_URL;
+import axiosInstance from '../../utils/axiosInstance';
 
 export const fetchWeeklyTimetable = createAsyncThunk(
   'timetable/fetchWeekly',
   async (classId, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${BASE_URL}/Timetable/${classId}`);
+      const res = await axiosInstance.get(`/Timetable/${classId}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: err.message });
@@ -19,10 +17,9 @@ export const fetchDailyTimetable = createAsyncThunk(
   'timetable/fetchDaily',
   async ({ classId, day }, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${BASE_URL}/Timetable/${classId}/${day}`);
+      const res = await axiosInstance.get(`/Timetable/${classId}/${day}`);
       return res.data;
     } catch (err) {
-      // 404 means no timetable yet — treat as empty, not an error
       if (err.response?.status === 404) return null;
       return rejectWithValue(err.response?.data || { message: err.message });
     }
@@ -33,7 +30,7 @@ export const savePeriod = createAsyncThunk(
   'timetable/savePeriod',
   async ({ classId, day, periods, schoolId }, { rejectWithValue }) => {
     try {
-      const res = await axios.post(`${BASE_URL}/Timetable/${classId}/${day}`, { periods, schoolId });
+      const res = await axiosInstance.post(`/Timetable/${classId}/${day}`, { periods, schoolId });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: err.message });
@@ -45,7 +42,7 @@ export const deleteDayTimetable = createAsyncThunk(
   'timetable/deleteDay',
   async ({ classId, day }, { rejectWithValue }) => {
     try {
-      const res = await axios.delete(`${BASE_URL}/Timetable/${classId}/${day}`);
+      const res = await axiosInstance.delete(`/Timetable/${classId}/${day}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: err.message });
@@ -57,7 +54,7 @@ export const markTeacherAttendance = createAsyncThunk(
   'timetable/markTeacherAttendance',
   async ({ teacherId, date, schoolId, status }, { rejectWithValue }) => {
     try {
-      const res = await axios.post(`${BASE_URL}/TeacherAttendance`, { teacherId, date, schoolId, status });
+      const res = await axiosInstance.post(`/TeacherAttendance`, { teacherId, date, schoolId, status });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: err.message });
@@ -69,7 +66,7 @@ export const fetchSubstituteAlerts = createAsyncThunk(
   'timetable/fetchSubstituteAlerts',
   async ({ classId, date }, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${BASE_URL}/Substitute/${classId}/${date}`);
+      const res = await axiosInstance.get(`/Substitute/${classId}/${date}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: err.message });

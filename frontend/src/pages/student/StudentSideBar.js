@@ -14,6 +14,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import FolderIcon from '@mui/icons-material/Folder';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import { theme } from '../../theme/studentTheme';
 
 const NavItem = ({ to, icon, label, active }) => (
@@ -51,6 +52,7 @@ const StudentSideBar = () => {
             <NavItem to="/Student/report" icon={<AssessmentIcon />} label="Report Card" active={is('/Student/report')} />
             <NavItem to="/Student/performance" icon={<TrendingUpIcon />} label="Performance" active={is('/Student/performance')} />
             <NavItem to="/Student/documents" icon={<FolderIcon />} label="My Documents" active={is('/Student/documents')} />
+            <NavItem to="/Student/notices" icon={<CampaignIcon />} label="Notices" active={is('/Student/notices')} />
             <NavItem to="/Student/complain" icon={<AnnouncementOutlinedIcon />} label="Complain" active={is('/Student/complain')} />
 
             <Divider sx={{ my: 1, borderColor: 'rgba(30,144,255,0.15)' }} />

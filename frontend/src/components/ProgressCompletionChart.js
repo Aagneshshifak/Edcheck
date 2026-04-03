@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, CircularProgress, Box } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosInstance';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const ProgressCompletionChart = ({ classId, teacherId }) => {
     const [chartData, setChartData] = useState([]);
@@ -12,7 +11,7 @@ const ProgressCompletionChart = ({ classId, teacherId }) => {
     useEffect(() => {
         if (!teacherId) return;
         setLoading(true);
-        axios.get(`${BASE}/AssignmentsByTeacher/${teacherId}`)
+        axiosInstance.get(`/AssignmentsByTeacher/${teacherId}`)
             .then(({ data }) => {
                 const filtered = (Array.isArray(data) ? data : []).filter(a => {
                     const id = a.sclassName?._id || a.sclassName;

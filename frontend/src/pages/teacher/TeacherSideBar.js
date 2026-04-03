@@ -143,13 +143,13 @@ const TeacherSideBar = () => (
             <NavItem icon={<AssignmentOutlinedIcon fontSize="small" />} label="Assignments" path="/Teacher/assignments" />
             <NavItem icon={<QuizIcon fontSize="small" />} label="Tests" path="/Teacher/tests" />
             <NavItem icon={<CalendarMonthIcon fontSize="small" />} label="Timetable" path="/Teacher/timetable" />
-            <NavItem icon={<GradeIcon fontSize="small" />} label="Marks Entry" path="/Teacher/marks" />
+            <NavItem icon={<GradeIcon fontSize="small" />} label="Enter Marks" path="/Teacher/marks" />
             <NavItem icon={<AssessmentIcon fontSize="small" />} label="Generate Report" path="/Teacher/reports" />
 
             <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
 
             <Section label="Communication" />
-            <NavItem icon={<AnnouncementOutlinedIcon fontSize="small" />} label="Notices" path="/Teacher/complain" />
+            <NavItem icon={<AnnouncementOutlinedIcon fontSize="small" />} label="Notices" path="/Teacher/notices" />
             <NavItem icon={<MessageIcon fontSize="small" />} label="Messages" path="/Teacher/complain" />
 
             <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />

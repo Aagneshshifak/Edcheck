@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Table, TableHead,
@@ -20,7 +20,6 @@ import RemoveCircleOutlineIcon   from '@mui/icons-material/RemoveCircleOutline';
 import SearchIcon                from '@mui/icons-material/Search';
 import ClearIcon                 from '@mui/icons-material/Clear';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 const ROWS_OPTIONS = [5, 10, 25, 50];
 
 const subLabel = (s) => s?.subName || s?.subjectName || String(s);
@@ -68,10 +67,10 @@ const ClassManagement = () => {
     const fetchAll = useCallback(() => {
         setLoading(true);
         Promise.all([
-            axios.get(`${BASE}/SclassList/${schoolId}`),
-            axios.get(`${BASE}/Teachers/${schoolId}`),
-            axios.get(`${BASE}/Admin/subjects/detail/${schoolId}`),
-            axios.get(`${BASE}/Students/${schoolId}`),
+            axiosInstance.get(`/SclassList/${schoolId}`),
+            axiosInstance.get(`/Teachers/${schoolId}`),
+            axiosInstance.get(`/Admin/subjects/detail/${schoolId}`),
+            axiosInstance.get(`/Students/${schoolId}`),
         ]).then(([c, t, s, st]) => {
             setClasses(Array.isArray(c.data) ? c.data : []);
             setTeachers((Array.isArray(t.data) ? t.data : []).map(t => ({ ...t, _id: String(t._id) })));
@@ -86,7 +85,7 @@ const ClassManagement = () => {
     const refreshDetail = useCallback(async (id) => {
         setDetailLoading(true);
         try {
-            const { data } = await axios.get(`${BASE}/Admin/class/${id}/detail`);
+            const { data } = await axiosInstance.get(`/Admin/class/${id}/detail`);
             setDetail(data);
         } catch { setDetail(null); }
         finally { setDetailLoading(false); }
@@ -128,7 +127,7 @@ const ClassManagement = () => {
         if (!editForm.className) return setError('Class name is required');
         setSaving(true); setError('');
         try {
-            await axios.put(`${BASE}/Admin/class/${editId}`, {
+            await axiosInstance.put(`/Admin/class/${editId}`, {
                 className:      editForm.className,
                 section:        editForm.section,
                 classTeacherId: editForm.classTeacherId === '' ? null : editForm.classTeacherId,
@@ -146,7 +145,7 @@ const ClassManagement = () => {
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Delete class "${name}"? This cannot be undone.`)) return;
         try {
-            await axios.delete(`${BASE}/Admin/class/${id}`);
+            await axiosInstance.delete(`/Admin/class/${id}`);
             setSuccess('Class deleted');
             fetchAll();
         } catch (e) {
@@ -157,7 +156,7 @@ const ClassManagement = () => {
     // ── Status toggle ─────────────────────────────────────────────────────────
     const handleToggleStatus = async (id, current) => {
         try {
-            await axios.put(`${BASE}/Admin/class/${id}/status`);
+            await axiosInstance.put(`/Admin/class/${id}/status`);
             setSuccess(`Class ${current === 'active' ? 'deactivated' : 'activated'}`);
             fetchAll();
         } catch { setError('Failed to update status'); }
@@ -174,7 +173,7 @@ const ClassManagement = () => {
         if (!newSubForm.subName) return;
         setSavingSub(true);
         try {
-            await axios.post(`${BASE}/Admin/subjects/add`, {
+            await axiosInstance.post(`/Admin/subjects/add`, {
                 subName:   newSubForm.subName,
                 subCode:   newSubForm.subCode,
                 classId:   detailClassId,
@@ -193,7 +192,7 @@ const ClassManagement = () => {
     const handleRemoveSubject = async (subId, subName) => {
         if (!window.confirm(`Remove subject "${subName}" from this class?`)) return;
         try {
-            await axios.delete(`${BASE}/Admin/subjects/${subId}`);
+            await axiosInstance.delete(`/Admin/subjects/${subId}`);
             setSuccess('Subject removed');
             await refreshDetail(detailClassId);
         } catch { setError('Failed to remove subject'); }
@@ -203,7 +202,7 @@ const ClassManagement = () => {
     const handleEnrollStudent = async () => {
         if (!enrollStudent) return;
         try {
-            await axios.post(`${BASE}/Admin/student/${enrollStudent._id}/enroll`, { classId: detailClassId });
+            await axiosInstance.post(`/Admin/student/${enrollStudent._id}/enroll`, { classId: detailClassId });
             setSuccess(`${enrollStudent.name} enrolled`);
             setEnrollStudent(null);
             await refreshDetail(detailClassId);
@@ -214,7 +213,7 @@ const ClassManagement = () => {
     const handleUnenrollStudent = async (studentId, studentName) => {
         if (!window.confirm(`Remove ${studentName} from this class?`)) return;
         try {
-            await axios.delete(`${BASE}/Admin/student/${studentId}/enroll`);
+            await axiosInstance.delete(`/Admin/student/${studentId}/enroll`);
             setSuccess(`${studentName} removed`);
             await refreshDetail(detailClassId);
             fetchAll();

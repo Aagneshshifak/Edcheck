@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Box, Paper, Select, MenuItem, FormControl, InputLabel,
     Button, Alert, Typography, Table, TableBody, TableCell,
@@ -9,7 +9,6 @@ import {
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import { savePeriod } from '../../../redux/timetableRelated/timetableSlice';
 
-const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 const BG    = '#0f172a';
 const CARD  = '#111827';
@@ -47,7 +46,7 @@ export default function TimetableBuilder() {
     useEffect(() => {
         if (!schoolId) return;
         setLoadingConfig(true);
-        axios.get(`${BASE_URL}/Timetable/config/${schoolId}`)
+        axiosInstance.get(`/Timetable/config/${schoolId}`)
             .then(r => setConfig(r.data))
             .catch(() => setConfig([]))
             .finally(() => setLoadingConfig(false));
@@ -56,7 +55,7 @@ export default function TimetableBuilder() {
     // Fetch classes once
     useEffect(() => {
         if (!schoolId) return;
-        axios.get(`${BASE_URL}/SclassList/${schoolId}`)
+        axiosInstance.get(`/SclassList/${schoolId}`)
             .then(r => setClasses(Array.isArray(r.data) ? r.data : []))
             .catch(() => setClasses([]));
     }, [schoolId]);
@@ -64,7 +63,7 @@ export default function TimetableBuilder() {
     // Fetch subjects when class changes
     useEffect(() => {
         if (!selectedClass) { setSubjects([]); return; }
-        axios.get(`${BASE_URL}/ClassSubjects/${selectedClass}`)
+        axiosInstance.get(`/ClassSubjects/${selectedClass}`)
             .then(r => setSubjects(Array.isArray(r.data) ? r.data : []))
             .catch(() => setSubjects([]));
     }, [selectedClass]);
@@ -72,7 +71,7 @@ export default function TimetableBuilder() {
     // Fetch teachers when class changes (filter by subject in selector)
     useEffect(() => {
         if (!schoolId) return;
-        axios.get(`${BASE_URL}/Teachers/${schoolId}`)
+        axiosInstance.get(`/Teachers/${schoolId}`)
             .then(r => setTeachers(Array.isArray(r.data) ? r.data : []))
             .catch(() => setTeachers([]));
     }, [schoolId]);
@@ -109,7 +108,7 @@ export default function TimetableBuilder() {
         setAutoGenerating(true);
         setAutoGenStatus(null);
         try {
-            const res = await axios.post(`${BASE_URL}/Timetable/auto-generate/${schoolId}`);
+            const res = await axiosInstance.post(`/Timetable/auto-generate/${schoolId}`);
             const { message, classesFound, subjectsFound, created, skipped, errors } = res.data;
             const detail = `Classes: ${classesFound ?? '?'}, Subjects: ${subjectsFound ?? '?'}, Created: ${created}, Skipped: ${skipped}`;
             const errNote = errors?.length ? ` | Warnings: ${errors.slice(0, 3).join('; ')}` : '';

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Button, TextField, Dialog,
     DialogTitle, DialogContent, DialogActions, Table, TableHead,
@@ -17,7 +17,6 @@ import LockResetIcon   from '@mui/icons-material/LockReset';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useToast } from '../../../context/ToastContext';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const STATUS_COLORS = { active: 'success', suspended: 'error' };
 
@@ -58,9 +57,9 @@ const TeacherManagement = () => {
     const fetchAll = useCallback(() => {
         setLoading(true);
         Promise.all([
-            axios.get(`${BASE}/Teachers/${schoolId}`),
-            axios.get(`${BASE}/SclassList/${schoolId}`),
-            axios.get(`${BASE}/AllSubjects/${schoolId}`),
+            axiosInstance.get(`/Teachers/${schoolId}`),
+            axiosInstance.get(`/SclassList/${schoolId}`),
+            axiosInstance.get(`/AllSubjects/${schoolId}`),
         ]).then(([t, c, s]) => {
             setTeachers(Array.isArray(t.data) ? t.data : []);
             setClasses(Array.isArray(c.data) ? c.data : []);
@@ -104,7 +103,7 @@ const TeacherManagement = () => {
         setBulkDeleting(true);
         try {
             const teacherIds = Array.from(selected);
-            const { data } = await axios.delete(`${BASE}/Admin/teachers/bulk`, {
+            const { data } = await axiosInstance.delete(`/Admin/teachers/bulk`, {
                 data: { teacherIds, schoolId },
             });
             showSuccess(data.message || `${data.deleted} teachers removed`);
@@ -143,7 +142,7 @@ const TeacherManagement = () => {
     const handleStatusToggle = async (teacher) => {
         const newStatus = teacher.status === 'active' ? 'suspended' : 'active';
         try {
-            const { data } = await axios.put(`${BASE}/Admin/teacher/${teacher._id}/status`, { status: newStatus });
+            const { data } = await axiosInstance.put(`/Admin/teacher/${teacher._id}/status`, { status: newStatus });
             setTeachers(prev => prev.map(t => t._id === teacher._id ? { ...t, status: data.status } : t));
             showSuccess(`Teacher ${data.status === 'active' ? 'activated' : 'suspended'}`);
         } catch (e) {
@@ -155,7 +154,7 @@ const TeacherManagement = () => {
     const handleResetPassword = async (id) => {
         setResetLoading(true);
         try {
-            const { data } = await axios.post(`${BASE}/Admin/teacher/${id}/resetPassword`);
+            const { data } = await axiosInstance.post(`/Admin/teacher/${id}/resetPassword`);
             setTempPassword(data.tempPassword);
             setResetPwdOpen(true);
         } catch (e) {
@@ -188,11 +187,11 @@ const TeacherManagement = () => {
         setSaving(true); setError('');
         try {
             if (editId) {
-                await axios.put(`${BASE}/Admin/teacher/${editId}`, form);
+                await axiosInstance.put(`/Admin/teacher/${editId}`, form);
                 setSuccess('Teacher updated');
             } else {
                 if (!form.password) return setError('Password is required');
-                await axios.post(`${BASE}/Admin/teacher/add`, { ...form, schoolId });
+                await axiosInstance.post(`/Admin/teacher/add`, { ...form, schoolId });
                 setSuccess('Teacher added');
             }
             setFormOpen(false);
@@ -205,7 +204,7 @@ const TeacherManagement = () => {
     const handleDelete = async (id, name) => {
         if (!window.confirm(`Remove teacher "${name}"?`)) return;
         try {
-            await axios.delete(`${BASE}/Admin/teacher/${id}`);
+            await axiosInstance.delete(`/Admin/teacher/${id}`);
             setSuccess('Teacher removed');
             fetchAll();
         } catch (e) { setError(e.response?.data?.message || 'Delete failed'); }
@@ -214,7 +213,7 @@ const TeacherManagement = () => {
     const openPerf = async (id) => {
         setPerfOpen(true); setPerfLoading(true); setPerfData(null);
         try {
-            const { data } = await axios.get(`${BASE}/Admin/teacher/${id}/performance`);
+            const { data } = await axiosInstance.get(`/Admin/teacher/${id}/performance`);
             setPerfData(data);
         } catch { setPerfData(null); }
         finally { setPerfLoading(false); }

@@ -35,6 +35,7 @@ import TeacherAnalytics from './TeacherAnalytics';
 import TeacherTimetable from './TeacherTimetable';
 import MarksEntry from './MarksEntry';
 import GenerateReport from './GenerateReport';
+import TeacherNotices from './TeacherNotices';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -111,7 +112,9 @@ const TeacherDashboard = () => {
                         <Route path="/Teacher/analytics" element={<TeacherAnalytics />} />
                         <Route path="/Teacher/timetable" element={<TeacherTimetable />} />
                         <Route path="/Teacher/marks" element={<MarksEntry />} />
+                        <Route path="/Teacher/enter-marks" element={<MarksEntry />} />
                         <Route path="/Teacher/reports" element={<GenerateReport />} />
+                        <Route path="/Teacher/notices" element={<TeacherNotices />} />
 
                         <Route path="/logout" element={<Logout />} />
                     </Routes>

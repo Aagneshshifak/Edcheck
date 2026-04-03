@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Container, Typography, Box, Button, Paper, Table, TableHead,
     TableBody, TableRow, TableCell, TableContainer, Dialog, DialogTitle,
@@ -13,7 +13,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 const EMPTY_FORM = { title: '', topic: '', description: '', dueDate: '', subjectId: '', classId: '' };
 
 const TeacherAssignments = () => {
@@ -35,7 +34,7 @@ const TeacherAssignments = () => {
     // Fetch populated teacher data to get subject/class names
     useEffect(() => {
         if (!currentUser._id) return;
-        axios.get(`${BASE}/Teacher/${currentUser._id}`)
+        axiosInstance.get(`/Teacher/${currentUser._id}`)
             .then(({ data }) => {
                 const subs = data.teachSubjects?.length
                     ? data.teachSubjects
@@ -58,7 +57,7 @@ const TeacherAssignments = () => {
         if (!currentUser._id) return;
         setLoading(true);
         try {
-            const { data } = await axios.get(`${BASE}/AssignmentsByTeacher/${currentUser._id}`);
+            const { data } = await axiosInstance.get(`/AssignmentsByTeacher/${currentUser._id}`);
             setAssignments(Array.isArray(data) ? data : []);
         } catch {
             setError('Failed to load assignments');
@@ -88,7 +87,7 @@ const TeacherAssignments = () => {
             fd.append('school',     schoolId);
             fd.append('createdBy',  currentUser._id);
             if (file) fd.append('file', file);
-            await axios.post(`${BASE}/AssignmentCreate`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+            await axiosInstance.post(`/AssignmentCreate`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
             setSuccess('Assignment published');
             setOpen(false);
             fetchAssignments();
@@ -100,7 +99,7 @@ const TeacherAssignments = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Delete this assignment?')) return;
         try {
-            await axios.delete(`${BASE}/Assignment/${id}`);
+            await axiosInstance.delete(`/Assignment/${id}`);
             setSuccess('Assignment deleted');
             setAssignments(prev => prev.filter(a => a._id !== id));
         } catch { setError('Delete failed'); }

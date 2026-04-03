@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, CircularProgress, Alert,
     Button, TextField, MenuItem, Select, FormControl, InputLabel,
@@ -16,7 +16,6 @@ import {
 } from 'recharts';
 import SkeletonChart from '../../../components/SkeletonChart';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 const STALE_MS = 24 * 60 * 60 * 1000;
 const COLORS = ['#1976d2', '#7b1fa2', '#2e7d32', '#e65100', '#c62828', '#00838f', '#558b2f', '#6a1b9a'];
 
@@ -635,15 +634,15 @@ const AnalyticsDashboard = ({ initialTab = 0 }) => {
         setLoadingGrade(true); setLoadingCohort(true); setLoadingRisk(true); setLoadingParent(true);
         try {
             const [ovRes, lbRes, sdRes, tRes, rRes, gdRes, cpRes, rtRes, peRes] = await Promise.all([
-                axios.get(`${BASE}/Admin/analytics/overview/${schoolId}`),
-                axios.get(`${BASE}/Admin/analytics/leaderboard/${schoolId}`),
-                axios.get(`${BASE}/Admin/analytics/subjectDifficulty/${schoolId}`),
-                axios.get(`${BASE}/Admin/analytics/teachers/${schoolId}`),
-                axios.get(`${BASE}/Admin/analytics/risk/${schoolId}`),
-                axios.get(`${BASE}/Admin/analytics/gradeDistribution/${schoolId}`).catch(() => ({ data: null })),
-                axios.get(`${BASE}/Admin/analytics/cohortProgression/${schoolId}`).catch(() => ({ data: null })),
-                axios.get(`${BASE}/Admin/analytics/riskTrends/${schoolId}`).catch(() => ({ data: null })),
-                axios.get(`${BASE}/Admin/analytics/parentEngagement/${schoolId}`).catch(() => ({ data: null })),
+                axiosInstance.get(`/Admin/analytics/overview/${schoolId}`),
+                axiosInstance.get(`/Admin/analytics/leaderboard/${schoolId}`),
+                axiosInstance.get(`/Admin/analytics/subjectDifficulty/${schoolId}`),
+                axiosInstance.get(`/Admin/analytics/teachers/${schoolId}`),
+                axiosInstance.get(`/Admin/analytics/risk/${schoolId}`),
+                axiosInstance.get(`/Admin/analytics/gradeDistribution/${schoolId}`).catch(() => ({ data: null })),
+                axiosInstance.get(`/Admin/analytics/cohortProgression/${schoolId}`).catch(() => ({ data: null })),
+                axiosInstance.get(`/Admin/analytics/riskTrends/${schoolId}`).catch(() => ({ data: null })),
+                axiosInstance.get(`/Admin/analytics/parentEngagement/${schoolId}`).catch(() => ({ data: null })),
             ]);
             setOverview(ovRes.data);
             setLeaderboard(Array.isArray(lbRes.data) ? lbRes.data : []);

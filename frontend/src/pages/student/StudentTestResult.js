@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, CircularProgress, Alert, Button } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { theme } from '../../theme/studentTheme';
 
 const StudentTestResult = () => {
@@ -16,7 +16,7 @@ const StudentTestResult = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        axios.get(`${BASE}/AttemptsByStudent/${currentUser._id}`)
+        axiosInstance.get(`/AttemptsByStudent/${currentUser._id}`)
             .then(res => {
                 const attempts = res.data || [];
                 const found = attempts.find(a => {

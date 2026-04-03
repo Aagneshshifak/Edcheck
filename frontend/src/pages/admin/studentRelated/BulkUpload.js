@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Button, Alert, CircularProgress,
     Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
@@ -10,7 +10,6 @@ import UploadFileIcon  from '@mui/icons-material/UploadFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DownloadIcon    from '@mui/icons-material/Download';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 // Generate a sample Excel template as a downloadable CSV
 const downloadTemplate = () => {
@@ -51,7 +50,7 @@ const BulkUpload = () => {
             fd.append('file', file);
             fd.append('schoolId', schoolId);
             fd.append('adminName', adminName);
-            const { data } = await axios.post(`${BASE}/Admin/bulk/students`, fd, {
+            const { data } = await axiosInstance.post(`/Admin/bulk/students`, fd, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             setResult(data);

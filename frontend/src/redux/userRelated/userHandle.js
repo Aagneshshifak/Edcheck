@@ -1,17 +1,19 @@
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     authRequest, stuffAdded, authSuccess, authFailed, authError,
-    authLogout, doneSuccess, getDeleteSuccess, getRequest, getFailed, getError,
+    authLogout, doneSuccess, getRequest, getFailed, getError,
 } from './userSlice';
 
+
+// Login — uses plain axios (no token exists yet)
 export const loginUser = (fields, role) => async (dispatch) => {
     dispatch(authRequest());
     try {
-        const result = await axios.post(`${process.env.REACT_APP_BASE_URL}/${role}Login`, fields, {
+        const result = await axiosInstance.post(`/${role}Login`, fields, {
             headers: { 'Content-Type': 'application/json' },
         });
         if (result.data.role) {
-            dispatch(authSuccess(result.data));
+            dispatch(authSuccess(result.data)); // result.data includes token
         } else {
             dispatch(authFailed(result.data.message));
         }
@@ -20,10 +22,11 @@ export const loginUser = (fields, role) => async (dispatch) => {
     }
 };
 
+// Register — uses plain axios (no token exists yet)
 export const registerUser = (fields, role) => async (dispatch) => {
     dispatch(authRequest());
     try {
-        const result = await axios.post(`${process.env.REACT_APP_BASE_URL}/${role}Reg`, fields, {
+        const result = await axiosInstance.post(`/${role}Reg`, fields, {
             headers: { 'Content-Type': 'application/json' },
         });
         if (result.data.schoolName) {
@@ -42,10 +45,11 @@ export const logoutUser = () => (dispatch) => {
     dispatch(authLogout());
 };
 
+// All authenticated calls use axiosInstance (token attached automatically)
 export const getUserDetails = (id, address) => async (dispatch) => {
     dispatch(getRequest());
     try {
-        const result = await axios.get(`${process.env.REACT_APP_BASE_URL}/${address}/${id}`);
+        const result = await axiosInstance.get(`/${address}/${id}`);
         if (result.data) {
             dispatch(doneSuccess(result.data));
         }
@@ -56,13 +60,18 @@ export const getUserDetails = (id, address) => async (dispatch) => {
 
 export const deleteUser = (id, address) => async (dispatch) => {
     dispatch(getRequest());
-    dispatch(getFailed("Sorry the delete function has been disabled for now."));
+    try {
+        await axiosInstance.delete(`/${address}/${id}`);
+        dispatch(doneSuccess({}));
+    } catch (error) {
+        dispatch(getError(error.message));
+    }
 };
 
 export const updateUser = (fields, id, address) => async (dispatch) => {
     dispatch(getRequest());
     try {
-        const result = await axios.put(`${process.env.REACT_APP_BASE_URL}/${address}/${id}`, fields, {
+        const result = await axiosInstance.put(`/${address}/${id}`, fields, {
             headers: { 'Content-Type': 'application/json' },
         });
         if (result.data.schoolName) {
@@ -78,7 +87,7 @@ export const updateUser = (fields, id, address) => async (dispatch) => {
 export const addStuff = (fields, address) => async (dispatch) => {
     dispatch(authRequest());
     try {
-        const result = await axios.post(`${process.env.REACT_APP_BASE_URL}/${address}Create`, fields, {
+        const result = await axiosInstance.post(`/${address}Create`, fields, {
             headers: { 'Content-Type': 'application/json' },
         });
         if (result.data.message) {

@@ -14,7 +14,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import { fetchNotifications, readNotification, readAllNotifications } from '../redux/notificationRelated/notificationHandle';
 import { setNotifications } from '../redux/notificationRelated/notificationSlice';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const TYPE_ICON = {
     assignment: <AssignmentIcon sx={{ fontSize: 16 }} />,
@@ -99,7 +98,7 @@ const NotificationBell = () => {
     useEffect(() => {
         if (!currentUser?._id) return;
 
-        const es = new EventSource(`${BASE}/Notifications/stream/${currentUser._id}`);
+        const es = new EventSource(`${process.env.REACT_APP_BASE_URL}/Notifications/stream/${currentUser._id}`);
 
         es.onmessage = (e) => {
             try {

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Grid, CircularProgress, Avatar, Button, InputAdornment, TextField } from '@mui/material';
 import { School, Tag, OpenInNew, FamilyRestroom, Search } from '@mui/icons-material';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 
 // Deterministic avatar colour from name
 const AVATAR_COLORS = ['#0ea5e9','#a78bfa','#34d399','#f59e0b','#f472b6','#60a5fa'];
@@ -120,8 +120,8 @@ const MyChildrenPage = () => {
 
     useEffect(() => {
         if (!currentUser?._id) return;
-        axios
-            .get(`${process.env.REACT_APP_BASE_URL}/Parent/children/${currentUser._id}`)
+        axiosInstance
+            .get(`/Parent/children/${currentUser._id}`)
             .then(res => setChildren(Array.isArray(res.data) ? res.data : []))
             .catch(() => setError('Failed to load children. Please refresh.'))
             .finally(() => setLoading(false));

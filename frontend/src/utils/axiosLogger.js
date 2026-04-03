@@ -1,11 +1,11 @@
-import axios from 'axios';
+import axiosInstance from './axiosInstance';
 
 /**
  * Call once with the addLog function from DevLogContext to attach
  * a global axios response interceptor that logs API errors.
  */
 export const attachAxiosLogger = (addLog) => {
-    const interceptor = axios.interceptors.response.use(
+    const interceptor = axiosInstance.interceptors.response.use(
         (response) => response,
         (error) => {
             const url    = error.config?.url || 'unknown URL';
@@ -24,5 +24,5 @@ export const attachAxiosLogger = (addLog) => {
     );
 
     // Return cleanup function
-    return () => axios.interceptors.response.eject(interceptor);
+    return () => axiosInstance.interceptors.response.eject(interceptor);
 };

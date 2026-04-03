@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const Parent = require("../models/parentSchema");
 const Student = require("../models/studentSchema");
+const { signToken } = require("../middleware/auth");
 
 // Register
 const parentRegister = async (req, res) => {
@@ -37,8 +38,9 @@ const parentLogIn = async (req, res) => {
             .populate("children", "name rollNum sclassName")
             .populate("school", "schoolName");
 
+        const token = signToken(result);
         result.password = undefined;
-        res.send(result);
+        res.send({ ...result.toObject(), token });
     } catch (err) {
         res.status(500).json(err);
     }

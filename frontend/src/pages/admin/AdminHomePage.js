@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
     Container, Grid, Box, Paper, Typography, CircularProgress,
     Chip, LinearProgress, Divider,
@@ -16,7 +16,6 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const STAT_CARDS = [
     { key: 'totalStudents', label: 'Total Students', icon: <GroupsIcon />,         color: '#0ea5e9', gradient: 'linear-gradient(135deg,#0ea5e9,#0284c7)' },
@@ -72,7 +71,7 @@ const AdminHomePage = () => {
 
     const fetchDashboard = useCallback(() => {
         setLoading(true);
-        axios.get(`${BASE}/Admin/dashboard/${schoolId}`)
+        axiosInstance.get(`/Admin/dashboard/${schoolId}`)
             .then(res => setData(res.data))
             .catch(() => setData(null))
             .finally(() => setLoading(false));

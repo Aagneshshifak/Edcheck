@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Box, Paper, Button, MenuItem, Select,
     FormControl, InputLabel, TextField, Table, TableBody, TableCell,
@@ -166,8 +166,8 @@ const ReportCenter = () => {
 
     // Load classes for filter dropdowns
     useEffect(() => {
-        axios
-            .get(`${process.env.REACT_APP_BASE_URL}/SclassList/${schoolId}`)
+        axiosInstance
+            .get(`/SclassList/${schoolId}`)
             .then((res) => setClasses(Array.isArray(res.data) ? res.data : []))
             .catch(() => setClasses([]));
     }, [schoolId]);
@@ -175,8 +175,8 @@ const ReportCenter = () => {
     // Load subjects when a class is selected
     useEffect(() => {
         if (!classId) { setSubjects([]); setSubjectId(''); return; }
-        axios
-            .get(`${process.env.REACT_APP_BASE_URL}/AllSubjects/${classId}`)
+        axiosInstance
+            .get(`/AllSubjects/${classId}`)
             .then((res) => setSubjects(Array.isArray(res.data) ? res.data : []))
             .catch(() => setSubjects([]));
     }, [classId]);
@@ -209,8 +209,8 @@ const ReportCenter = () => {
             assignmentCompletion: `Admin/reports/assignmentCompletion/${schoolId}`,
         };
 
-        axios
-            .get(`${process.env.REACT_APP_BASE_URL}/${endpointMap[reportType]}`, { params })
+        axiosInstance
+            .get(`/${endpointMap[reportType]}`, { params })
             .then((res) => setRows(Array.isArray(res.data) ? res.data : []))
             .catch((err) => setError(err.response?.data?.message || 'Failed to generate report'))
             .finally(() => setLoading(false));

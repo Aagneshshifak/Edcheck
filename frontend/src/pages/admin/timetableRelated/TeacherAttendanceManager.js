@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Box, Paper, Typography, Button, TextField, Table, TableBody,
     TableCell, TableHead, TableRow, Chip, CircularProgress, Alert,
 } from '@mui/material';
 import { markTeacherAttendance } from '../../../redux/timetableRelated/timetableSlice';
 
-const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 const BG     = '#0f172a';
 const CARD   = '#111827';
@@ -35,7 +34,7 @@ export default function TeacherAttendanceManager() {
         if (!schoolId) return;
         setLoading(true);
         setError(null);
-        axios.get(`${BASE_URL}/Teachers/${schoolId}`)
+        axiosInstance.get(`/Teachers/${schoolId}`)
             .then(r => setTeachers(Array.isArray(r.data) ? r.data : []))
             .catch(() => setError('Failed to load teachers.'))
             .finally(() => setLoading(false));

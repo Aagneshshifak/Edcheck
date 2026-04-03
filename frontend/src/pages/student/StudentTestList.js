@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, Chip, Button, CircularProgress, Alert } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import QuizIcon from '@mui/icons-material/Quiz';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { theme } from '../../theme/studentTheme';
@@ -11,17 +11,16 @@ const StudentTestList = () => {
     const { currentUser } = useSelector(s => s.user);
     const navigate = useNavigate();
     
-    const BASE = process.env.REACT_APP_BASE_URL;
     const [tests, setTests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        axios.get(`${BASE}/TestsForStudent/${currentUser._id}`)
+        axiosInstance.get(`/TestsForStudent/${currentUser._id}`)
             .then(res => setTests(res.data || []))
             .catch(() => setError('Failed to load tests.'))
             .finally(() => setLoading(false));
-    }, [BASE, currentUser._id]);
+    }, [currentUser._id]);
 
     if (loading) return (
         <Box sx={{ minHeight: '100vh', background: theme.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

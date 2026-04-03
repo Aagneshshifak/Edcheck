@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const Teacher = require('../models/teacherSchema.js');
 const Subject = require('../models/subjectSchema.js');
 const { withCache, invalidate } = require('../utils/cache.js');
+const { signToken } = require('../middleware/auth.js');
 
 const teacherRegister = async (req, res) => {
     const { name, email, password, role, school, teachSubject, teachSclass } = req.body;
@@ -38,8 +39,9 @@ const teacherLogIn = async (req, res) => {
                 teacher = await teacher.populate("school",        "schoolName")
                 teacher = await teacher.populate("teachSclass",   "sclassName")
                 teacher = await teacher.populate("teachClasses",  "sclassName")
+                const token = signToken(teacher);
                 teacher.password = undefined;
-                res.send(teacher);
+                res.send({ ...teacher.toObject(), token });
             } else {
                 res.send({ message: "Invalid password" });
             }

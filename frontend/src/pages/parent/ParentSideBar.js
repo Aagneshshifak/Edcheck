@@ -1,5 +1,5 @@
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Box, Typography } from '@mui/material';
-import { FamilyRestroom, EventNote, Logout } from '@mui/icons-material';
+import { FamilyRestroom, EventNote, Campaign, Logout } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { authLogout } from '../../redux/userRelated/userSlice';
@@ -9,6 +9,7 @@ const drawerWidth = 220;
 const items = [
     { text: 'My Children', icon: <FamilyRestroom />, path: '/Parent/mychildren' },
     { text: 'Attendance',  icon: <EventNote />,      path: '/Parent/attendance' },
+    { text: 'Notices',     icon: <Campaign />,       path: '/Parent/notices' },
 ];
 
 const ParentSideBar = () => {

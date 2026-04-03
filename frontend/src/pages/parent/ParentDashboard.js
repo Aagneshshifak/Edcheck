@@ -4,6 +4,7 @@ import ParentSideBar from './ParentSideBar';
 import MyChildrenPage from './MyChildrenPage';
 import ParentAttendancePage from './ParentAttendancePage';
 import ChildDashboard from './ChildDashboard';
+import ParentNoticesPage from './ParentNoticesPage';
 import { Route, Routes, Navigate } from 'react-router-dom';
 
 const ParentDashboard = () => {
@@ -28,6 +29,7 @@ const ParentDashboard = () => {
                     <Route path="/Parent/mychildren" element={<MyChildrenPage />} />
                     <Route path="/Parent/student/:studentId" element={<ChildDashboard />} />
                     <Route path="/Parent/attendance" element={<ParentAttendancePage />} />
+                    <Route path="/Parent/notices" element={<ParentNoticesPage />} />
                     {/* Legacy redirect */}
                     <Route path="/Parent/dashboard" element={<Navigate to="/Parent/mychildren" replace />} />
                     <Route path="*" element={<Navigate to="/Parent/mychildren" replace />} />

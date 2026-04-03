@@ -3,6 +3,7 @@ const Student = require('../models/studentSchema.js');
 const Subject = require('../models/subjectSchema.js');
 const { createNotifications } = require('./notification-controller');
 const { withCache, invalidate } = require('../utils/cache.js');
+const { signToken } = require('../middleware/auth.js');
 
 const studentRegister = async (req, res) => {
     try {
@@ -47,10 +48,11 @@ const studentLogIn = async (req, res) => {
             if (validated) {
                 student = await student.populate("school", "schoolName");
                 student = await student.populate("sclassName", "sclassName");
+                const token = signToken(student);
                 student.password = undefined;
                 student.examResult = undefined;
                 student.attendance = undefined;
-                res.send(student);
+                res.send({ ...student.toObject(), token });
             } else {
                 res.send({ message: "Invalid password" });
             }

@@ -34,6 +34,13 @@ const noticeSchema = new mongoose.Schema({
         publicId: { type: String },
         _id: false,
     }],
+
+    // Priority — used for urgent highlighting in UI
+    priority: {
+        type: String,
+        enum: ['normal', 'urgent'],
+        default: 'normal',
+    },
 }, { timestamps: true });
 
 noticeSchema.pre("save", function (next) {

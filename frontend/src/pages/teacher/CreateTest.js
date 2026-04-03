@@ -26,7 +26,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import * as XLSX from 'xlsx';
 
 const emptyQuestion = () => ({
@@ -235,7 +235,7 @@ const CreateTest = () => {
                     marks: Number(q.marks),
                 })),
             };
-            await axios.post(`${process.env.REACT_APP_BASE_URL}/TestCreate`, payload);
+            await axiosInstance.post(`${process.env.REACT_APP_BASE_URL}/TestCreate`, payload);
             setSnackbar({ open: true, message: 'Test created successfully!', severity: 'success' });
             setTitle('');
             setSubject('');

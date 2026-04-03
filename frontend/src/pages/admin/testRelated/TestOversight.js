@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../../utils/axiosInstance';
 import {
     Container, Typography, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, CircularProgress, Alert, Chip,
@@ -16,7 +16,6 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import QuizIcon from '@mui/icons-material/Quiz';
 
-const BASE = process.env.REACT_APP_BASE_URL;
 
 const EMPTY_FORM = { title: '', subjectId: '', classId: '', durationMinutes: 30, shuffleQuestions: false };
 
@@ -41,9 +40,9 @@ const TestOversight = () => {
     const fetchAll = useCallback(() => {
         setLoading(true); setError('');
         Promise.all([
-            axios.get(`${BASE}/Admin/tests/${schoolId}`),
-            axios.get(`${BASE}/SclassList/${schoolId}`),
-            axios.get(`${BASE}/AllSubjects/${schoolId}`),
+            axiosInstance.get(`/Admin/tests/${schoolId}`),
+            axiosInstance.get(`/SclassList/${schoolId}`),
+            axiosInstance.get(`/AllSubjects/${schoolId}`),
         ]).then(([t, c, s]) => {
             setTests(Array.isArray(t.data) ? t.data : []);
             setClasses(Array.isArray(c.data) ? c.data : []);
@@ -58,7 +57,7 @@ const TestOversight = () => {
         e.stopPropagation();
         if (!window.confirm('Delete this test and all its attempts?')) return;
         try {
-            await axios.delete(`${BASE}/Test/${id}`);
+            await axiosInstance.delete(`/Test/${id}`);
             setTests(prev => prev.filter(t => t._id !== id));
         } catch (err) { alert(err.response?.data?.message || 'Delete failed'); }
     };
@@ -66,7 +65,7 @@ const TestOversight = () => {
     const handleToggle = async (e, id) => {
         e.stopPropagation();
         try {
-            const { data } = await axios.put(`${BASE}/Admin/tests/${id}/toggle`);
+            const { data } = await axiosInstance.put(`/Admin/tests/${id}/toggle`);
             setTests(prev => prev.map(t => t._id === id ? { ...t, isActive: data.isActive } : t));
         } catch (err) { alert('Toggle failed'); }
     };
@@ -75,7 +74,7 @@ const TestOversight = () => {
         if (!form.title || !form.classId) return setError('Title and class are required');
         setSaving(true); setError('');
         try {
-            await axios.post(`${BASE}/Admin/tests/create`, { ...form, schoolId });
+            await axiosInstance.post(`/Admin/tests/create`, { ...form, schoolId });
             setSuccess('Test created');
             setCreateOpen(false);
             setForm(EMPTY_FORM);
