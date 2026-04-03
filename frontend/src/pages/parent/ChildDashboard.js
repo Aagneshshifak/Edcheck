@@ -12,6 +12,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { fetchWeeklyTimetable } from '../../redux/timetableRelated/timetableSlice';
+import ReportCard from '../../components/ReportCard';
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
 const BG     = '#0b1120';
@@ -424,6 +425,12 @@ const ChildDashboard = () => {
                     </Table>
                 </Paper>
             )}
+
+            {/* ── Report Card ── */}
+            <SectionHeader>Report Card</SectionHeader>
+            <Box sx={{ mb: 4 }}>
+                <ReportCard studentId={studentId} compact />
+            </Box>
 
             {/* ── Timetable ── */}
             <SectionHeader>Weekly Timetable</SectionHeader>

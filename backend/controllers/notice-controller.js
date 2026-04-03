@@ -3,24 +3,49 @@ const { withCache, invalidate } = require('../utils/cache');
 
 const noticeCreate = async (req, res) => {
     try {
-        const notice = new Notice({ ...req.body, school: req.body.adminID });
+        const notice = new Notice({
+            ...req.body,
+            school:   req.body.adminID || req.body.school || req.body.schoolId,
+            schoolId: req.body.adminID || req.body.school || req.body.schoolId,
+        });
         const result = await notice.save();
-        invalidate(`notices:${result.school}`);
+        invalidate(`notices:${result.schoolId}`);
         res.send(result);
     } catch (err) {
         res.status(500).json(err);
     }
 };
 
+/**
+ * GET /NoticeList/:schoolId
+ * Optional query params:
+ *   audience   — filter by audience (students|teachers|parents|all)
+ *   targetType — filter by targetType
+ *   targetId   — filter by targetId
+ */
 const noticeList = async (req, res) => {
     try {
-        const cacheKey = `notices:${req.params.id}`;
-        const notices = await withCache(cacheKey, async () => {
-            const list = await Notice.find({ school: req.params.id })
-                .sort({ date: -1 })
-                .lean();
-            return list;
-        }, 120); // 2-minute cache
+        const { audience, targetType, targetId } = req.query;
+
+        // Build query — always include "all" notices plus any targeted ones
+        const query = {
+            $or: [{ school: req.params.id }, { schoolId: req.params.id }],
+        };
+
+        if (audience && audience !== 'all') {
+            query.$and = [{ $or: [{ audience }, { audience: 'all' }] }];
+        }
+
+        if (targetType && targetType !== 'all') {
+            const targetFilter = { $or: [{ targetType: 'all' }, { targetType }] };
+            if (targetId) targetFilter.$or.push({ targetId });
+            query.$and = [...(query.$and || []), targetFilter];
+        }
+
+        const cacheKey = `notices:${req.params.id}:${audience || ''}:${targetType || ''}:${targetId || ''}`;
+        const notices = await withCache(cacheKey, async () =>
+            Notice.find(query).sort({ date: -1 }).lean()
+        , 60);
 
         if (notices.length > 0) {
             res.send(notices);
@@ -35,7 +60,7 @@ const noticeList = async (req, res) => {
 const updateNotice = async (req, res) => {
     try {
         const result = await Notice.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
-        if (result) invalidate(`notices:${result.school}`);
+        if (result) invalidate(`notices:${result.schoolId}`);
         res.send(result);
     } catch (error) {
         res.status(500).json(error);
@@ -45,7 +70,7 @@ const updateNotice = async (req, res) => {
 const deleteNotice = async (req, res) => {
     try {
         const result = await Notice.findByIdAndDelete(req.params.id);
-        if (result) invalidate(`notices:${result.school}`);
+        if (result) invalidate(`notices:${result.schoolId}`);
         res.send(result);
     } catch (error) {
         res.status(500).json(error);
@@ -54,15 +79,17 @@ const deleteNotice = async (req, res) => {
 
 const deleteNotices = async (req, res) => {
     try {
-        const result = await Notice.deleteMany({ school: req.params.id })
+        const result = await Notice.deleteMany({
+            $or: [{ school: req.params.id }, { schoolId: req.params.id }],
+        });
         if (result.deletedCount === 0) {
-            res.send({ message: "No notices found to delete" })
+            res.send({ message: "No notices found to delete" });
         } else {
-            res.send(result)
+            res.send(result);
         }
     } catch (error) {
-        res.status(500).json(err);
+        res.status(500).json(error);
     }
-}
+};
 
 module.exports = { noticeCreate, noticeList, updateNotice, deleteNotice, deleteNotices };

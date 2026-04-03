@@ -278,6 +278,10 @@ router.get('/api/attendance/check',                  checkPeriodAttendance);
 router.get('/api/attendance/class/:classId',         getClassAttendancePeriod);
 router.get('/api/attendance/student/:studentId',     getStudentAttendancePeriod);
 
+// ── Report Card ───────────────────────────────────────────────────────────────
+const { getReportCard } = require('../controllers/report-card-controller');
+router.get('/api/report/student/:studentId', getReportCard);
+
 // ── Upcoming Deadlines ────────────────────────────────────────────────────────
 router.get('/UpcomingDeadlines/:studentId', getUpcomingDeadlines);
 

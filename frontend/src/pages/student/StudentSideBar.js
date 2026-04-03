@@ -12,6 +12,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import QuizIcon from '@mui/icons-material/Quiz';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import { theme } from '../../theme/studentTheme';
 
 const NavItem = ({ to, icon, label, active }) => (
@@ -46,6 +47,7 @@ const StudentSideBar = () => {
             <NavItem to="/Student/tests" icon={<QuizIcon />} label="Tests" active={is('/Student/tests')} />
             <NavItem to="/Student/progress" icon={<TrendingUpIcon />} label="Progress" active={is('/Student/progress')} />
             <NavItem to="/Student/timetable" icon={<CalendarMonthIcon />} label="Timetable" active={is('/Student/timetable')} />
+            <NavItem to="/Student/report" icon={<AssessmentIcon />} label="Report Card" active={is('/Student/report')} />
             <NavItem to="/Student/complain" icon={<AnnouncementOutlinedIcon />} label="Complain" active={is('/Student/complain')} />
 
             <Divider sx={{ my: 1, borderColor: 'rgba(30,144,255,0.15)' }} />
