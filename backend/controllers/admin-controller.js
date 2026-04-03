@@ -7,6 +7,7 @@ const Subject = require('../models/subjectSchema.js');
 const Notice = require('../models/noticeSchema.js');
 const Complain = require('../models/complainSchema.js');
 const { withCache, invalidate } = require('../utils/cache.js');
+const { signToken } = require('../middleware/auth.js');
 
 // const adminRegister = async (req, res) => {
 //     try {
@@ -86,8 +87,9 @@ const adminLogIn = async (req, res) => {
         if (admin) {
             const validated = await bcrypt.compare(req.body.password, admin.password);
             if (validated) {
+                const token = signToken(admin);
                 admin.password = undefined;
-                res.send(admin);
+                res.send({ ...admin.toObject(), token });
             } else {
                 res.send({ message: "Invalid password" });
             }

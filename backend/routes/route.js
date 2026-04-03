@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const path = require('path');
+const { auth } = require('../middleware/auth');
 
 const { adminRegister, adminLogIn, getAdminDetail, updateAdmin, updateAdminPassword } = require('../controllers/admin-controller.js');
 const { sclassCreate, sclassList, deleteSclass, deleteSclasses, getSclassDetail, getSclassStudents } = require('../controllers/class-controller.js');
@@ -52,70 +53,70 @@ const { getAlerts } = require('../controllers/alerts-controller.js');
 const requireFeature = require('../middleware/requireFeature');
 
 // ── Admin — Activity Logs ─────────────────────────────────────────────────────
-router.get('/Admin/activity/:schoolId', getActivityLogs);
+router.get('/Admin/activity/:schoolId', auth, getActivityLogs);
 
 // ── Admin — Data Management ───────────────────────────────────────────────────
-router.get('/Admin/data/export/students/:schoolId', exportStudents);
-router.get('/Admin/data/export/teachers/:schoolId', exportTeachers);
-router.get('/Admin/data/export/classes/:schoolId', exportClasses);
-router.get('/Admin/data/export/testResults/:schoolId', exportTestResults);
-router.get('/Admin/data/importHistory/:schoolId', getImportHistory);
-router.get('/Admin/data/orphans/:schoolId', getOrphans);
-router.delete('/Admin/data/orphans/:schoolId', deleteOrphans);
+router.get('/Admin/data/export/students/:schoolId', auth, exportStudents);
+router.get('/Admin/data/export/teachers/:schoolId', auth, exportTeachers);
+router.get('/Admin/data/export/classes/:schoolId', auth, exportClasses);
+router.get('/Admin/data/export/testResults/:schoolId', auth, exportTestResults);
+router.get('/Admin/data/importHistory/:schoolId', auth, getImportHistory);
+router.get('/Admin/data/orphans/:schoolId', auth, getOrphans);
+router.delete('/Admin/data/orphans/:schoolId', auth, deleteOrphans);
 
 // ── Admin — Real-time Alerts ──────────────────────────────────────────────────
-router.get('/Admin/alerts/:schoolId', getAlerts);
+router.get('/Admin/alerts/:schoolId', auth, getAlerts);
 
 // ── Admin — Bulk Upload ───────────────────────────────────────────────────────
-router.post('/Admin/bulk/students', upload.single('file'), bulkUploadStudents);
+router.post('/Admin/bulk/students', auth, upload.single('file'), bulkUploadStudents);
 
 const { addSubject, removeSubject, getSubjectsDetail, updateTopics, assignTeacher, updateSubject, assignSubjectToClass, unassignSubjectFromClass } = require('../controllers/admin-subject-controller.js');
 
 // ── Admin — Subject Management ────────────────────────────────────────────────
-router.post('/Admin/subjects/add', addSubject);
-router.delete('/Admin/subjects/:id', removeSubject);
-router.put('/Admin/subjects/:id', updateSubject);
-router.get('/Admin/subjects/detail/:schoolId', getSubjectsDetail);
-router.put('/Admin/subjects/:id/topics', updateTopics);
-router.put('/Admin/subjects/:id/teacher', assignTeacher);
-router.post('/Admin/subjects/:id/assign-class',    assignSubjectToClass);
-router.delete('/Admin/subjects/:id/assign-class',  unassignSubjectFromClass);
+router.post('/Admin/subjects/add', auth, addSubject);
+router.delete('/Admin/subjects/:id', auth, removeSubject);
+router.put('/Admin/subjects/:id', auth, updateSubject);
+router.get('/Admin/subjects/detail/:schoolId', auth, getSubjectsDetail);
+router.put('/Admin/subjects/:id/topics', auth, updateTopics);
+router.put('/Admin/subjects/:id/teacher', auth, assignTeacher);
+router.post('/Admin/subjects/:id/assign-class', auth, assignSubjectToClass);
+router.delete('/Admin/subjects/:id/assign-class', auth, unassignSubjectFromClass);
 
 // ── Admin — Test Management ───────────────────────────────────────────────────
-router.post('/Admin/tests/create', adminCreateTest);
-router.put('/Admin/tests/:id/toggle', toggleTestStatus);
+router.post('/Admin/tests/create', auth, adminCreateTest);
+router.put('/Admin/tests/:id/toggle', auth, toggleTestStatus);
 
 // ── Admin — Teacher Management ────────────────────────────────────────────────
-router.post('/Admin/teacher/add', addTeacher);
-router.put('/Admin/teacher/:id', updateTeacher);
-router.delete('/Admin/teacher/:id', removeTeacher);
-router.get('/Admin/teacher/:id/performance', getTeacherIndividualPerformance);
-router.delete('/Admin/teachers/bulk', bulkDeleteTeachers);
-router.put('/Admin/teacher/:id/status', updateTeacherStatus);
+router.post('/Admin/teacher/add', auth, addTeacher);
+router.put('/Admin/teacher/:id', auth, updateTeacher);
+router.delete('/Admin/teacher/:id', auth, removeTeacher);
+router.get('/Admin/teacher/:id/performance', auth, getTeacherIndividualPerformance);
+router.delete('/Admin/teachers/bulk', auth, bulkDeleteTeachers);
+router.put('/Admin/teacher/:id/status', auth, updateTeacherStatus);
 
 // ── Teacher — Class Insights ──────────────────────────────────────────────────
 const { getClassInsights } = require('../controllers/teacher-insights-controller');
-router.get('/Teacher/class/:classId/insights', getClassInsights);
-router.post('/Admin/teacher/:id/resetPassword', resetTeacherPassword);
+router.get('/Teacher/class/:classId/insights', auth, getClassInsights);
+router.post('/Admin/teacher/:id/resetPassword', auth, resetTeacherPassword);
 
-// ── Class API (public-style CRUD) ─────────────────────────────────────────────
+// ── Class API ─────────────────────────────────────────────────────────────────
 const { createClass, getAllClasses, getClassById, updateClassById, deleteClassById, getClassTree, checkClassIntegrity } = require('../controllers/class-api-controller.js');
-router.post('/api/class/create',              createClass);
-router.get('/api/class/all',                  getAllClasses);
-router.get('/api/class/:id/tree',             getClassTree);
-router.get('/api/class/:id/integrity',        checkClassIntegrity);
-router.get('/api/class/:id',                  getClassById);
-router.put('/api/class/update/:id',           updateClassById);
-router.delete('/api/class/delete/:id',        deleteClassById);
+router.post('/api/class/create', auth, createClass);
+router.get('/api/class/all', auth, getAllClasses);
+router.get('/api/class/:id/tree', auth, getClassTree);
+router.get('/api/class/:id/integrity', auth, checkClassIntegrity);
+router.get('/api/class/:id', auth, getClassById);
+router.put('/api/class/update/:id', auth, updateClassById);
+router.delete('/api/class/delete/:id', auth, deleteClassById);
 
 // ── Admin — Class Management ──────────────────────────────────────────────────
-router.post('/Admin/class/add', addClass);
-router.put('/Admin/class/:id', updateClass);
-router.delete('/Admin/class/:id', removeClass);
-router.get('/Admin/class/:id/detail', getClassDetail);
-router.put('/Admin/class/:id/status', toggleClassStatus);
-router.post('/Admin/class/:id/analytics/recompute', recomputeClassAnalytics);
-router.get('/Admin/class/:id/analytics', getClassAnalytics);
+router.post('/Admin/class/add', auth, addClass);
+router.put('/Admin/class/:id', auth, updateClass);
+router.delete('/Admin/class/:id', auth, removeClass);
+router.get('/Admin/class/:id/detail', auth, getClassDetail);
+router.put('/Admin/class/:id/status', auth, toggleClassStatus);
+router.post('/Admin/class/:id/analytics/recompute', auth, recomputeClassAnalytics);
+router.get('/Admin/class/:id/analytics', auth, getClassAnalytics);
 
 // ── Admin — Student Management ────────────────────────────────────────────────
 router.post('/Admin/student/add', adminAddStudent);
@@ -136,205 +137,205 @@ const { getSubstitutesByClassDate, getSubstitutesByTeacher } = require('../contr
 const { autoGenerateTimetables } = require('../controllers/timetable-generator-controller.js');
 
 // ── Admin — Dashboard summary ─────────────────────────────────────────────────
-router.get('/Admin/dashboard/:schoolId', getDashboardSummary);
+router.get('/Admin/dashboard/:schoolId', auth, getDashboardSummary);
 
 // ── Admin — Health metrics ────────────────────────────────────────────────────
-router.get('/Admin/health/:schoolId', getHealthMetrics);
+router.get('/Admin/health/:schoolId', auth, getHealthMetrics);
 
 // ── Admin — School config ─────────────────────────────────────────────────────
-router.get('/Admin/config/:schoolId', getConfig);
-router.put('/Admin/config/:schoolId', updateConfig);
+router.get('/Admin/config/:schoolId', auth, getConfig);
+router.put('/Admin/config/:schoolId', auth, updateConfig);
 
 // ── Admin ────────────────────────────────────────────────────────────────────
 router.post('/AdminReg', adminRegister);
 router.post('/AdminLogin', adminLogIn);
-router.get("/Admin/:id", getAdminDetail);
-router.put("/Admin/:id/password", updateAdminPassword);
-router.put("/Admin/:id", cloudinaryUpload.single('logo'), updateAdmin);
+router.get("/Admin/:id", auth, getAdminDetail);
+router.put("/Admin/:id/password", auth, updateAdminPassword);
+router.put("/Admin/:id", auth, cloudinaryUpload.single('logo'), updateAdmin);
 
 // ── Student ──────────────────────────────────────────────────────────────────
 router.post('/StudentReg', studentRegister);
 router.post('/StudentLogin', studentLogIn);
-router.get("/Students/:id", getStudents);
-router.get("/Student/:id", getStudentDetail);
-router.delete("/Students/:id", deleteStudents);
-router.delete("/StudentsClass/:id", deleteStudentsByClass);
-router.delete("/Student/:id", deleteStudent);
-router.put("/Student/:id", updateStudent);
-router.put('/UpdateExamResult/:id', updateExamResult);
-router.put('/StudentAttendance/:id', studentAttendance);
-router.put('/RemoveAllStudentsSubAtten/:id', clearAllStudentsAttendanceBySubject);
-router.put('/RemoveAllStudentsAtten/:id', clearAllStudentsAttendance);
-router.put('/RemoveStudentSubAtten/:id', removeStudentAttendanceBySubject);
-router.put('/RemoveStudentAtten/:id', removeStudentAttendance);
-router.get('/StudentProgress/:studentId', getStudentProgress);
+router.get("/Students/:id", auth, getStudents);
+router.get("/Student/:id", auth, getStudentDetail);
+router.delete("/Students/:id", auth, deleteStudents);
+router.delete("/StudentsClass/:id", auth, deleteStudentsByClass);
+router.delete("/Student/:id", auth, deleteStudent);
+router.put("/Student/:id", auth, updateStudent);
+router.put('/UpdateExamResult/:id', auth, updateExamResult);
+router.put('/StudentAttendance/:id', auth, studentAttendance);
+router.put('/RemoveAllStudentsSubAtten/:id', auth, clearAllStudentsAttendanceBySubject);
+router.put('/RemoveAllStudentsAtten/:id', auth, clearAllStudentsAttendance);
+router.put('/RemoveStudentSubAtten/:id', auth, removeStudentAttendanceBySubject);
+router.put('/RemoveStudentAtten/:id', auth, removeStudentAttendance);
+router.get('/StudentProgress/:studentId', auth, getStudentProgress);
 
 // ── Teacher ──────────────────────────────────────────────────────────────────
 router.post('/TeacherReg', teacherRegister);
 router.post('/TeacherLogin', teacherLogIn);
-router.get("/Teachers/:id", getTeachers);
-router.get("/Teacher/:id", getTeacherDetail);
-router.delete("/Teachers/:id", deleteTeachers);
-router.delete("/TeachersClass/:id", deleteTeachersByClass);
-router.delete("/Teacher/:id", deleteTeacher);
-router.put("/TeacherSubject", updateTeacherSubject);
-router.post('/TeacherAttendance/:id', teacherAttendance);
+router.get("/Teachers/:id", auth, getTeachers);
+router.get("/Teacher/:id", auth, getTeacherDetail);
+router.delete("/Teachers/:id", auth, deleteTeachers);
+router.delete("/TeachersClass/:id", auth, deleteTeachersByClass);
+router.delete("/Teacher/:id", auth, deleteTeacher);
+router.put("/TeacherSubject", auth, updateTeacherSubject);
+router.post('/TeacherAttendance/:id', auth, teacherAttendance);
 
 // ── Parent ───────────────────────────────────────────────────────────────────
 router.post('/ParentReg', parentRegister);
 router.post('/ParentLogin', parentLogIn);
-router.get("/Parents/:id", getParents);
-router.get("/Parent/children/:parentId", getParentChildren);
-router.get("/Parent/:parentId/student/:studentId/verify", verifyParentStudent);
-router.get("/Parent/:id", getParentDetail);
-router.put("/Parent/:id", updateParent);
-router.delete("/Parent/:id", deleteParent);
-router.put("/ParentAddChild", addChildToParent);
+router.get("/Parents/:id", auth, getParents);
+router.get("/Parent/children/:parentId", auth, getParentChildren);
+router.get("/Parent/:parentId/student/:studentId/verify", auth, verifyParentStudent);
+router.get("/Parent/:id", auth, getParentDetail);
+router.put("/Parent/:id", auth, updateParent);
+router.delete("/Parent/:id", auth, deleteParent);
+router.put("/ParentAddChild", auth, addChildToParent);
 
 // ── Notice ───────────────────────────────────────────────────────────────────
-router.post('/NoticeCreate', cloudinaryUpload.array('attachments', 5), noticeCreate);
-router.get('/NoticeList/:id', noticeList);
-router.delete("/Notices/:id", deleteNotices);
-router.delete("/Notice/:id", deleteNotice);
-router.put("/Notice/:id", updateNotice);
+router.post('/NoticeCreate', auth, cloudinaryUpload.array('attachments', 5), noticeCreate);
+router.get('/NoticeList/:id', auth, noticeList);
+router.delete("/Notices/:id", auth, deleteNotices);
+router.delete("/Notice/:id", auth, deleteNotice);
+router.put("/Notice/:id", auth, updateNotice);
 
 // ── Complain (legacy) ────────────────────────────────────────────────────────
 router.post('/ComplainCreate', complainCreate);
 router.get('/ComplainList/:id', complainList);
 
 // ── Class ────────────────────────────────────────────────────────────────────
-router.post('/SclassCreate', sclassCreate);
-router.get('/SclassList/:id', sclassList);
-router.get("/Sclass/Students/:id", getSclassStudents);   // must be before /Sclass/:id
-router.get("/Sclass/:id", getSclassDetail);
-router.delete("/Sclasses/:id", deleteSclasses);
-router.delete("/Sclass/:id", deleteSclass);
+router.post('/SclassCreate', auth, sclassCreate);
+router.get('/SclassList/:id', auth, sclassList);
+router.get("/Sclass/Students/:id", auth, getSclassStudents);
+router.get("/Sclass/:id", auth, getSclassDetail);
+router.delete("/Sclasses/:id", auth, deleteSclasses);
+router.delete("/Sclass/:id", auth, deleteSclass);
 
 // ── Subject ──────────────────────────────────────────────────────────────────
-router.post('/SubjectCreate', subjectCreate);
-router.get('/AllSubjects/:id', allSubjects);
-router.get('/ClassSubjects/:id', classSubjects);
-router.get('/FreeSubjectList/:id', freeSubjectList);
-router.get("/Subject/:id", getSubjectDetail);
-router.delete("/Subject/:id", deleteSubject);
-router.delete("/Subjects/:id", deleteSubjects);
-router.delete("/SubjectsClass/:id", deleteSubjectsByClass);
+router.post('/SubjectCreate', auth, subjectCreate);
+router.get('/AllSubjects/:id', auth, allSubjects);
+router.get('/ClassSubjects/:id', auth, classSubjects);
+router.get('/FreeSubjectList/:id', auth, freeSubjectList);
+router.get("/Subject/:id", auth, getSubjectDetail);
+router.delete("/Subject/:id", auth, deleteSubject);
+router.delete("/Subjects/:id", auth, deleteSubjects);
+router.delete("/SubjectsClass/:id", auth, deleteSubjectsByClass);
 
 // ── Admin — Assignment oversight ──────────────────────────────────────────────
-router.get('/Admin/assignments/:schoolId', getSchoolAssignments);
+router.get('/Admin/assignments/:schoolId', auth, getSchoolAssignments);
 
 // ── Admin — Test oversight ────────────────────────────────────────────────────
-router.get('/Admin/tests/:schoolId', getSchoolTests);
+router.get('/Admin/tests/:schoolId', auth, getSchoolTests);
 
 // ── Admin — Attendance reporting ──────────────────────────────────────────────
-router.get('/Admin/attendance/school/:schoolId', getSchoolAttendance);
-router.get('/Admin/attendance/class/:classId', getClassAttendance);
-router.get('/Admin/attendance/student/:studentId', getStudentAttendance);
+router.get('/Admin/attendance/school/:schoolId', auth, getSchoolAttendance);
+router.get('/Admin/attendance/class/:classId', auth, getClassAttendance);
+router.get('/Admin/attendance/student/:studentId', auth, getStudentAttendance);
 
 // ── Admin — Analytics ─────────────────────────────────────────────────────────
-router.get('/Admin/analytics/overview/:schoolId', getAnalyticsOverview);
-router.get('/Admin/analytics/leaderboard/:schoolId', requireFeature('leaderboard'), getLeaderboard);
-router.get('/Admin/analytics/subjectDifficulty/:schoolId', getSubjectDifficulty);
-router.get('/Admin/analytics/teachers/:schoolId', getTeacherPerformance);
-router.get('/Admin/analytics/risk/:schoolId', getStudentRisk);
-router.get('/Admin/analytics/gradeDistribution/:schoolId', getGradeDistribution);
-router.get('/Admin/analytics/cohortProgression/:schoolId', getCohortProgression);
-router.get('/Admin/analytics/riskTrends/:schoolId', getRiskTrends);
-router.get('/Admin/analytics/parentEngagement/:schoolId', getParentEngagement);
-router.get('/Admin/school/:schoolId/analytics', getSchoolAnalytics);
+router.get('/Admin/analytics/overview/:schoolId', auth, getAnalyticsOverview);
+router.get('/Admin/analytics/leaderboard/:schoolId', auth, requireFeature('leaderboard'), getLeaderboard);
+router.get('/Admin/analytics/subjectDifficulty/:schoolId', auth, getSubjectDifficulty);
+router.get('/Admin/analytics/teachers/:schoolId', auth, getTeacherPerformance);
+router.get('/Admin/analytics/risk/:schoolId', auth, getStudentRisk);
+router.get('/Admin/analytics/gradeDistribution/:schoolId', auth, getGradeDistribution);
+router.get('/Admin/analytics/cohortProgression/:schoolId', auth, getCohortProgression);
+router.get('/Admin/analytics/riskTrends/:schoolId', auth, getRiskTrends);
+router.get('/Admin/analytics/parentEngagement/:schoolId', auth, getParentEngagement);
+router.get('/Admin/school/:schoolId/analytics', auth, getSchoolAnalytics);
 
 // ── Admin — Reports ───────────────────────────────────────────────────────────
-router.get('/Admin/reports/studentPerformance/:schoolId', getStudentPerformance);
-router.get('/Admin/reports/classAttendance/:schoolId', getClassAttendanceReport);
-router.get('/Admin/reports/teacherActivity/:schoolId', getTeacherActivity);
-router.get('/Admin/reports/assignmentCompletion/:schoolId', getAssignmentCompletion);
+router.get('/Admin/reports/studentPerformance/:schoolId', auth, getStudentPerformance);
+router.get('/Admin/reports/classAttendance/:schoolId', auth, getClassAttendanceReport);
+router.get('/Admin/reports/teacherActivity/:schoolId', auth, getTeacherActivity);
+router.get('/Admin/reports/assignmentCompletion/:schoolId', auth, getAssignmentCompletion);
 
 // ── Admin — Notification management ──────────────────────────────────────────
-router.get('/Admin/notifications/preview', previewRecipients);
-router.post('/Admin/notifications/send', sendNotification);
-router.get('/Admin/notifications/sent/:schoolId', getSentNotifications);
-router.delete('/Admin/notifications/:id', deleteNotification);
+router.get('/Admin/notifications/preview', auth, previewRecipients);
+router.post('/Admin/notifications/send', auth, sendNotification);
+router.get('/Admin/notifications/sent/:schoolId', auth, getSentNotifications);
+router.delete('/Admin/notifications/:id', auth, deleteNotification);
 
 // ── Assignments ──────────────────────────────────────────────────────────────
-router.post('/AssignmentCreate', createAssignment);
-router.get('/AssignmentsByClass/:classId', getAssignmentsByClass);
-router.get('/AssignmentsBySubject/:subjectId', getAssignmentsBySubject);
-router.get('/AssignmentsByTeacher/:teacherId', getAssignmentsByTeacher);
-router.delete('/Assignment/:id', deleteAssignment);
+router.post('/AssignmentCreate', auth, createAssignment);
+router.get('/AssignmentsByClass/:classId', auth, getAssignmentsByClass);
+router.get('/AssignmentsBySubject/:subjectId', auth, getAssignmentsBySubject);
+router.get('/AssignmentsByTeacher/:teacherId', auth, getAssignmentsByTeacher);
+router.delete('/Assignment/:id', auth, deleteAssignment);
 
 // ── Submissions ───────────────────────────────────────────────────────────────
-router.post('/SubmitAssignment', requireFeature('fileUploads'), cloudinaryUpload.array('files', 5), submitAssignment);
-router.get('/StudentSubmissions/:studentId', getStudentSubmissions);
-router.get('/AssignmentSubmissions/:assignmentId', getAssignmentSubmissions);
-router.put('/GradeSubmission/:id', gradeSubmission);
+router.post('/SubmitAssignment', auth, requireFeature('fileUploads'), cloudinaryUpload.array('files', 5), submitAssignment);
+router.get('/StudentSubmissions/:studentId', auth, getStudentSubmissions);
+router.get('/AssignmentSubmissions/:assignmentId', auth, getAssignmentSubmissions);
+router.put('/GradeSubmission/:id', auth, gradeSubmission);
 
 // ── Attendance Analytics ──────────────────────────────────────────────────────
-router.get('/attendance-analytics/:studentId', getAttendanceAnalytics);
+router.get('/attendance-analytics/:studentId', auth, getAttendanceAnalytics);
 
 // ── Period-wise Attendance ────────────────────────────────────────────────────
 const { markPeriodAttendance, checkPeriodAttendance, getClassAttendancePeriod, getStudentAttendancePeriod } = require('../controllers/period-attendance-controller');
-router.post('/api/attendance/mark',                  markPeriodAttendance);
-router.get('/api/attendance/check',                  checkPeriodAttendance);
-router.get('/api/attendance/class/:classId',         getClassAttendancePeriod);
-router.get('/api/attendance/student/:studentId',     getStudentAttendancePeriod);
+router.post('/api/attendance/mark', auth, markPeriodAttendance);
+router.get('/api/attendance/check', auth, checkPeriodAttendance);
+router.get('/api/attendance/class/:classId', auth, getClassAttendancePeriod);
+router.get('/api/attendance/student/:studentId', auth, getStudentAttendancePeriod);
 
 // ── Report Card ───────────────────────────────────────────────────────────────
 const { getReportCard } = require('../controllers/report-card-controller');
-router.get('/api/report/student/:studentId', getReportCard);
+router.get('/api/report/student/:studentId', auth, getReportCard);
 
 // ── Generic File Upload (Cloudinary) ─────────────────────────────────────────
 const { uploadFiles, deleteFile } = require('../controllers/upload-controller');
-router.post('/api/upload/files',                cloudinaryUpload.array('files', 10), uploadFiles);
-router.delete('/api/upload/delete/:publicId',   deleteFile);
+router.post('/api/upload/files', auth, cloudinaryUpload.array('files', 10), uploadFiles);
+router.delete('/api/upload/delete/:publicId', auth, deleteFile);
 
 // ── Student Documents ─────────────────────────────────────────────────────────
 const { getStudentDocuments, uploadStudentDocuments, deleteStudentDocument } = require('../controllers/student-document-controller');
-router.get('/api/student-docs/:studentId',                    getStudentDocuments);
-router.post('/api/student-docs/:studentId',                   cloudinaryUpload.array('documents', 10), uploadStudentDocuments);
-router.delete('/api/student-docs/:studentId/:publicId',       deleteStudentDocument);
+router.get('/api/student-docs/:studentId', auth, getStudentDocuments);
+router.post('/api/student-docs/:studentId', auth, cloudinaryUpload.array('documents', 10), uploadStudentDocuments);
+router.delete('/api/student-docs/:studentId/:publicId', auth, deleteStudentDocument);
 
 // ── Upcoming Deadlines ────────────────────────────────────────────────────────
-router.get('/UpcomingDeadlines/:studentId', getUpcomingDeadlines);
+router.get('/UpcomingDeadlines/:studentId', auth, getUpcomingDeadlines);
 
-// ── Notifications ─────────────────────────────────────────────────────────────
+// ── Notifications — SSE stream is public (EventSource can't send headers) ────
 router.get('/Notifications/stream/:userId', streamNotifications);
-router.get('/Notifications/:userId', getNotifications);
-router.put('/Notifications/read/:id', markAsRead);
-router.put('/Notifications/readAll/:userId', markAllAsRead);
+router.get('/Notifications/:userId', auth, getNotifications);
+router.put('/Notifications/read/:id', auth, markAsRead);
+router.put('/Notifications/readAll/:userId', auth, markAllAsRead);
 
 // ── Serve uploaded files ──────────────────────────────────────────────────────
 const express = require('express');
 router.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ── Tests ───────────────────────────────────────────────────────────────────
-router.post('/TestCreate', createTest);
-router.get('/TestsByClass/:classId', getTestsByClass);
-router.get('/TestsForStudent/:studentId', getTestsForStudent);
-router.put('/Test/:id', updateTest);
-router.delete('/Test/:id', deleteTest);
+router.post('/TestCreate', auth, createTest);
+router.get('/TestsByClass/:classId', auth, getTestsByClass);
+router.get('/TestsForStudent/:studentId', auth, getTestsForStudent);
+router.put('/Test/:id', auth, updateTest);
+router.delete('/Test/:id', auth, deleteTest);
 
 // ── Test Attempts ────────────────────────────────────────────────────────────
-router.post('/SubmitAttempt', requireFeature('testRetake'), submitAttempt);
-router.get('/AttemptsByTest/:testId', getAttemptsByTest);
-router.get('/AttemptsByStudent/:studentId', getAttemptsByStudent);
-router.get('/Attempt/:id', getAttemptById);
+router.post('/SubmitAttempt', auth, requireFeature('testRetake'), submitAttempt);
+router.get('/AttemptsByTest/:testId', auth, getAttemptsByTest);
+router.get('/AttemptsByStudent/:studentId', auth, getAttemptsByStudent);
+router.get('/Attempt/:id', auth, getAttemptById);
 
 // ── Timetable ─────────────────────────────────────────────────────────────────
-router.get('/Timetable/config/:schoolId', getTimetableConfig);
-router.post('/Timetable/auto-generate/:schoolId', autoGenerateTimetables);
-router.post('/Timetable/:classId/:day', createDayTimetable);
-router.get('/Timetable/:classId/:day', getDayTimetable);
-router.get('/Timetable/:classId', getWeeklyTimetable);
-router.put('/Timetable/:classId/:day/period/:periodNumber', updatePeriod);
-router.delete('/Timetable/:classId/:day', deleteDayTimetable);
+router.get('/Timetable/config/:schoolId', auth, getTimetableConfig);
+router.post('/Timetable/auto-generate/:schoolId', auth, autoGenerateTimetables);
+router.post('/Timetable/:classId/:day', auth, createDayTimetable);
+router.get('/Timetable/:classId/:day', auth, getDayTimetable);
+router.get('/Timetable/:classId', auth, getWeeklyTimetable);
+router.put('/Timetable/:classId/:day/period/:periodNumber', auth, updatePeriod);
+router.delete('/Timetable/:classId/:day', auth, deleteDayTimetable);
 
 // ── Teacher Attendance (Timetable) ────────────────────────────────────────────
-router.post('/TeacherAttendance', markTeacherAttendance);
-router.get('/TeacherAttendance/:teacherId/:date', getTeacherAttendance);
-router.get('/TeacherSchedule/:teacherId/:day', getTeacherDaySchedule);
+router.post('/TeacherAttendance', auth, markTeacherAttendance);
+router.get('/TeacherAttendance/:teacherId/:date', auth, getTeacherAttendance);
+router.get('/TeacherSchedule/:teacherId/:day', auth, getTeacherDaySchedule);
 
 // ── Substitute Assignments ────────────────────────────────────────────────────
-router.get('/Substitute/teacher/:teacherId/:date', getSubstitutesByTeacher);
-router.get('/Substitute/:classId/:date', getSubstitutesByClassDate);
+router.get('/Substitute/teacher/:teacherId/:date', auth, getSubstitutesByTeacher);
+router.get('/Substitute/:classId/:date', auth, getSubstitutesByClassDate);
 
 module.exports = router;
