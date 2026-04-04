@@ -2,6 +2,15 @@ const router = require('express').Router();
 const path = require('path');
 const { auth } = require('../middleware/auth');
 
+// Health check endpoint for Render
+router.get('/', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        message: 'School Management API is running',
+        timestamp: new Date().toISOString()
+    });
+});
+
 const { adminRegister, adminLogIn, getAdminDetail, updateAdmin, updateAdminPassword } = require('../controllers/admin-controller.js');
 const { sclassCreate, sclassList, deleteSclass, deleteSclasses, getSclassDetail, getSclassStudents } = require('../controllers/class-controller.js');
 const { complainCreate, complainList } = require('../controllers/complain-controller.js');
