@@ -28,6 +28,8 @@ app.use(cors({
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            // Log rejected origin for debugging
+            logger.warn(`CORS: origin ${origin} not in allowed list: ${allowedOrigins.join(', ')}`);
             callback(new Error(`CORS: origin ${origin} not allowed`));
         }
     },
