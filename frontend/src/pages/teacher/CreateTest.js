@@ -98,12 +98,27 @@ const CreateTest = () => {
     };
 
     /**
-     * Expected XML structure:
+     * Expected XML structure (supports two formats):
+     * 
+     * Format 1 (original):
      * <questions>
      *   <question marks="1">
      *     <text>Question text</text>
      *     <option correct="true">Option A</option>
      *     <option>Option B</option>
+     *   </question>
+     * </questions>
+     * 
+     * Format 2 (alternative):
+     * <questions>
+     *   <question>
+     *     <questionText>Question text</questionText>
+     *     <options>
+     *       <option>Option A</option>
+     *       <option>Option B</option>
+     *     </options>
+     *     <correctAnswer>1</correctAnswer>
+     *     <marks>1</marks>
      *   </question>
      * </questions>
      */
@@ -115,28 +130,53 @@ const CreateTest = () => {
                 const doc = parser.parseFromString(e.target.result, 'text/xml');
                 const qNodes = doc.querySelectorAll('question');
                 const parsed = Array.from(qNodes).map((q) => {
-                    const text = q.querySelector('text')?.textContent?.trim() || '';
-                    const optNodes = q.querySelectorAll('option');
-                    const options = [];
+                    // Try Format 1 first (original format)
+                    let text = q.querySelector('text')?.textContent?.trim();
+                    let optNodes = q.querySelectorAll('option');
+                    let options = [];
                     let correctAnswer = 0;
-                    optNodes.forEach((opt, i) => {
-                        options.push(opt.textContent.trim());
-                        if (opt.getAttribute('correct') === 'true') correctAnswer = i;
-                    });
+                    let marks = Number(q.getAttribute('marks') || 1);
+
+                    if (text && optNodes.length > 0) {
+                        // Format 1: <text> and direct <option> elements
+                        optNodes.forEach((opt, i) => {
+                            options.push(opt.textContent.trim());
+                            if (opt.getAttribute('correct') === 'true') correctAnswer = i;
+                        });
+                    } else {
+                        // Format 2: <questionText>, <options>, <correctAnswer>, <marks>
+                        text = q.querySelector('questionText')?.textContent?.trim();
+                        const optionsContainer = q.querySelector('options');
+                        if (optionsContainer) {
+                            optNodes = optionsContainer.querySelectorAll('option');
+                            options = Array.from(optNodes).map(opt => opt.textContent.trim());
+                        }
+                        const correctAnswerNode = q.querySelector('correctAnswer');
+                        if (correctAnswerNode) {
+                            correctAnswer = Math.max(0, Number(correctAnswerNode.textContent.trim()) - 1);
+                        }
+                        const marksNode = q.querySelector('marks');
+                        if (marksNode) {
+                            marks = Number(marksNode.textContent.trim()) || 1;
+                        }
+                    }
+
                     return {
-                        questionText: text,
+                        questionText: text || '',
                         options: options.length >= 2 ? options : ['', ''],
                         correctAnswer,
-                        marks: Number(q.getAttribute('marks') || 1),
+                        marks,
                     };
                 }).filter(q => q.questionText);
+                
                 if (parsed.length === 0) {
                     setSnackbar({ open: true, message: 'No valid questions found in XML', severity: 'warning' });
                     return;
                 }
                 setQuestions(parsed);
                 setSnackbar({ open: true, message: `Imported ${parsed.length} questions from XML`, severity: 'success' });
-            } catch {
+            } catch (err) {
+                console.error('XML parse error:', err);
                 setSnackbar({ open: true, message: 'Failed to parse XML file', severity: 'error' });
             }
         };

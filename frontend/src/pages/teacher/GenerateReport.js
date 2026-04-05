@@ -30,7 +30,7 @@ const GenerateReport = () => {
                 if (cls[0]) setClassId(cls[0]._id || cls[0]);
             })
             .catch(() => {});
-    }, [currentUser?._id, BASE]);
+    }, [currentUser?._id]);
 
     // Load students when class changes
     useEffect(() => {
@@ -46,7 +46,7 @@ const GenerateReport = () => {
             })
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, [classId, BASE]);
+    }, [classId]);
 
     // ── Student list view ─────────────────────────────────────────────────────
     if (!selected) return (

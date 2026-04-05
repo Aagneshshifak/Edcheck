@@ -68,8 +68,17 @@ const createTest = async (req, res) => {
 // Get tests for a class (teacher view)
 const getTestsByClass = async (req, res) => {
     try {
-        const { classId, school } = req.query;
-        const tests = await Test.find({ classId, school })
+        const classId = req.params.classId || req.query.classId;
+        const school = req.query.school;
+        
+        if (!classId) {
+            return res.status(400).json({ message: 'classId is required' });
+        }
+        
+        const filter = { classId };
+        if (school) filter.school = school;
+        
+        const tests = await Test.find(filter)
             .populate("subject", "subName subjectName subCode");
         res.send(tests);
     } catch (err) {

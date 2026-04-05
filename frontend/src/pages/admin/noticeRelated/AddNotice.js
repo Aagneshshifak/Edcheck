@@ -62,13 +62,13 @@ const AddNotice = () => {
         const ep = endpoints[targetType];
         if (!ep) return;
 
-        axiosInstance.get(`${BASE}${ep}`)
+        axiosInstance.get(`${process.env.REACT_APP_BASE_URL}${ep}`)
             .then(({ data }) => {
                 const list = Array.isArray(data) ? data : [];
                 setTargets(list);
             })
             .catch(() => setTargets([]));
-    }, [targetType, adminID, BASE]);
+    }, [targetType, adminID]);
 
     const getTargetLabel = (item) => {
         if (targetType === 'class')   return item.className || item.sclassName || item._id;
