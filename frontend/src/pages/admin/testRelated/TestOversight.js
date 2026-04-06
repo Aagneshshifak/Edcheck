@@ -30,6 +30,7 @@ const TestOversight = () => {
     const [error, setError]         = useState('');
     const [success, setSuccess]     = useState('');
     const [classFilter, setClassFilter] = useState('');
+    const [subjectFilter, setSubjectFilter] = useState('');
     const [tab, setTab]             = useState(0); // 0=All, 1=Active, 2=Completed
 
     // Create dialog
@@ -39,8 +40,17 @@ const TestOversight = () => {
 
     const fetchAll = useCallback(() => {
         setLoading(true); setError('');
+        
+        // Build query params for filtering
+        const params = new URLSearchParams();
+        if (classFilter) params.append('classId', classFilter);
+        if (subjectFilter) params.append('subjectId', subjectFilter);
+        
+        const queryString = params.toString();
+        const testsUrl = `/Admin/tests/${schoolId}${queryString ? `?${queryString}` : ''}`;
+        
         Promise.all([
-            axiosInstance.get(`/Admin/tests/${schoolId}`),
+            axiosInstance.get(testsUrl),
             axiosInstance.get(`/SclassList/${schoolId}`),
             axiosInstance.get(`/AllSubjects/${schoolId}`),
         ]).then(([t, c, s]) => {
@@ -49,7 +59,7 @@ const TestOversight = () => {
             setSubjects(Array.isArray(s.data) ? s.data : []);
         }).catch(err => setError(err.response?.data?.message || 'Failed to load tests'))
           .finally(() => setLoading(false));
-    }, [schoolId]);
+    }, [schoolId, classFilter, subjectFilter]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -87,7 +97,6 @@ const TestOversight = () => {
     const classOptions = [...new Map(tests.map(t => [t.classId?._id, t.classId])).values()].filter(Boolean);
 
     const filtered = tests.filter(t => {
-        if (classFilter && t.classId?._id !== classFilter) return false;
         if (tab === 1 && !t.isActive)  return false;
         if (tab === 2 && t.isActive)   return false;
         return true;
@@ -130,6 +139,13 @@ const TestOversight = () => {
                     <Select value={classFilter} label="Class" onChange={e => setClassFilter(e.target.value)}>
                         <MenuItem value="">All Classes</MenuItem>
                         {classOptions.map(c => <MenuItem key={c._id} value={c._id}>{c.sclassName || c.className}</MenuItem>)}
+                    </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <InputLabel>Subject</InputLabel>
+                    <Select value={subjectFilter} label="Subject" onChange={e => setSubjectFilter(e.target.value)}>
+                        <MenuItem value="">All Subjects</MenuItem>
+                        {subjects.map(s => <MenuItem key={s._id} value={s._id}>{s.subName || s.subjectName}</MenuItem>)}
                     </Select>
                 </FormControl>
             </Box>

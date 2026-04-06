@@ -46,6 +46,7 @@ import AddClass from './classRelated/AddClass';
 import ClassDetails from './classRelated/ClassDetails';
 import ShowClasses from './classRelated/ShowClasses';
 import AccountMenu from '../../components/AccountMenu';
+import NotificationBell from '../../components/NotificationBell';
 
 import SystemHealth from './systemRelated/SystemHealth';
 import SystemConfig from './configRelated/SystemConfig';
@@ -131,6 +132,7 @@ const AdminDashboardInner = () => {
                         >
                             Admin Dashboard
                         </Typography>
+                        <NotificationBell />
                         <AccountMenu />
                     </Toolbar>
                 </AppBar>

@@ -38,7 +38,7 @@ const { getSchoolAttendance, getClassAttendance, getStudentAttendance } = requir
 const { sendNotification, getSentNotifications, deleteNotification, previewRecipients } = require('../controllers/admin-notification-controller.js');
 const { getAnalyticsOverview, getLeaderboard, getSubjectDifficulty, getTeacherPerformance, getStudentRisk, getGradeDistribution, getCohortProgression, getRiskTrends, getParentEngagement } = require('../controllers/admin-analytics-controller.js');
 const { getStudentPerformance, getClassAttendanceReport, getTeacherActivity, getAssignmentCompletion } = require('../controllers/admin-report-controller.js');
-const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest } = require('../controllers/test-controller.js');
+const { createTest, getTestById, getTestsByClass, getTestsForStudent, updateTest, deleteTest, publishTest } = require('../controllers/test-controller.js');
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
 
 const { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance: getTeacherIndividualPerformance, bulkDeleteTeachers, updateTeacherStatus, resetTeacherPassword } = require('../controllers/admin-teacher-controller.js');
@@ -135,6 +135,7 @@ const { getConfig, updateConfig } = require('../controllers/admin-config-control
 const { getConfig: getTimetableConfig, createDayTimetable, getDayTimetable, getWeeklyTimetable, updatePeriod, deleteDayTimetable, markTeacherAttendance, getTeacherAttendance, getTeacherDaySchedule } = require('../controllers/timetable-controller.js');
 const { getSubstitutesByClassDate, getSubstitutesByTeacher } = require('../controllers/substitute-controller.js');
 const { autoGenerateTimetables } = require('../controllers/timetable-generator-controller.js');
+const { updateTestQuestions } = require('../controllers/test-controller.js');
 
 // ── Admin — Dashboard summary ─────────────────────────────────────────────────
 router.get('/Admin/dashboard/:schoolId', auth, getDashboardSummary);
@@ -309,9 +310,12 @@ router.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 router.post('/TestCreate', auth, createTest);
+router.get('/Test/:id', auth, getTestById);
 router.get('/TestsByClass/:classId', auth, getTestsByClass);
 router.get('/TestsForStudent/:studentId', auth, getTestsForStudent);
 router.put('/Test/:id', auth, updateTest);
+router.put('/Test/:id/questions', auth, updateTestQuestions);
+router.put('/Test/:id/publish', auth, publishTest);
 router.delete('/Test/:id', auth, deleteTest);
 
 // ── Test Attempts ────────────────────────────────────────────────────────────

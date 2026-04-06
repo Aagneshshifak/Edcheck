@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
     IconButton, Badge, Box, Typography, Divider,
     ClickAwayListener, Paper, Slide,
@@ -78,6 +79,7 @@ const Toast = ({ notification, onClose }) => {
 // ── Main bell component ───────────────────────────────────────────────────────
 const NotificationBell = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { currentUser } = useSelector((s) => s.user);
     const { items, hasMore, nextCursor } = useSelector((s) => s.notifications);
     const [open, setOpen] = useState(false);
@@ -122,6 +124,20 @@ const NotificationBell = () => {
 
     const handleMarkOne = (id) => dispatch(readNotification(id));
     const handleMarkAll = () => dispatch(readAllNotifications(currentUser._id));
+
+    const handleNotificationClick = (notification) => {
+        // Mark as read if unread
+        if (!notification.readStatus) {
+            handleMarkOne(notification._id);
+        }
+
+        // Navigate based on notification type and metadata
+        if (notification.type === 'test' && notification.metadata?.testId) {
+            setOpen(false);
+            navigate(`/Admin/tests/${notification.metadata.testId}`);
+        }
+        // Add more navigation logic for other types as needed
+    };
 
     return (
         <>
@@ -169,11 +185,11 @@ const NotificationBell = () => {
                                 <>
                                 {items.map((n) => (
                                     <Box key={n._id}
-                                        onClick={() => !n.readStatus && handleMarkOne(n._id)}
+                                        onClick={() => handleNotificationClick(n)}
                                         sx={{
                                             px: 2, py: 1.5,
                                             display: 'flex', gap: 1.5, alignItems: 'flex-start',
-                                            cursor: n.readStatus ? 'default' : 'pointer',
+                                            cursor: 'pointer',
                                             bgcolor: n.readStatus ? 'transparent' : 'rgba(30,144,255,0.06)',
                                             borderLeft: n.readStatus ? '3px solid transparent' : `3px solid ${TYPE_COLOR[n.type] || '#1e90ff'}`,
                                             '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },

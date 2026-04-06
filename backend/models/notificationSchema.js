@@ -15,6 +15,10 @@ const notificationSchema = new mongoose.Schema({
         required: true,
     },
     readStatus: { type: Boolean, default: false },
+    metadata: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+    },
 }, { timestamps: true });
 
 notificationSchema.index({ userId: 1, readStatus: 1 });

@@ -2,12 +2,13 @@ const Test        = require("../models/testSchema");
 const TestAttempt  = require("../models/testAttemptSchema");
 const Student      = require("../models/studentSchema");
 
-// GET /Admin/tests/:schoolId?classId=&status=active|completed
+// GET /Admin/tests/:schoolId?classId=&subjectId=&status=active|completed
 const getSchoolTests = async (req, res) => {
     try {
         const { schoolId } = req.params;
         const filter = { school: schoolId };
         if (req.query.classId) filter.classId = req.query.classId;
+        if (req.query.subjectId) filter.subject = req.query.subjectId;
         if (req.query.status === 'active')    filter.isActive = true;
         if (req.query.status === 'completed') filter.isActive = false;
 
@@ -64,18 +65,27 @@ const getSchoolTests = async (req, res) => {
 const adminCreateTest = async (req, res) => {
     try {
         const { title, subjectId, classId, schoolId, durationMinutes, questions, shuffleQuestions } = req.body;
+        
+        // Validate required fields: title, class, duration
         if (!title || !classId || !schoolId) {
             return res.status(400).json({ message: 'title, classId and schoolId are required' });
         }
+        
+        // Validate duration if provided
+        if (durationMinutes !== undefined && durationMinutes <= 0) {
+            return res.status(400).json({ message: 'duration must be greater than 0' });
+        }
+        
         const test = new Test({
             title,
-            subject:         subjectId || undefined,
+            subject:         subjectId || undefined,  // Subject is optional
             classId,
             school:          schoolId,
             durationMinutes: durationMinutes || 30,
-            questions:       questions || [],
+            questions:       questions || [],         // Allow empty questions array
             shuffleQuestions: shuffleQuestions || false,
-            isActive:        true,
+            isActive:        false,                   // Set to false by default for test shells
+            createdBy:       req.user.id,             // Store admin user ID
         });
         await test.save();
         res.status(201).json(test);

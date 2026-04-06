@@ -5,6 +5,88 @@ const { createNotifications } = require("./notification-controller");
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Validates that question text is not empty
+ * @param {string} questionText - The question text to validate
+ * @returns {string|null} Error message if invalid, null if valid
+ */
+function validateQuestionText(questionText) {
+    if (!questionText || questionText.trim() === "") {
+        return "Question text cannot be empty";
+    }
+    return null;
+}
+
+/**
+ * Validates that option count is between 2-6
+ * @param {Array} options - The options array to validate
+ * @returns {string|null} Error message if invalid, null if valid
+ */
+function validateOptionCount(options) {
+    if (!options || !Array.isArray(options)) {
+        return "Questions must have 2-6 options";
+    }
+    if (options.length < 2 || options.length > 6) {
+        return "Questions must have 2-6 options";
+    }
+    return null;
+}
+
+/**
+ * Validates that correctAnswer index is within option range
+ * @param {number} correctAnswer - The correct answer index
+ * @param {Array} options - The options array
+ * @returns {string|null} Error message if invalid, null if valid
+ */
+function validateCorrectAnswer(correctAnswer, options) {
+    if (correctAnswer == null) {
+        return "Correct answer must be a valid option index";
+    }
+    if (!options || !Array.isArray(options)) {
+        return "Correct answer must be a valid option index";
+    }
+    if (correctAnswer < 0 || correctAnswer >= options.length) {
+        return "Correct answer must be a valid option index";
+    }
+    return null;
+}
+
+/**
+ * Validates that marks value is greater than zero
+ * @param {number} marks - The marks value to validate
+ * @returns {string|null} Error message if invalid, null if valid
+ */
+function validateMarks(marks) {
+    if (marks == null || marks <= 0) {
+        return "Marks must be greater than 0";
+    }
+    return null;
+}
+
+/**
+ * Validates a complete question object
+ * @param {Object} question - The question object to validate
+ * @param {number} questionIndex - The index of the question (for error messages)
+ * @returns {string|null} Error message if invalid, null if valid
+ */
+function validateQuestion(question, questionIndex = 0) {
+    const questionNum = questionIndex + 1;
+    
+    let error = validateQuestionText(question.questionText);
+    if (error) return `Question ${questionNum}: ${error}`;
+    
+    error = validateOptionCount(question.options);
+    if (error) return `Question ${questionNum}: ${error}`;
+    
+    error = validateCorrectAnswer(question.correctAnswer, question.options);
+    if (error) return `Question ${questionNum}: ${error}`;
+    
+    error = validateMarks(question.marks);
+    if (error) return `Question ${questionNum}: ${error}`;
+    
+    return null;
+}
+
 function validateTest(body) {
     const { durationMinutes, questions } = body;
 
@@ -17,16 +99,8 @@ function validateTest(body) {
     }
 
     for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
-        if (!q.options || q.options.length < 2 || q.options.length > 6) {
-            return `question ${i + 1}: options must have between 2 and 6 items`;
-        }
-        if (q.correctAnswer == null || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
-            return `question ${i + 1}: correctAnswer must be a valid index into options`;
-        }
-        if (!q.marks || q.marks <= 0) {
-            return `question ${i + 1}: marks must be greater than 0`;
-        }
+        const error = validateQuestion(questions[i], i);
+        if (error) return error;
     }
 
     return null;
@@ -60,6 +134,25 @@ const createTest = async (req, res) => {
         } catch (_) { /* non-fatal */ }
 
         res.send(result);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Get a single test by ID
+const getTestById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const test = await Test.findById(id)
+            .populate("subject", "subName subjectName subCode")
+            .populate("classId", "sclassName className section");
+        
+        if (!test) {
+            return res.status(404).json({ message: 'Test not found' });
+        }
+        
+        res.send(test);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -142,10 +235,163 @@ const deleteTest = async (req, res) => {
     }
 };
 
+// Update test questions (teacher adds/updates questions)
+const updateTestQuestions = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { questions } = req.body;
+        const teacherId = req.body.teacherId || req.user?._id;
+
+        // Validate questions array exists
+        if (!questions || !Array.isArray(questions)) {
+            return res.status(400).json({ message: "Questions array is required" });
+        }
+
+        // Validate each question
+        for (let i = 0; i < questions.length; i++) {
+            const error = validateQuestion(questions[i], i);
+            if (error) {
+                return res.status(400).json({ message: error });
+            }
+        }
+
+        // Find the test
+        const test = await Test.findById(id);
+        if (!test) {
+            return res.status(404).json({ message: "Test not found" });
+        }
+
+        // Authorization: verify teacher teaches the class
+        if (teacherId) {
+            const Teacher = require("../models/teacherSchema");
+            const teacher = await Teacher.findById(teacherId);
+            
+            if (!teacher) {
+                return res.status(403).json({ message: "Unauthorized: Teacher not found" });
+            }
+
+            // Check if teacher teaches this class (support both single and array formats)
+            const teachesClass = 
+                (teacher.teachClasses && teacher.teachClasses.some(c => c.toString() === test.classId.toString())) ||
+                (teacher.teachSclass && teacher.teachSclass.toString() === test.classId.toString());
+
+            if (!teachesClass) {
+                return res.status(403).json({ message: "Unauthorized: Teacher does not teach this class" });
+            }
+        }
+
+        // Update only the questions array, preserve all other metadata
+        test.questions = questions;
+        const updatedTest = await test.save();
+
+        // Populate fields for response
+        await updatedTest.populate("subject", "subName subjectName subCode");
+        await updatedTest.populate("classId", "sclassName");
+
+        res.status(200).json(updatedTest);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Publish test and notify admin
+const publishTest = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const teacherId = req.body.teacherId || req.user?._id;
+
+        // Find the test
+        const test = await Test.findById(id)
+            .populate("subject", "subName subjectName subCode")
+            .populate("classId", "sclassName className section");
+        
+        if (!test) {
+            return res.status(404).json({ message: "Test not found" });
+        }
+
+        // Validate test has at least one question
+        if (!test.questions || test.questions.length === 0) {
+            return res.status(400).json({ message: "Cannot publish test with no questions" });
+        }
+
+        // Authorization: verify teacher teaches the class
+        if (teacherId) {
+            const Teacher = require("../models/teacherSchema");
+            const teacher = await Teacher.findById(teacherId);
+            
+            if (!teacher) {
+                return res.status(403).json({ message: "Unauthorized: Teacher not found" });
+            }
+
+            // Check if teacher teaches this class
+            const teachesClass = 
+                (teacher.teachClasses && teacher.teachClasses.some(c => c.toString() === test.classId._id.toString())) ||
+                (teacher.teachSclass && teacher.teachSclass.toString() === test.classId._id.toString());
+
+            if (!teachesClass) {
+                return res.status(403).json({ message: "Unauthorized: Teacher does not teach this class" });
+            }
+
+            // Set isActive to true
+            test.isActive = true;
+            await test.save();
+
+            // Retrieve admin information for notification
+            const Admin = require("../models/adminSchema");
+            const admin = await Admin.findById(test.school);
+
+            if (admin) {
+                // Format notification message
+                const className = test.classId.sclassName || test.classId.className || "Unknown Class";
+                const section = test.classId.section ? ` (${test.classId.section})` : "";
+                const subjectName = test.subject ? ` - ${test.subject.subName || test.subject.subjectName || test.subject.subCode}` : "";
+                const message = `Teacher ${teacher.name} published test '${test.title}' for ${className}${section}${subjectName} (${test.durationMinutes} min)`;
+
+                // Create notification for admin
+                try {
+                    await createNotifications(
+                        [admin._id],
+                        message,
+                        "test",
+                        {
+                            metadata: {
+                                testId: test._id,
+                                teacherId: teacher._id,
+                                teacherName: teacher.name
+                            }
+                        }
+                    );
+                } catch (notifError) {
+                    // Log error but don't block the response
+                    console.error("Failed to create notification:", notifError);
+                }
+            }
+
+            return res.status(200).json({ 
+                message: "Test published successfully",
+                test: test
+            });
+        } else {
+            return res.status(400).json({ message: "Teacher ID is required" });
+        }
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 module.exports = {
     createTest,
+    getTestById,
     getTestsByClass,
     getTestsForStudent,
     updateTest,
     deleteTest,
+    updateTestQuestions,
+    publishTest,
+    // Validation helpers
+    validateQuestionText,
+    validateOptionCount,
+    validateCorrectAnswer,
+    validateMarks,
+    validateQuestion,
 };

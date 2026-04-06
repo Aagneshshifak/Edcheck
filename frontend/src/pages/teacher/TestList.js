@@ -18,6 +18,10 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import WarningIcon from '@mui/icons-material/Warning';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -94,36 +98,100 @@ const TestList = () => {
                                 <TableCell><strong>Subject</strong></TableCell>
                                 <TableCell><strong>Duration (min)</strong></TableCell>
                                 <TableCell><strong>Questions</strong></TableCell>
+                                <TableCell><strong>Publication Status</strong></TableCell>
                                 <TableCell align="center"><strong>Actions</strong></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {tests.map((test) => (
-                                <TableRow key={test._id} hover>
-                                    <TableCell>{test.title}</TableCell>
-                                    <TableCell>
-                                        {test.subject?.subName || test.subject || '—'}
-                                    </TableCell>
-                                    <TableCell>{test.durationMinutes}</TableCell>
-                                    <TableCell>{test.questions?.length ?? 0}</TableCell>
-                                    <TableCell align="center">
-                                        <IconButton
-                                            color="primary"
-                                            onClick={() => navigate(`/Teacher/tests/${test._id}/results`)}
-                                            title="View Results"
-                                        >
-                                            <BarChartIcon />
-                                        </IconButton>
-                                        <IconButton
-                                            color="error"
-                                            onClick={() => handleDelete(test._id)}
-                                            title="Delete"
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {tests.map((test) => {
+                                const questionCount = test.questions?.length ?? 0;
+                                const hasNoQuestions = questionCount === 0;
+                                const isActive = test.isActive ?? false;
+
+                                return (
+                                    <TableRow key={test._id} hover>
+                                        <TableCell>{test.title}</TableCell>
+                                        <TableCell>
+                                            {test.subject?.subName || test.subject || '—'}
+                                        </TableCell>
+                                        <TableCell>{test.durationMinutes}</TableCell>
+                                        <TableCell>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                {hasNoQuestions && (
+                                                    <WarningIcon 
+                                                        sx={{ 
+                                                            color: 'warning.main', 
+                                                            fontSize: 20 
+                                                        }} 
+                                                    />
+                                                )}
+                                                <Typography
+                                                    sx={{
+                                                        color: hasNoQuestions ? 'warning.main' : 'text.primary',
+                                                        fontWeight: hasNoQuestions ? 600 : 400,
+                                                    }}
+                                                >
+                                                    {questionCount}
+                                                </Typography>
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                {isActive ? (
+                                                    <>
+                                                        <CheckCircleIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                                                        <Typography sx={{ color: 'success.main' }}>Active</Typography>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CancelIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                                                        <Typography sx={{ color: 'text.secondary' }}>Inactive</Typography>
+                                                    </>
+                                                )}
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            {hasNoQuestions ? (
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    size="small"
+                                                    startIcon={<AddIcon />}
+                                                    onClick={() => navigate(`/Teacher/tests/${test._id}/questions`)}
+                                                    sx={{ mr: 1 }}
+                                                >
+                                                    Add Questions
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    variant="outlined"
+                                                    color="primary"
+                                                    size="small"
+                                                    startIcon={<EditIcon />}
+                                                    onClick={() => navigate(`/Teacher/tests/${test._id}/questions`)}
+                                                    sx={{ mr: 1 }}
+                                                >
+                                                    Edit Questions
+                                                </Button>
+                                            )}
+                                            <IconButton
+                                                color="primary"
+                                                onClick={() => navigate(`/Teacher/tests/${test._id}/results`)}
+                                                title="View Results"
+                                            >
+                                                <BarChartIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                color="error"
+                                                onClick={() => handleDelete(test._id)}
+                                                title="Delete"
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
                         </TableBody>
                     </Table>
                 </TableContainer>
