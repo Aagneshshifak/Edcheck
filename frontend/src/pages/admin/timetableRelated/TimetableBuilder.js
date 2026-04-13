@@ -10,18 +10,18 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import { savePeriod } from '../../../redux/timetableRelated/timetableSlice';
 
 
-const BG    = '#0f172a';
-const CARD  = '#111827';
-const ACCENT = '#0ea5e9';
-const TEXT  = '#e2e8f0';
-const MUTED = 'rgba(148,163,184,0.7)';
-const BREAK_BG = 'rgba(14,165,233,0.05)';
+const BG     = '#ffffff';
+const CARD   = '#000000';
+const ACCENT = '#111111';
+const TEXT   = '#111111';
+const MUTED  = 'rgba(0,0,0,0.5)';
+const BREAK_BG = 'rgba(0,0,0,0.03)';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const cellSx = {
-    borderColor: 'rgba(148,163,184,0.15)',
-    color: TEXT,
+    borderColor: 'rgba(0,0,0,0.06)',
+    color: '#111111',
     py: 1,
 };
 
@@ -168,18 +168,19 @@ export default function TimetableBuilder() {
     };
 
     const selectSx = {
-        color: TEXT,
-        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(148,163,184,0.3)' },
-        '& .MuiSvgIcon-root': { color: MUTED },
-        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: ACCENT },
-        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: ACCENT },
+        color: '#111111',
+        backgroundColor: '#ffffff',
+        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0,0,0,0.2)' },
+        '& .MuiSvgIcon-root': { color: '#666666' },
+        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#111111' },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#111111' },
     };
 
-    const labelSx = { color: MUTED };
+    const labelSx = { color: '#666666' };
 
     return (
-        <Box sx={{ minHeight: '100vh', bgcolor: BG, p: 3 }}>
-            <Typography variant="h5" sx={{ color: TEXT, mb: 3, fontWeight: 700 }}>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#ffffff', p: 3 }}>
+            <Typography variant="h5" sx={{ color: '#111111', mb: 3, fontWeight: 700 }}>
                 Timetable Builder
             </Typography>
 
@@ -195,7 +196,7 @@ export default function TimetableBuilder() {
             )}
 
             {/* Selectors */}
-            <Paper sx={{ bgcolor: CARD, p: 2, mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <FormControl size="small" sx={{ minWidth: 200 }}>
                     <InputLabel sx={labelSx}>Class</InputLabel>
                     <Select value={selectedClass} label="Class" onChange={e => setSelectedClass(e.target.value)} sx={selectSx}>
@@ -216,23 +217,18 @@ export default function TimetableBuilder() {
                     variant="contained"
                     onClick={handleSave}
                     disabled={saving || !selectedClass}
-                    sx={{ ml: 'auto', bgcolor: ACCENT, '&:hover': { bgcolor: '#0284c7' }, color: '#fff' }}
+                    sx={{ ml: 'auto' }}
                 >
-                    {saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Save'}
+                    {saving ? <CircularProgress size={20} sx={{ color: '#ffffff' }} /> : 'Save'}
                 </Button>
 
                 <Tooltip title="Auto-generate timetables for ALL classes using their assigned subjects">
                     <span>
                         <Button
                             variant="outlined"
-                            startIcon={autoGenerating ? <CircularProgress size={16} sx={{ color: ACCENT }} /> : <AutoFixHighIcon />}
+                            startIcon={autoGenerating ? <CircularProgress size={16} /> : <AutoFixHighIcon />}
                             onClick={handleAutoGenerate}
                             disabled={autoGenerating}
-                            sx={{
-                                borderColor: ACCENT,
-                                color: ACCENT,
-                                '&:hover': { bgcolor: 'rgba(14,165,233,0.08)', borderColor: ACCENT },
-                            }}
                         >
                             {autoGenerating ? 'Generating…' : 'Auto-Generate All'}
                         </Button>
@@ -251,15 +247,15 @@ export default function TimetableBuilder() {
             {/* Period grid */}
             {loadingConfig ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-                    <CircularProgress sx={{ color: ACCENT }} />
+                    <CircularProgress sx={{ color: '#111111' }} />
                 </Box>
             ) : (
                 <Paper sx={{ bgcolor: CARD, overflow: 'hidden' }}>
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ bgcolor: 'rgba(14,165,233,0.1)' }}>
+                            <TableRow sx={{ bgcolor: '#111111' }}>
                                 {['#', 'Time', 'Type', 'Subject', 'Teacher'].map(h => (
-                                    <TableCell key={h} sx={{ ...cellSx, fontWeight: 700, color: ACCENT }}>{h}</TableCell>
+                                    <TableCell key={h} sx={{ ...cellSx, fontWeight: 700, color: '#ffffff', borderBottom: 'none' }}>{h}</TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
@@ -277,18 +273,18 @@ export default function TimetableBuilder() {
                                         <TableCell sx={cellSx}>
                                             {isBreak ? '—' : slot.periodNumber}
                                         </TableCell>
-                                        <TableCell sx={{ ...cellSx, color: MUTED, whiteSpace: 'nowrap' }}>
+                                        <TableCell sx={{ ...cellSx, color: 'rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>
                                             {slot.startTime} – {slot.endTime}
                                         </TableCell>
                                         <TableCell sx={cellSx}>
                                             {slot.type === 'interval' && (
-                                                <Typography variant="caption" sx={{ color: ACCENT }}>Interval</Typography>
+                                                <Typography variant="caption" sx={{ color: '#111111' }}>Interval</Typography>
                                             )}
                                             {slot.type === 'lunch' && (
-                                                <Typography variant="caption" sx={{ color: ACCENT }}>Lunch Break</Typography>
+                                                <Typography variant="caption" sx={{ color: '#111111' }}>Lunch Break</Typography>
                                             )}
                                             {slot.type === 'lecture' && (
-                                                <Typography variant="caption" sx={{ color: MUTED }}>Lecture</Typography>
+                                                <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.5)' }}>Lecture</Typography>
                                             )}
                                         </TableCell>
                                         <TableCell sx={{ ...cellSx, minWidth: 180 }}>
@@ -300,7 +296,7 @@ export default function TimetableBuilder() {
                                                         onChange={e => handlePeriodChange(slot.periodNumber, 'subjectId', e.target.value)}
                                                         sx={selectSx}
                                                         renderValue={v => {
-                                                            if (!v) return <span style={{ color: MUTED }}>Subject</span>;
+                                                            if (!v) return <span style={{ color: 'rgba(0,0,0,0.5)' }}>Subject</span>;
                                                             const sub = subjects.find(s => s._id === v);
                                                             return sub ? sub.subName : v;
                                                         }}
@@ -322,7 +318,7 @@ export default function TimetableBuilder() {
                                                         onChange={e => handlePeriodChange(slot.periodNumber, 'teacherId', e.target.value)}
                                                         sx={selectSx}
                                                         renderValue={v => {
-                                                            if (!v) return <span style={{ color: MUTED }}>Teacher</span>;
+                                                            if (!v) return <span style={{ color: 'rgba(0,0,0,0.5)' }}>Teacher</span>;
                                                             const t = teachers.find(t => t._id === v);
                                                             return t ? t.name : v;
                                                         }}

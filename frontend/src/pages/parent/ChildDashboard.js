@@ -17,7 +17,7 @@ import AcademicPerformanceDashboard from '../student/AcademicPerformanceDashboar
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
 const BG     = '#0b1120';
-const CARD   = '#111827';
+const CARD   = '#000000';
 const CARD2  = '#1a2540';
 const ACCENT = '#0ea5e9';
 const MUTED  = 'rgba(148,163,184,0.7)';

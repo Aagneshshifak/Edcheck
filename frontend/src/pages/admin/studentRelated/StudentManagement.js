@@ -339,19 +339,20 @@ const StudentManagement = () => {
                 <Paper>
                     <TableContainer>
                         <Table size="small">
-                            <TableHead sx={{ bgcolor: 'grey.100' }}>
+                            <TableHead>
                                 <TableRow>
-                                    <TableCell padding="checkbox">
+                                    <TableCell padding="checkbox" sx={{ background: '#111111', color: '#ffffff' }}>
                                         <Checkbox
                                             size="small"
                                             checked={allSelected}
                                             indeterminate={someSelected && !allSelected}
                                             onChange={toggleSelectAll}
                                             disabled={students.length === 0}
+                                            sx={{ color: 'rgba(255,255,255,0.7)', '&.Mui-checked': { color: '#ffffff' } }}
                                         />
                                     </TableCell>
                                     {['Name', 'Roll No', 'Class', 'Parent', 'Phone', 'Status', 'Actions'].map(h => (
-                                        <TableCell key={h}><strong>{h}</strong></TableCell>
+                                        <TableCell key={h} sx={{ background: '#111111', color: '#ffffff', fontWeight: 600, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</TableCell>
                                     ))}
                                 </TableRow>
                             </TableHead>
@@ -361,12 +362,14 @@ const StudentManagement = () => {
                                         <TableCell colSpan={8} align="center">No students found</TableCell>
                                     </TableRow>
                                 ) : students.map(s => (
-                                    <TableRow key={s._id} hover selected={selected.has(s._id)}>
+                                    <TableRow key={s._id} hover selected={selected.has(s._id)}
+                                        sx={{ '& .MuiTableCell-root': { color: '#ffffff', borderBottom: '1px solid rgba(255,255,255,0.06)' } }}>
                                         <TableCell padding="checkbox">
                                             <Checkbox
                                                 size="small"
                                                 checked={selected.has(s._id)}
                                                 onChange={() => toggleSelect(s._id)}
+                                                sx={{ color: 'rgba(255,255,255,0.5)', '&.Mui-checked': { color: '#ffffff' } }}
                                             />
                                         </TableCell>
                                         <TableCell>{s.name}</TableCell>
@@ -408,15 +411,14 @@ const StudentManagement = () => {
                         </Table>
                     </TableContainer>
 
-                    {/* Cursor pagination controls */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: 2, py: 1, gap: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: 2, py: 1.5, gap: 1, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                        <Typography variant="body2" sx={{ color: '#ffffff' }}>
                             Page {pageIndex + 1}
                         </Typography>
-                        <IconButton size="small" onClick={goPrev} disabled={pageIndex === 0}>
+                        <IconButton size="small" onClick={goPrev} disabled={pageIndex === 0} sx={{ color: '#ffffff', '&.Mui-disabled': { color: 'rgba(255,255,255,0.3)' } }}>
                             <NavigateBeforeIcon />
                         </IconButton>
-                        <IconButton size="small" onClick={goNext} disabled={!hasMore}>
+                        <IconButton size="small" onClick={goNext} disabled={!hasMore} sx={{ color: '#ffffff', '&.Mui-disabled': { color: 'rgba(255,255,255,0.3)' } }}>
                             <NavigateNextIcon />
                         </IconButton>
                     </Box>

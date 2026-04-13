@@ -46,6 +46,7 @@ import AddClass from './classRelated/AddClass';
 import ClassDetails from './classRelated/ClassDetails';
 import ShowClasses from './classRelated/ShowClasses';
 import AccountMenu from '../../components/AccountMenu';
+import NotificationBell from '../../components/NotificationBell';
 
 import SystemHealth from './systemRelated/SystemHealth';
 import SystemConfig from './configRelated/SystemConfig';
@@ -131,6 +132,7 @@ const AdminDashboardInner = () => {
                         >
                             Admin Dashboard
                         </Typography>
+                        <NotificationBell />
                         <AccountMenu />
                     </Toolbar>
                 </AppBar>
@@ -248,16 +250,18 @@ export default AdminDashboard
 
 const styles = {
     boxStyled: {
-        background: 'linear-gradient(135deg, #0f172a 0%, #0a1628 100%)',
+        background: '#ffffff',
         flexGrow: 1,
-        height: '100vh',
-        overflow: 'auto',
+        minHeight: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
     },
     toolBarStyled: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
         px: [1],
+        background: '#111111',
     },
     drawerStyled: {
         display: 'flex',

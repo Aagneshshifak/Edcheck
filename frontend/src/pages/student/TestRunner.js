@@ -257,7 +257,7 @@ const TestRunner = () => {
                 width: 160, borderRadius: 2, overflow: 'hidden',
                 border: `2px solid ${camReady ? 'rgba(0,230,118,0.6)' : 'rgba(255,82,82,0.5)'}`,
                 boxShadow: `0 4px 20px ${camReady ? 'rgba(0,230,118,0.2)' : 'rgba(255,82,82,0.2)'}`,
-                bgcolor: '#0a1628',
+                bgcolor: '#ffffff',
             }}>
                 <video
                     ref={videoRef}

@@ -17,7 +17,7 @@ const pctColor = (v) => v >= 75 ? '#34d399' : v >= 50 ? '#f59e0b' : '#ef4444';
 // ── Shared card ───────────────────────────────────────────────────────────────
 const ChartCard = ({ title, subtitle, children }) => (
     <Paper sx={{
-        bgcolor: '#111827', border: '1px solid rgba(14,165,233,0.12)',
+        bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.12)',
         borderRadius: 3, p: 3, height: '100%',
     }}>
         <Typography sx={{ color: '#f1f5f9', fontWeight: 700, fontSize: '1rem', mb: 0.3 }}>{title}</Typography>
@@ -36,7 +36,7 @@ const Empty = ({ msg }) => (
 const DarkTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
     return (
-        <Box sx={{ bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 2, p: 1.5 }}>
+        <Box sx={{ bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 2, p: 1.5 }}>
             {label && <Typography sx={{ color: '#f1f5f9', fontSize: '0.78rem', fontWeight: 700, mb: 0.5 }}>{label}</Typography>}
             {payload.map((p, i) => (
                 <Typography key={i} sx={{ color: p.color || '#0ea5e9', fontSize: '0.75rem' }}>
@@ -198,7 +198,7 @@ const AssignmentChart = ({ studentId }) => {
                         if (!active || !payload?.length) return null;
                         const d = payload[0].payload;
                         return (
-                            <Box sx={{ bgcolor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 2, p: 1.5 }}>
+                            <Box sx={{ bgcolor: '#000000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 2, p: 1.5 }}>
                                 <Typography sx={{ color: d.fill, fontWeight: 700, fontSize: '0.78rem' }}>{d.name}: {d.value}</Typography>
                             </Box>
                         );

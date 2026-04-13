@@ -29,23 +29,23 @@ const StatCard = ({ label, value, icon, color, gradient, loading, onClick }) => 
         onClick={onClick}
         sx={{
             p: 3, cursor: onClick ? 'pointer' : 'default',
-            background: 'rgba(17,24,39,0.8)',
-            border: `1px solid ${color}30`,
+            background: '#000000',
+            border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
             transition: 'all 0.25s ease',
-            '&:hover': onClick ? { borderColor: color, boxShadow: `0 8px 32px ${color}25`, transform: 'translateY(-3px)' } : {},
+            '&:hover': onClick ? { borderColor: 'rgba(255,255,255,0.3)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', transform: 'translateY(-3px)' } : {},
         }}
     >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <Box>
-                <Typography variant='caption' sx={{ color: 'rgba(148,163,184,0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.7rem', fontWeight: 600 }}>
+                <Typography variant='caption' sx={{ color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.7rem', fontWeight: 600 }}>
                     {label}
                 </Typography>
-                <Typography variant='h3' sx={{ fontWeight: 700, mt: 0.5, background: gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                    {loading ? <CircularProgress size={28} sx={{ color }} /> : (value ?? 0)}
+                <Typography variant='h3' sx={{ fontWeight: 700, mt: 0.5, color: '#ffffff' }}>
+                    {loading ? <CircularProgress size={28} sx={{ color: '#ffffff' }} /> : (value ?? 0)}
                 </Typography>
             </Box>
-            <Box sx={{ p: 1.5, borderRadius: 2, background: `${color}18`, color, display: 'flex' }}>
+            <Box sx={{ p: 1.5, borderRadius: 2, background: 'rgba(255,255,255,0.1)', color: '#ffffff', display: 'flex' }}>
                 {icon}
             </Box>
         </Box>
@@ -53,12 +53,12 @@ const StatCard = ({ label, value, icon, color, gradient, loading, onClick }) => 
 );
 
 const SectionCard = ({ title, icon, children, minHeight = 280 }) => (
-    <Paper sx={{ p: 2.5, borderRadius: 3, minHeight, background: 'rgba(17,24,39,0.8)', border: '1px solid rgba(14,165,233,0.12)' }}>
+    <Paper sx={{ p: 2.5, borderRadius: 3, minHeight, background: '#000000', border: '1px solid rgba(255,255,255,0.1)' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Box sx={{ color: '#0ea5e9' }}>{icon}</Box>
-            <Typography variant='h6' sx={{ fontWeight: 600, fontSize: '0.95rem' }}>{title}</Typography>
+            <Box sx={{ color: '#ffffff' }}>{icon}</Box>
+            <Typography variant='h6' sx={{ fontWeight: 600, fontSize: '0.95rem', color: '#ffffff' }}>{title}</Typography>
         </Box>
-        <Divider sx={{ mb: 2, borderColor: 'rgba(14,165,233,0.1)' }} />
+        <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.08)' }} />
         {children}
     </Paper>
 );
@@ -113,14 +113,14 @@ const AdminHomePage = () => {
                             ? <Typography color='text.secondary' sx={{ textAlign: 'center', py: 4 }}>No test data yet.</Typography>
                             : <ResponsiveContainer width='100%' height={220}>
                                 <BarChart data={data.classPerformance} margin={{ top: 5, right: 10, left: -10, bottom: 40 }}>
-                                    <CartesianGrid strokeDasharray='3 3' stroke='rgba(14,165,233,0.08)' />
-                                    <XAxis dataKey='className' angle={-30} textAnchor='end' tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                                    <YAxis domain={[0, 100]} unit='%' tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                                    <CartesianGrid strokeDasharray='3 3' stroke='rgba(255,255,255,0.06)' />
+                                    <XAxis dataKey='className' angle={-30} textAnchor='end' tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
+                                    <YAxis domain={[0, 100]} unit='%' tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
                                     <Tooltip
-                                        contentStyle={{ background: '#1e293b', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8 }}
+                                        contentStyle={{ background: '#111111', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: '#ffffff' }}
                                         formatter={v => [`${v}%`, 'Avg Score']}
                                     />
-                                    <Bar dataKey='avgScore' fill='#0ea5e9' radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey='avgScore' fill='#ffffff' radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         }
@@ -134,14 +134,14 @@ const AdminHomePage = () => {
                             : data.teacherPerformance.map((t, i) => (
                                 <Box key={i} sx={{ mb: 1.5 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                        <Typography variant='body2' sx={{ fontWeight: 500 }}>{t.name}</Typography>
-                                        <Typography variant='body2' sx={{ color: t.score >= 75 ? '#10b981' : t.score >= 50 ? '#f59e0b' : '#ef4444', fontWeight: 600 }}>
+                                        <Typography variant='body2' sx={{ fontWeight: 500, color: '#ffffff' }}>{t.name}</Typography>
+                                        <Typography variant='body2' sx={{ color: t.score >= 75 ? '#4ade80' : t.score >= 50 ? '#fbbf24' : '#f87171', fontWeight: 600 }}>
                                             {t.score}%
                                         </Typography>
                                     </Box>
                                     <LinearProgress variant='determinate' value={t.score}
-                                        sx={{ height: 6, borderRadius: 3,
-                                            '& .MuiLinearProgress-bar': { bgcolor: t.score >= 75 ? '#10b981' : t.score >= 50 ? '#f59e0b' : '#ef4444' }
+                                        sx={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.1)',
+                                            '& .MuiLinearProgress-bar': { bgcolor: t.score >= 75 ? '#4ade80' : t.score >= 50 ? '#fbbf24' : '#f87171' }
                                         }}
                                     />
                                 </Box>
@@ -162,12 +162,12 @@ const AdminHomePage = () => {
                                 <Typography variant='caption' color='text.secondary'>All students have good attendance</Typography>
                               </Box>
                             : data.studentRisk.map((s, i) => (
-                                <Box key={i} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                                <Box key={i} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <WarningAmberIcon fontSize='small' sx={{ color: s.riskScore >= 70 ? '#ef4444' : '#f59e0b' }} />
                                         <Box>
-                                            <Typography variant='body2' sx={{ fontWeight: 600 }}>{s.name}</Typography>
-                                            <Typography variant='caption' color='text.secondary'>
+                                            <Typography variant='body2' sx={{ fontWeight: 600, color: '#ffffff' }}>{s.name}</Typography>
+                                            <Typography variant='caption' sx={{ color: 'rgba(255,255,255,0.45)' }}>
                                                 Attendance: {s.attendanceRate != null ? `${s.attendanceRate}%` : 'N/A'}
                                             </Typography>
                                         </Box>
@@ -188,14 +188,14 @@ const AdminHomePage = () => {
                         : !data?.recentNotices?.length
                             ? <Typography color='text.secondary' sx={{ textAlign: 'center', py: 4 }}>No notices yet.</Typography>
                             : data.recentNotices.map((n, i) => (
-                                <Box key={i} sx={{ py: 1.25, borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                                <Box key={i} sx={{ py: 1.25, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.25 }}>
-                                        <Typography variant='body2' sx={{ fontWeight: 600, flex: 1, mr: 1 }}>{n.title}</Typography>
-                                        <Typography variant='caption' sx={{ color: 'rgba(148,163,184,0.7)', whiteSpace: 'nowrap' }}>
+                                        <Typography variant='body2' sx={{ fontWeight: 600, flex: 1, mr: 1, color: '#ffffff' }}>{n.title}</Typography>
+                                        <Typography variant='caption' sx={{ color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>
                                             {new Date(n.date).toLocaleDateString()}
                                         </Typography>
                                     </Box>
-                                    <Typography variant='caption' color='text.secondary' sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    <Typography variant='caption' sx={{ color: 'rgba(255,255,255,0.5)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                                         {n.details}
                                     </Typography>
                                 </Box>

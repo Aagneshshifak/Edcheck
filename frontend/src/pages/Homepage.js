@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Container, Grid, Box, Button } from '@mui/material';
 import styled from 'styled-components';
 import Students from "../assets/students.svg";
-import { LightPurpleButton } from '../components/buttonStyles';
 
 const Homepage = () => {
     return (
@@ -17,9 +16,8 @@ const Homepage = () => {
                         <StyledTitle>
                             Welcome to
                             <br />
-                            School Management
+                            Edcheck
                             <br />
-                            System
                         </StyledTitle>
                         <StyledText>
                             Streamline school management, class organization, and add students and faculty.
@@ -28,20 +26,30 @@ const Homepage = () => {
                         </StyledText>
                         <StyledBox>
                             <StyledLink to="/choose">
-                                <LightPurpleButton variant="contained" fullWidth>
+                                <Button variant="contained" fullWidth
+                                    sx={{
+                                        background: '#111111',
+                                        color: '#ffffff',
+                                        borderRadius: '10px',
+                                        py: 1.3,
+                                        fontWeight: 700,
+                                        textTransform: 'none',
+                                        fontSize: '1rem',
+                                        '&:hover': { background: '#333333' },
+                                    }}>
                                     Login
-                                </LightPurpleButton>
+                                </Button>
                             </StyledLink>
                             <StyledLink to="/chooseasguest">
                                 <Button variant="outlined" fullWidth
-                                    sx={{ mt: 2, mb: 3, color: "#7f56da", borderColor: "#7f56da" }}
+                                    sx={{ mt: 2, mb: 3, color: "#111111", borderColor: "#111111", borderRadius: '10px', textTransform: 'none', fontWeight: 600, '&:hover': { background: '#f5f5f5' } }}
                                 >
                                     Login as Guest
                                 </Button>
                             </StyledLink>
                             <StyledText>
                                 Don't have an account?{' '}
-                                <Link to="/Adminregister" style={{color:"#550080"}}>
+                                <Link to="/Adminregister" style={{color:"#111111", fontWeight: 600}}>
                                     Sign up
                                 </Link>
                             </StyledText>
@@ -69,6 +77,9 @@ const StyledPaper = styled.div`
   padding: 24px;
   height: 100vh;
   background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 `;
 
 const StyledBox = styled(Box)`

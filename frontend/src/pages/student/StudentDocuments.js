@@ -135,7 +135,7 @@ const StudentDocuments = () => {
 
             {/* Upload progress */}
             {uploading && (
-                <Paper sx={{ bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 3, p: 2, mb: 2 }}>
+                <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 3, p: 2, mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.8 }}>
                         <Typography sx={{ color: 'rgba(148,163,184,0.7)', fontSize: '0.82rem' }}>Uploading…</Typography>
                         <Typography sx={{ color: '#0ea5e9', fontWeight: 700, fontSize: '0.82rem' }}>{progress}%</Typography>
@@ -154,7 +154,7 @@ const StudentDocuments = () => {
                 </Box>
             ) : docs.length === 0 ? (
                 <Paper sx={{
-                    bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.05)',
+                    bgcolor: '#000000', border: '1px solid rgba(255,255,255,0.05)',
                     borderRadius: 3, p: 6, textAlign: 'center',
                 }}>
                     <FolderIcon sx={{ color: 'rgba(148,163,184,0.2)', fontSize: '3.5rem', mb: 1 }} />
@@ -174,7 +174,7 @@ const StudentDocuments = () => {
 
                         return (
                             <Paper key={i} sx={{
-                                bgcolor: '#111827',
+                                bgcolor: '#000000',
                                 border: '1px solid rgba(255,255,255,0.05)',
                                 borderRadius: 3, p: 2,
                                 display: 'flex', alignItems: 'center', gap: 2,

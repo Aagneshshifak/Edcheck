@@ -63,7 +63,7 @@ const StudentComplain = () => {
 
     return (
         <>
-            <Box sx={{ flex: '1 1 auto', alignItems: 'center', display: 'flex', justifyContent: 'center', minHeight: '100vh', background: '#0f172a' }}>
+            <Box sx={{ flex: '1 1 auto', alignItems: 'center', display: 'flex', justifyContent: 'center', minHeight: '100vh', background: '#ffffff' }}>
                 <Box sx={{ maxWidth: 550, px: 3, py: '100px', width: '100%' }}>
                     <Stack spacing={1} sx={{ mb: 3 }}>
                         <Typography variant="h4" sx={{ color: '#e5e7eb', fontWeight: 700 }}>Complain</Typography>

@@ -88,7 +88,7 @@ const TeacherNotices = () => {
 
             {/* ── Create notice form ── */}
             <Paper component="form" onSubmit={handleSend}
-                sx={{ bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 3, p: 3, mb: 4, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                sx={{ bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 3, p: 3, mb: 4, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                 <Typography sx={{ color: '#f1f5f9', fontWeight: 700, fontSize: '0.95rem' }}>
                     Send a Notice
                 </Typography>
@@ -123,14 +123,14 @@ const TeacherNotices = () => {
                     <CircularProgress sx={{ color: '#0ea5e9' }} />
                 </Box>
             ) : notices.length === 0 ? (
-                <Paper sx={{ bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, p: 4, textAlign: 'center' }}>
+                <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, p: 4, textAlign: 'center' }}>
                     <Typography sx={{ color: 'rgba(148,163,184,0.4)', fontSize: '0.88rem' }}>No notices yet.</Typography>
                 </Paper>
             ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     {notices.map(n => (
                         <Paper key={n._id} sx={{
-                            bgcolor: '#111827', border: '1px solid rgba(14,165,233,0.12)',
+                            bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.12)',
                             borderLeft: '3px solid #0ea5e9', borderRadius: 2, p: 2.5,
                         }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.8 }}>

@@ -46,7 +46,7 @@ const Toast = ({ notification, onClose }) => {
                 right: 24,
                 zIndex: 2000,
                 width: 320,
-                bgcolor: '#0d1b2e',
+                bgcolor: '#000000',
                 border: `1px solid ${color}55`,
                 borderLeft: `4px solid ${color}`,
                 borderRadius: 2,
@@ -142,7 +142,7 @@ const NotificationBell = () => {
                             maxHeight: 420,
                             overflowY: 'auto',
                             zIndex: 1400,
-                            bgcolor: '#0d1b2e',
+                            bgcolor: '#000000',
                             border: '1px solid rgba(30,144,255,0.2)',
                             borderRadius: 2,
                         }}>

@@ -11,18 +11,18 @@ const ParentDashboard = () => {
     const [open, setOpen] = useState(false);
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#0f172a' }}>
-            <AppBar position="fixed" sx={{ bgcolor: '#0f172a', borderBottom: '1px solid rgba(14,165,233,0.15)', boxShadow: 'none', zIndex: 1201 }}>
+        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#ffffff' }}>
+            <AppBar position="fixed" sx={{ bgcolor: '#111111', borderBottom: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 2px 12px rgba(0,0,0,0.25)', zIndex: 1201 }}>
                 <Toolbar>
-                    <Typography sx={{ color: '#e5e7eb', fontWeight: 700, fontSize: '1.1rem', flexGrow: 1 }}>
-                        School Management
+                    <Typography sx={{ color: '#ffffff', fontWeight: 700, fontSize: '1.1rem', flexGrow: 1 }}>
+                        Edcheck
                     </Typography>
                 </Toolbar>
             </AppBar>
 
             <ParentSideBar open={open} setOpen={setOpen} />
 
-            <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+            <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8, background: '#ffffff', minHeight: '100vh' }}>
                 <Routes>
                     {/* Default: always land on My Children */}
                     <Route path="/" element={<Navigate to="/Parent/mychildren" replace />} />
