@@ -167,7 +167,7 @@ const MyChildrenPage = () => {
                     sx={{
                         mb: 3, maxWidth: 320, display: 'block',
                         '& .MuiOutlinedInput-root': {
-                            bgcolor: '#1e293b',
+                            bgcolor: '#000000',
                             borderRadius: 2.5,
                             color: '#f1f5f9',
                             '& fieldset': { borderColor: 'rgba(14,165,233,0.25)' },

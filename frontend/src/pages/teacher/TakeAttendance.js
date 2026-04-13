@@ -173,7 +173,7 @@ const TakeAttendance = () => {
 
             {/* ── Period chips ── */}
             {schedule.length > 0 && (
-                <Paper sx={{ bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 3, p: 2, mb: 3 }}>
+                <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 3, p: 2, mb: 3 }}>
                     <Typography sx={{ color: 'rgba(148,163,184,0.6)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, mb: 1.5 }}>
                         Today's Schedule
                     </Typography>
@@ -207,7 +207,7 @@ const TakeAttendance = () => {
             {/* ── Active period info ── */}
             {activePeriod && (
                 <Paper sx={{
-                    bgcolor: '#1e293b', border: `1px solid ${isCurrent ? 'rgba(52,211,153,0.3)' : 'rgba(14,165,233,0.15)'}`,
+                    bgcolor: '#000000', border: `1px solid ${isCurrent ? 'rgba(52,211,153,0.3)' : 'rgba(14,165,233,0.15)'}`,
                     borderRadius: 3, p: 2.5, mb: 3,
                     display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'center',
                 }}>
@@ -259,7 +259,7 @@ const TakeAttendance = () => {
 
             {/* ── Post-submit summary ── */}
             {summary && (
-                <Paper sx={{ bgcolor: '#1e293b', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 3, p: 3, mb: 3 }}>
+                <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 3, p: 3, mb: 3 }}>
                     <Typography sx={{ color: '#34d399', fontWeight: 700, fontSize: '1rem', mb: 1.5 }}>
                         ✓ Attendance Saved — Period {activePeriod?.periodNumber}
                     </Typography>
@@ -300,7 +300,7 @@ const TakeAttendance = () => {
 
             {/* ── Live summary bar ── */}
             {total > 0 && !summary && (
-                <Paper sx={{ bgcolor: '#1e293b', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 3, p: 2, mb: 2 }}>
+                <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 3, p: 2, mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <Typography sx={{ color: '#34d399', fontSize: '0.82rem', fontWeight: 700 }}>{presentCount} Present</Typography>
@@ -334,13 +334,13 @@ const TakeAttendance = () => {
                     <CircularProgress sx={{ color: '#0ea5e9' }} />
                 </Box>
             ) : !activePeriod ? (
-                <Paper sx={{ bgcolor: '#1e293b', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 3, p: 5, textAlign: 'center' }}>
+                <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 3, p: 5, textAlign: 'center' }}>
                     <Typography sx={{ color: 'rgba(148,163,184,0.4)' }}>No periods scheduled for today.</Typography>
                 </Paper>
             ) : (
                 /* Fixed-height scrollable container for 45+ students */
                 <TableContainer component={Paper} sx={{
-                    bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.06)',
+                    bgcolor: '#000000', border: '1px solid rgba(255,255,255,0.06)',
                     borderRadius: 3, overflow: 'hidden',
                     maxHeight: 520,
                     '& .MuiTableBody-root': { overflowY: 'auto' },
@@ -350,7 +350,7 @@ const TakeAttendance = () => {
                             <TableRow>
                                 {['Roll', 'Student Name', 'Status', 'Mark'].map(h => (
                                     <TableCell key={h} sx={{
-                                        bgcolor: '#1e293b', color: 'rgba(148,163,184,0.7)',
+                                        bgcolor: '#000000', color: 'rgba(148,163,184,0.7)',
                                         fontWeight: 700, fontSize: '0.73rem',
                                         borderBottom: '1px solid rgba(255,255,255,0.07)', py: 1.5,
                                     }}>
@@ -399,7 +399,7 @@ const TakeAttendance = () => {
                                                             sx={{
                                                                 minWidth: 76, textTransform: 'none', fontSize: '0.72rem', borderRadius: 2, py: 0.4,
                                                                 ...(active
-                                                                    ? { bgcolor: os.color, color: opt === 'Present' ? '#0f172a' : '#fff', '&:hover': { bgcolor: os.color } }
+                                                                    ? { bgcolor: os.color, color: opt === 'Present' ? '#ffffff' : '#fff', '&:hover': { bgcolor: os.color } }
                                                                     : { color: os.color, border: `1px solid ${os.border}`, '&:hover': { bgcolor: os.bg } }),
                                                             }}>
                                                             {opt}

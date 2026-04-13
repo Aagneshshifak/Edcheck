@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Grid,
-  Paper,
-  Box,
-  Container,
-  CircularProgress,
   Backdrop,
+  CircularProgress,
 } from '@mui/material';
 import { AccountCircle, School, Group, FamilyRestroom } from '@mui/icons-material';
 import styled from 'styled-components';
@@ -88,62 +84,22 @@ const ChooseUser = ({ visitor }) => {
 
   return (
     <StyledContainer>
-      <Container>
-        <Grid container spacing={2} justifyContent="center">
-          <Grid item xs={12} sm={6} md={3}>
-            <div onClick={() => navigateHandler("Admin")}>
-              <StyledPaper elevation={3}>
-                <Box mb={2}>
-                  <AccountCircle fontSize="large" />
-                </Box>
-                <StyledTypography>
-                  Admin
-                </StyledTypography>
-                Login as an administrator to access the dashboard to manage app data.
-              </StyledPaper>
-            </div>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StyledPaper elevation={3}>
-              <div onClick={() => navigateHandler("Student")}>
-                <Box mb={2}>
-                  <School fontSize="large" />
-                </Box>
-                <StyledTypography>
-                  Student
-                </StyledTypography>
-                Login as a student to explore course materials and assignments.
-              </div>
-            </StyledPaper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StyledPaper elevation={3}>
-              <div onClick={() => navigateHandler("Teacher")}>
-                <Box mb={2}>
-                  <Group fontSize="large" />
-                </Box>
-                <StyledTypography>
-                  Teacher
-                </StyledTypography>
-                Login as a teacher to create courses, assignments, and track student progress.
-              </div>
-            </StyledPaper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StyledPaper elevation={3}>
-              <div onClick={() => navigateHandler("Parent")}>
-                <Box mb={2}>
-                  <FamilyRestroom fontSize="large" />
-                </Box>
-                <StyledTypography>
-                  Parent
-                </StyledTypography>
-                Login as a parent to monitor your child's progress, attendance, and performance.
-              </div>
-            </StyledPaper>
-          </Grid>
-        </Grid>
-      </Container>
+      <HeaderText>Edcheck</HeaderText>
+      <SubText>Choose your role to continue</SubText>
+      <CardsRow>
+        {[
+          { role: "Admin",   icon: <AccountCircle sx={{ fontSize: 48 }} />, desc: "Login as an administrator to access the dashboard to manage app data." },
+          { role: "Student", icon: <School sx={{ fontSize: 48 }} />,        desc: "Login as a student to explore course materials and assignments." },
+          { role: "Teacher", icon: <Group sx={{ fontSize: 48 }} />,         desc: "Login as a teacher to create courses, assignments, and track student progress." },
+          { role: "Parent",  icon: <FamilyRestroom sx={{ fontSize: 48 }} />,desc: "Login as a parent to monitor your child's progress, attendance, and performance." },
+        ].map(({ role, icon, desc }) => (
+          <StyledCard key={role} onClick={() => navigateHandler(role)}>
+            <IconWrap>{icon}</IconWrap>
+            <CardTitle>{role}</CardTitle>
+            <CardDesc>{desc}</CardDesc>
+          </StyledCard>
+        ))}
+      </CardsRow>
       <Backdrop
         sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={loader}
@@ -159,26 +115,79 @@ const ChooseUser = ({ visitor }) => {
 export default ChooseUser;
 
 const StyledContainer = styled.div`
-  background: linear-gradient(to bottom, #411d70, #19118b);
-  height: 120vh;
+  background: #ffffff;
+  min-height: 100vh;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 2rem 1rem;
 `;
 
-const StyledPaper = styled(Paper)`
-  padding: 20px;
+const HeaderText = styled.h1`
+  color: #111111;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-weight: 800;
+  margin-bottom: 0.4rem;
   text-align: center;
-  background-color: #1f1f38;
-  color:rgba(255, 255, 255, 0.6);
-  cursor:pointer;
+  letter-spacing: -0.5px;
+`;
+
+const SubText = styled.p`
+  color: #555555;
+  font-size: 1rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+`;
+
+const CardsRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  max-width: 1100px;
+`;
+
+const StyledCard = styled.div`
+  background: #111111;
+  color: #ffffff;
+  border-radius: 60px;
+  padding: 2.5rem 1.8rem;
+  flex: 1 1 200px;
+  max-width: 240px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 
   &:hover {
-    background-color: #2c2c6c;
-    color:white;
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+    background: #222222;
   }
 `;
 
-const StyledTypography = styled.h2`
-  margin-bottom: 10px;
+const IconWrap = styled.div`
+  margin-bottom: 1rem;
+  color: #ffffff;
+`;
+
+const CardTitle = styled.h2`
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  color: #ffffff;
+`;
+
+const CardDesc = styled.p`
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.5;
 `;

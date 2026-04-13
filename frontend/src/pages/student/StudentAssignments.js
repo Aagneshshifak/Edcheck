@@ -165,7 +165,7 @@ const StudentAssignments = () => {
                     </Button>
                 </Box>
             )}
-            <Dialog open={uploadDialog} onClose={() => { if (!uploading) setUploadDialog(false); }} PaperProps={{ sx: { background: '#0a1628', border: theme.cardBorder, borderRadius: 3, minWidth: 380 } }}>
+            <Dialog open={uploadDialog} onClose={() => { if (!uploading) setUploadDialog(false); }} PaperProps={{ sx: { background: '#ffffff', border: theme.cardBorder, borderRadius: 3, minWidth: 380 } }}>
                 <DialogTitle sx={{ color: theme.text, borderBottom: '1px solid rgba(30,144,255,.12)', pb: 1.5 }}>
                     Submit Assignment
                     {selectedAssignment && <Typography sx={{ color: theme.accent, fontSize: '0.78rem', mt: 0.3 }}>{selectedAssignment.title}</Typography>}

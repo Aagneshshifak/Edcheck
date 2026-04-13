@@ -6,8 +6,8 @@ import {
 } from '@mui/material';
 import { fetchWeeklyTimetable } from '../../redux/timetableRelated/timetableSlice';
 
-const BG    = '#0f172a';
-const CARD  = '#111827';
+const BG    = '#ffffff';
+const CARD  = '#000000';
 const ACCENT = '#0ea5e9';
 const BREAK_BG = 'rgba(14,165,233,0.05)';
 
@@ -136,7 +136,7 @@ const StudentTimetable = () => {
                 ) : (
                     <Table>
                         <TableHead>
-                            <TableRow sx={{ bgcolor: '#1e293b' }}>
+                            <TableRow sx={{ bgcolor: '#000000' }}>
                                 {['Period #', 'Time', 'Subject', 'Teacher'].map(h => (
                                     <TableCell key={h} sx={{ color: '#94a3b8', fontWeight: 700, borderBottom: '1px solid #334155' }}>
                                         {h}

@@ -58,7 +58,7 @@ const GenerateReport = () => {
                 </Typography>
             </Box>
 
-            <Paper sx={{ bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 3, p: 2, mb: 3 }}>
+            <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 3, p: 2, mb: 3 }}>
                 <FormControl size="small" sx={{ minWidth: 200 }}>
                     <InputLabel sx={{ color: 'rgba(148,163,184,0.6)' }}>Class</InputLabel>
                     <Select value={classId} label="Class" onChange={e => setClassId(e.target.value)}
@@ -77,10 +77,10 @@ const GenerateReport = () => {
                     <CircularProgress sx={{ color: '#0ea5e9' }} />
                 </Box>
             ) : (
-                <Paper sx={{ bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ bgcolor: '#1e293b' }}>
+                            <TableRow sx={{ bgcolor: '#000000' }}>
                                 {['Roll', 'Student Name', 'Action'].map(h => (
                                     <TableCell key={h} sx={{ color: 'rgba(148,163,184,0.7)', fontWeight: 700, fontSize: '0.73rem', borderBottom: '1px solid rgba(255,255,255,0.07)', py: 1.5 }}>
                                         {h}

@@ -7,8 +7,8 @@ import {
 } from '@mui/material';
 
 
-const BG    = '#0f172a';
-const CARD  = '#111827';
+const BG    = '#ffffff';
+const CARD  = '#000000';
 const ACCENT = '#0ea5e9';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -76,7 +76,7 @@ const TeacherTimetable = () => {
         if (activePeriod?.periodNumber === p.periodNumber && activePeriod?.startTime === p.startTime)
             return <Chip label="Now" size="small" sx={{ bgcolor: ACCENT, color: '#fff', fontWeight: 700 }} />;
         if (!activePeriod && nextPeriod?.periodNumber === p.periodNumber && nextPeriod?.startTime === p.startTime)
-            return <Chip label="Next" size="small" sx={{ bgcolor: '#38bdf8', color: '#0f172a', fontWeight: 700 }} />;
+            return <Chip label="Next" size="small" sx={{ bgcolor: '#38bdf8', color: '#ffffff', fontWeight: 700 }} />;
         return null;
     };
 
@@ -139,7 +139,7 @@ const TeacherTimetable = () => {
                 ) : (
                     <Table>
                         <TableHead>
-                            <TableRow sx={{ bgcolor: '#1e293b' }}>
+                            <TableRow sx={{ bgcolor: '#000000' }}>
                                 {['Period', 'Class', 'Subject', 'Start', 'End', 'Status'].map(h => (
                                     <TableCell key={h} sx={{ color: '#94a3b8', fontWeight: 700, borderBottom: '1px solid #334155' }}>
                                         {h}
