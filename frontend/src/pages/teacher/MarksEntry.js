@@ -91,10 +91,10 @@ const MarksEntry = () => {
     };
 
     return (
-        <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: '#0b1120', minHeight: '100vh' }}>
+        <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                <GradeIcon sx={{ color: '#0ea5e9' }} />
-                <Typography sx={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.4rem' }}>
+                <GradeIcon />
+                <Typography variant="h5" fontWeight={800}>
                     Marks Entry
                 </Typography>
             </Box>

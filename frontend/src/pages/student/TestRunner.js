@@ -215,7 +215,8 @@ const TestRunner = () => {
                 This test requires webcam access for proctoring. Please allow camera access in your browser and reload the page.
             </Typography>
             <Button onClick={() => window.location.reload()}
-                sx={{ background: 'linear-gradient(135deg,#0050c8,#1e90ff)', color: '#fff', borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600 }}>
+                variant="contained"
+                sx={{ borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600 }}>
                 Reload &amp; Allow Camera
             </Button>
         </Box>
@@ -244,7 +245,8 @@ const TestRunner = () => {
                     </Typography>
                     <Button
                         onClick={() => { document.documentElement.requestFullscreen().catch(() => {}); }}
-                        sx={{ background: 'linear-gradient(135deg,#0050c8,#1e90ff)', color: '#fff', borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600 }}
+                        variant="contained"
+                        sx={{ borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600 }}
                     >
                         Return to Fullscreen
                     </Button>
@@ -323,7 +325,7 @@ const TestRunner = () => {
             <LinearProgress
                 variant="determinate"
                 value={progress}
-                sx={{ mb: 3, height: 4, borderRadius: 2, bgcolor: 'rgba(30,144,255,0.15)', '& .MuiLinearProgress-bar': { bgcolor: timeLeft < 60 ? '#ff5252' : theme.accent } }}
+                sx={{ mb: 3, height: 4, borderRadius: 2, '& .MuiLinearProgress-bar': { borderRadius: 2 } }}
             />
 
             {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
@@ -361,7 +363,8 @@ const TestRunner = () => {
                 <Button
                     onClick={() => handleSubmit('manual')}
                     disabled={submitting}
-                    sx={{ background: 'linear-gradient(135deg,#0050c8,#1e90ff)', color: '#fff', borderRadius: 2, px: 5, py: 1.2, textTransform: 'none', fontWeight: 600, fontSize: '0.95rem' }}
+                    variant="contained"
+                    sx={{ borderRadius: 2, px: 5, py: 1.2, textTransform: 'none', fontWeight: 600, fontSize: '0.95rem' }}
                 >
                     {submitting ? 'Submitting...' : 'Submit Test'}
                 </Button>

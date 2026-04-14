@@ -110,7 +110,7 @@ const TeacherAssignments = () => {
     const subjectName  = a => a.subject?.subName || a.subject?.subjectName || '—';
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 6, bgcolor: '#ffffff', minHeight: '100vh', pt: 4 }}>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 6, minHeight: '100vh', pt: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AssignmentIcon sx={{ color: '#0ea5e9' }} />

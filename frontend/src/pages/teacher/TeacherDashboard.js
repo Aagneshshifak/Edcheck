@@ -130,7 +130,7 @@ export default TeacherDashboard
 
 const styles = {
     boxStyled: {
-        background: '#ffffff',
+        background: '#111111',
         flexGrow: 1,
         minHeight: '100vh',
         overflowY: 'auto',
@@ -141,7 +141,7 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'flex-end',
         px: [1],
-        background: '#111111',
+        background: '#000000',
     },
     drawerStyled: {
         display: "flex"

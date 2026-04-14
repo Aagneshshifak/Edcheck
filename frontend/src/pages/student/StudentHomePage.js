@@ -133,40 +133,35 @@ const SubjectAssignmentPanel = ({ subjectsList, assignments }) => (
 );
 
 // ── Bottom-right: Attendance Analytics Chart ──────────────────────────────────
-const AttendanceAnalyticsChart = ({ subjectAttendanceMap }) => {
-    const entries = Object.entries(subjectAttendanceMap);
-    return (
-        <Card>
-            <CardTitle>Attendance Analytics</CardTitle>
-            {entries.length === 0 ? (
-                <Typography sx={{ color: theme.textMuted, fontSize: '0.82rem', textAlign: 'center', py: 3 }}>
-                    No attendance records yet
-                </Typography>
-            ) : (
-                entries.map(([subject, { present, total }]) => {
-                    const pct = total > 0 ? Math.round((present / total) * 100) : 0;
-                    const color = pct >= 75 ? theme.success : pct >= 50 ? theme.warning : theme.danger;
-                    return (
-                        <Box key={subject} sx={{ mb: 2 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                <Typography sx={{ color: theme.text, fontSize: '0.82rem' }}>{subject}</Typography>
-                                <Typography sx={{ color, fontSize: '0.82rem', fontWeight: 700 }}>{pct}%</Typography>
-                            </Box>
-                            <LinearProgress variant="determinate" value={pct} sx={{
-                                height: 6, borderRadius: 3,
-                                bgcolor: 'rgba(255,255,255,0.07)',
-                                '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 3 },
-                            }} />
-                            <Typography sx={{ color: theme.textMuted, fontSize: '0.68rem', mt: 0.3 }}>
-                                {present} / {total} sessions
-                            </Typography>
+const AttendanceAnalyticsChart = ({ summaries }) => (
+    <Card>
+        <CardTitle>Attendance Analytics</CardTitle>
+        {summaries.length === 0 ? (
+            <Typography sx={{ color: theme.textMuted, fontSize: '0.82rem', textAlign: 'center', py: 3 }}>
+                No attendance records yet
+            </Typography>
+        ) : (
+            summaries.map(({ subjectName, attendedClasses, totalClasses, attendancePercentage }) => {
+                const color = attendancePercentage >= 75 ? theme.success : attendancePercentage >= 50 ? theme.warning : theme.danger;
+                return (
+                    <Box key={subjectName} sx={{ mb: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography sx={{ color: theme.text, fontSize: '0.82rem' }}>{subjectName}</Typography>
+                            <Typography sx={{ color, fontSize: '0.82rem', fontWeight: 700 }}>{attendancePercentage}%</Typography>
                         </Box>
-                    );
-                })
-            )}
-        </Card>
-    );
-};
+                        <LinearProgress variant="determinate" value={attendancePercentage} sx={{
+                            height: 6, borderRadius: 3,
+                            '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 3 },
+                        }} />
+                        <Typography sx={{ color: theme.textMuted, fontSize: '0.68rem', mt: 0.3 }}>
+                            {attendedClasses} / {totalClasses} classes attended
+                        </Typography>
+                    </Box>
+                );
+            })
+        )}
+    </Card>
+);
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 const StudentHomePage = () => {
@@ -177,6 +172,7 @@ const StudentHomePage = () => {
     const progress = useSelector(s => s.progress);
 
     const [subjectAttendance, setSubjectAttendance] = useState([]);
+    const [attendanceSummaries, setAttendanceSummaries] = useState([]);
     const [assignments, setAssignments] = useState([]);
 
     const classID = currentUser?.sclassName?._id || currentUser?.classId?._id;
@@ -194,6 +190,14 @@ const StudentHomePage = () => {
         if (userDetails?.attendance) setSubjectAttendance(userDetails.attendance);
     }, [userDetails]);
 
+    // Fetch real attendance analytics from the dedicated endpoint
+    useEffect(() => {
+        if (!currentUser?._id) return;
+        axiosInstance.get(`/attendance-analytics/${currentUser._id}`)
+            .then(r => setAttendanceSummaries(Array.isArray(r.data) ? r.data : []))
+            .catch(() => {});
+    }, [currentUser?._id]);
+
     // Fetch assignments for the subject panel
     useEffect(() => {
         if (!classID) return;
@@ -208,14 +212,6 @@ const StudentHomePage = () => {
     const overallAvg = progress.data?.length > 0
         ? Math.round(progress.data.reduce((s, i) => s + i.percentageScore, 0) / progress.data.length * 10) / 10
         : null;
-
-    const subjectAttendanceMap = {};
-    subjectAttendance.forEach(a => {
-        const key = a.subName?.subName || a.subjectId?.subName || 'Unknown';
-        if (!subjectAttendanceMap[key]) subjectAttendanceMap[key] = { present: 0, total: 0 };
-        subjectAttendanceMap[key].total++;
-        if (a.status === 'Present') subjectAttendanceMap[key].present++;
-    });
 
     return (
         <Box sx={{ minHeight: '100vh', background: theme.bg, p: { xs: 2, md: 3 } }}>
@@ -261,7 +257,7 @@ const StudentHomePage = () => {
                     </Card>
                 </Grid>
                 <Grid item xs={12} md={5}>
-                    <AttendanceAnalyticsChart subjectAttendanceMap={subjectAttendanceMap} />
+                    <AttendanceAnalyticsChart summaries={attendanceSummaries} />
                 </Grid>
             </Grid>
 

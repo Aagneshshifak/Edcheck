@@ -28,7 +28,7 @@ const StudentDashboard = () => {
     const [open, setOpen] = useState(true);
 
     return (
-        <Box sx={{ display: 'flex', background: '#ffffff' }}>
+        <Box sx={{ display: 'flex', background: '#111111' }}>
             <CssBaseline />
             <AppBar open={open} position='absolute'>
                 <Toolbar sx={{ pr: '24px' }}>
@@ -36,7 +36,7 @@ const StudentDashboard = () => {
                         sx={{ marginRight: '36px', ...(open && { display: 'none' }) }}>
                         <MenuIcon />
                     </IconButton>
-                    <Typography component="h1" variant="h6" noWrap sx={{ flexGrow: 1, color: '#ffffff', fontWeight: 700 }}>
+                    <Typography component="h1" variant="h6" noWrap sx={{ flexGrow: 1, fontWeight: 700 }}>
                         Student Dashboard
                     </Typography>
                     <NotificationBell />
@@ -45,7 +45,7 @@ const StudentDashboard = () => {
             </AppBar>
 
             <Drawer variant="permanent" open={open}>
-                <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: [1], background: '#111111' }}>
+                <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: [1], background: '#000000' }}>
                     <IconButton onClick={() => setOpen(!open)} sx={{ color: '#ffffff' }}>
                         <ChevronLeftIcon />
                     </IconButton>
@@ -56,7 +56,7 @@ const StudentDashboard = () => {
                 </List>
             </Drawer>
 
-            <Box component="main" sx={{ flexGrow: 1, minHeight: '100vh', overflowY: 'auto', overflowX: 'hidden', background: '#ffffff' }}>
+            <Box component="main" sx={{ flexGrow: 1, minHeight: '100vh', overflowY: 'auto', overflowX: 'hidden', background: '#111111' }}>
                 <Toolbar />
                 <Routes>
                     <Route path="/" element={<StudentHomePage />} />

@@ -14,7 +14,14 @@ import {
 } from 'recharts';
 
 
-const ACCENT = '#0ea5e9';
+const GLASS = {
+    background: 'rgba(255,255,255,0.06)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 3,
+    boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
+};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +63,7 @@ const ClassOverview = ({ students }) => {
             {/* Summary row */}
             <Grid container spacing={2} mb={3}>
                 {[
-                    { label: 'Students',        value: students.length,  color: ACCENT },
+                    { label: 'Students',        value: students.length,  color: '#0ea5e9' },
                     { label: 'Avg Attendance',  value: `${avgAttendance}%`, color: avgAttendance >= 75 ? '#22c55e' : '#ef4444' },
                     { label: 'Avg Score',       value: `${avgScore}%`,   color: scoreColor(avgScore) },
                     { label: 'High Risk',       value: highRisk,         color: '#ef4444' },
@@ -79,7 +86,7 @@ const ClassOverview = ({ students }) => {
                         <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                         <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                         <Tooltip formatter={(v) => [`${v}%`, 'Avg Score']} />
-                        <Bar dataKey="score" fill={ACCENT} radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="score" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             </Paper>

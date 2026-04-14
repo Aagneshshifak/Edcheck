@@ -56,15 +56,20 @@ const NavItem = ({ icon, label, path, indent = false }) => {
             onClick={() => navigate(path)}
             sx={{
                 mx: 1, my: 0.25,
-                borderRadius: '8px',
+                borderRadius: '10px',
                 pl: indent ? 4 : 2,
                 py: 0.75,
                 transition: 'all 0.18s ease',
-                borderLeft: active ? `3px solid ${ACCENT}` : '3px solid transparent',
-                bgcolor: active ? ACCENT_DIM : 'transparent',
+                // Glass effect on active
+                background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
+                backdropFilter: active ? 'blur(8px)' : 'none',
+                WebkitBackdropFilter: active ? 'blur(8px)' : 'none',
+                border: active ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+                boxShadow: active ? '0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)' : 'none',
                 '&:hover': {
-                    bgcolor: ACCENT_DIM,
-                    pl: indent ? 4.5 : 2.5,
+                    background: 'rgba(255,255,255,0.08)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255,255,255,0.12)',
                 },
             }}
         >
