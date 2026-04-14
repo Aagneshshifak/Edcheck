@@ -179,7 +179,7 @@ export default function TimetableBuilder() {
     const labelSx = { color: '#666666' };
 
     return (
-        <Box sx={{ minHeight: '100vh', bgcolor: '#ffffff', p: 3 }}>
+        <Box sx={{ minHeight: '100vh', p: 3 }}>
             <Typography variant="h5" sx={{ color: '#111111', mb: 3, fontWeight: 700 }}>
                 Timetable Builder
             </Typography>

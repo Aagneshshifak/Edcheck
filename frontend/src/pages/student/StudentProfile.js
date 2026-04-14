@@ -1,106 +1,81 @@
-import React from 'react'
-import styled from 'styled-components';
-import { Card, CardContent, Typography, Grid, Box, Avatar, Container, Paper } from '@mui/material';
+import React from 'react';
+import {
+    Card, CardContent, Typography, Grid, Box, Avatar,
+    Container, Paper, Divider,
+} from '@mui/material';
 import { useSelector } from 'react-redux';
+import PersonIcon from '@mui/icons-material/Person';
+
+const InfoRow = ({ label, value }) => (
+    <Box sx={{ py: 1.5, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 160, fontWeight: 600 }}>
+            {label}
+        </Typography>
+        <Typography variant="body2">{value || '—'}</Typography>
+    </Box>
+);
 
 const StudentProfile = () => {
-  const { currentUser, response, error } = useSelector((state) => state.user);
+    const { currentUser } = useSelector((state) => state.user);
+    const sclassName   = currentUser.sclassName;
+    const studentSchool = currentUser.school;
 
-  if (response) { console.log(response) }
-  else if (error) { console.log(error) }
-
-  const sclassName = currentUser.sclassName
-  const studentSchool = currentUser.school
-
-  return (
-    <>
-      <Container maxWidth="md">
-        <StyledPaper elevation={3}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="center">
-                <Avatar alt="Student Avatar" sx={{ width: 150, height: 150 }}>
-                  {String(currentUser.name).charAt(0)}
+    return (
+        <Container maxWidth="md" sx={{ py: 4 }}>
+            {/* Avatar card */}
+            <Paper variant="outlined" sx={{ p: 4, mb: 3, textAlign: 'center' }}>
+                <Avatar sx={{ width: 96, height: 96, fontSize: '2rem', mx: 'auto', mb: 2, bgcolor: '#111111' }}>
+                    {String(currentUser.name).charAt(0).toUpperCase()}
                 </Avatar>
-              </Box>
-            </Grid>
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="center">
-                <Typography variant="h5" component="h2" textAlign="center">
-                  {currentUser.name}
+                <Typography variant="h5" fontWeight={700}>{currentUser.name}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Roll No: {currentUser.rollNum}
                 </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="center">
-                <Typography variant="subtitle1" component="p" textAlign="center">
-                  Student Roll No: {currentUser.rollNum}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="center">
-                <Typography variant="subtitle1" component="p" textAlign="center">
-                  Class: {sclassName.sclassName}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="center">
-                <Typography variant="subtitle1" component="p" textAlign="center">
-                  School: {studentSchool.schoolName}
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </StyledPaper>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Personal Information
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1" component="p">
-                  <strong>Date of Birth:</strong> January 1, 2000
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1" component="p">
-                  <strong>Gender:</strong> Male
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1" component="p">
-                  <strong>Email:</strong> john.doe@example.com
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1" component="p">
-                  <strong>Phone:</strong> (123) 456-7890
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1" component="p">
-                  <strong>Address:</strong> 123 Main Street, City, Country
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="subtitle1" component="p">
-                  <strong>Emergency Contact:</strong> (987) 654-3210
-                </Typography>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      </Container>
-    </>
-  )
-}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 2 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="caption" color="text.secondary">Class</Typography>
+                        <Typography variant="body2" fontWeight={600}>{sclassName?.sclassName || '—'}</Typography>
+                    </Box>
+                    <Divider orientation="vertical" flexItem />
+                    <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="caption" color="text.secondary">School</Typography>
+                        <Typography variant="body2" fontWeight={600}>{studentSchool?.schoolName || '—'}</Typography>
+                    </Box>
+                </Box>
+            </Paper>
 
-export default StudentProfile
+            {/* Personal info */}
+            <Card variant="outlined">
+                <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <PersonIcon fontSize="small" />
+                        <Typography variant="h6" fontWeight={700}>Personal Information</Typography>
+                    </Box>
+                    <Divider sx={{ mb: 1 }} />
+                    <Grid container>
+                        <Grid item xs={12} sm={6}>
+                            <InfoRow label="Date of Birth" value="January 1, 2000" />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <InfoRow label="Gender" value="Male" />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <InfoRow label="Email" value="student@example.com" />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <InfoRow label="Phone" value="(123) 456-7890" />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <InfoRow label="Address" value="123 Main Street, City" />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <InfoRow label="Emergency Contact" value="(987) 654-3210" />
+                        </Grid>
+                    </Grid>
+                </CardContent>
+            </Card>
+        </Container>
+    );
+};
 
-const StyledPaper = styled(Paper)`
-  padding: 20px;
-  margin-bottom: 20px;
-`;
+export default StudentProfile;

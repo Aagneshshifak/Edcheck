@@ -250,7 +250,7 @@ export default AdminDashboard
 
 const styles = {
     boxStyled: {
-        background: '#ffffff',
+        background: '#111111',
         flexGrow: 1,
         minHeight: '100vh',
         overflowY: 'auto',

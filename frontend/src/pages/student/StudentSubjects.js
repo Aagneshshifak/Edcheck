@@ -1,138 +1,235 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSubjectList } from '../../redux/sclassRelated/sclassHandle';
-import { BottomNavigation, BottomNavigationAction, Container, Paper, Table, TableBody, TableHead, Typography } from '@mui/material';
 import { getUserDetails } from '../../redux/userRelated/userHandle';
-import CustomBarChart from '../../components/CustomBarChart'
+import axiosInstance from '../../utils/axiosInstance';
+import {
+    Box, Typography, Paper, Grid, Chip, CircularProgress,
+    LinearProgress, Divider,
+} from '@mui/material';
+import MenuBookIcon    from '@mui/icons-material/MenuBook';
+import AssignmentIcon  from '@mui/icons-material/Assignment';
+import QuizIcon        from '@mui/icons-material/Quiz';
+import GradeIcon       from '@mui/icons-material/Grade';
 
-import InsertChartIcon from '@mui/icons-material/InsertChart';
-import InsertChartOutlinedIcon from '@mui/icons-material/InsertChartOutlined';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
-import { StyledTableCell, StyledTableRow } from '../../components/styles';
+// ── colour for a percentage ───────────────────────────────────────────────────
+const pctColor = (v) => v >= 75 ? 'success' : v >= 50 ? 'warning' : 'error';
+const pctHex   = (v) => v >= 75 ? '#16a34a' : v >= 50 ? '#d97706' : '#dc2626';
 
-const StudentSubjects = () => {
-
-    const dispatch = useDispatch();
-    const { subjectsList, sclassDetails } = useSelector((state) => state.sclass);
-    const { userDetails, currentUser, loading, response, error } = useSelector((state) => state.user);
-
-    useEffect(() => {
-        dispatch(getUserDetails(currentUser._id, "Student"));
-    }, [dispatch, currentUser._id])
-
-    if (response) { console.log(response) }
-    else if (error) { console.log(error) }
-
-    const [subjectMarks, setSubjectMarks] = useState([]);
-    const [selectedSection, setSelectedSection] = useState('table');
-
-    useEffect(() => {
-        if (userDetails) {
-            setSubjectMarks(userDetails.examResult || []);
-        }
-    }, [userDetails])
-
-    useEffect(() => {
-        if (subjectMarks.length === 0) {
-            dispatch(getSubjectList(currentUser.sclassName._id, "ClassSubjects"));
-        }
-    }, [subjectMarks, dispatch, currentUser.sclassName._id]);
-
-    const handleSectionChange = (event, newSection) => {
-        setSelectedSection(newSection);
-    };
-
-    const renderTableSection = () => {
-        return (
-            <>
-                <Typography variant="h5" align="center" gutterBottom sx={{ color: '#e8f4fd', pt: 3, fontWeight: 700, letterSpacing: 0.5 }}>
-                    Subject Marks
-                </Typography>
-                <Table sx={{ '& .MuiTableCell-root': { borderColor: 'rgba(30,144,255,0.12)' } }}>
-                    <TableHead>
-                        <StyledTableRow>
-                            <StyledTableCell sx={{ background: 'linear-gradient(90deg,#0d1b2a,#112240)', color: '#1e90ff', fontWeight: 700 }}>Subject</StyledTableCell>
-                            <StyledTableCell sx={{ background: 'linear-gradient(90deg,#0d1b2a,#112240)', color: '#1e90ff', fontWeight: 700 }}>Marks</StyledTableCell>
-                        </StyledTableRow>
-                    </TableHead>
-                    <TableBody>
-                        {subjectMarks.map((result, index) => {
-                            if (!result.subName || !result.marksObtained) return null;
-                            return (
-                                <StyledTableRow key={index} sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(13,27,42,0.8)' }, '&:nth-of-type(even)': { bgcolor: 'rgba(10,22,40,0.6)' }, '&:hover': { bgcolor: 'rgba(30,144,255,0.08) !important' } }}>
-                                    <StyledTableCell sx={{ color: '#e8f4fd' }}>{result.subName.subName}</StyledTableCell>
-                                    <StyledTableCell sx={{ color: result.marksObtained >= 75 ? '#00e676' : result.marksObtained >= 50 ? '#ffab40' : '#ff5252', fontWeight: 700 }}>{result.marksObtained}</StyledTableCell>
-                                </StyledTableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-            </>
-        );
-    };
-
-    const renderChartSection = () => {
-        return <CustomBarChart chartData={subjectMarks} dataKey="marksObtained" />;
-    };
-
-    const renderClassDetailsSection = () => {
-        return (
-            <Container sx={{ pt: 3 }}>
-                <Typography variant="h5" align="center" gutterBottom sx={{ color: '#e8f4fd', fontWeight: 700 }}>
-                    Class Details
-                </Typography>
-                <Typography variant="h6" gutterBottom sx={{ color: 'rgba(232,244,253,0.7)', textAlign: 'center', mb: 3 }}>
-                    Class: {sclassDetails && sclassDetails.sclassName}
-                </Typography>
-                {subjectsList && subjectsList.map((subject, index) => (
-                    <div key={index} style={{ background: 'linear-gradient(145deg,#0d1b2a,#112240)', border: '1px solid rgba(30,144,255,0.18)', borderRadius: 8, padding: '12px 16px', marginBottom: 8 }}>
-                        <Typography variant="subtitle1" sx={{ color: '#e8f4fd' }}>
-                            {subject.subName} <span style={{ color: '#1e90ff', fontSize: '0.8rem' }}>({subject.subCode})</span>
-                        </Typography>
-                    </div>
-                ))}
-            </Container>
-        );
-    };
+// ── single subject card ───────────────────────────────────────────────────────
+const SubjectCard = ({ subject, marks, assignmentCount, testCount, avgScore }) => {
+    const hasMarks = marks !== null && marks !== undefined;
 
     return (
-        <>
-            {loading ? (
-                <div style={{ minHeight: '100vh', background: '#0a0a0f', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e90ff' }}>Loading...</div>
-            ) : (
-                <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#0a0a0f 0%,#0d1b2a 50%,#0a0a0f 100%)', paddingBottom: 80 }}>
-                    {subjectMarks && Array.isArray(subjectMarks) && subjectMarks.length > 0
-                        ?
-                        (<>
-                            {selectedSection === 'table' && renderTableSection()}
-                            {selectedSection === 'chart' && renderChartSection()}
+        <Paper variant="outlined" sx={{
+            p: 3, borderRadius: 3,
+            transition: 'box-shadow 0.2s',
+            '&:hover': { boxShadow: 6 },
+        }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{
+                        width: 40, height: 40, borderRadius: 2,
+                        bgcolor: 'rgba(255,255,255,0.08)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                        <MenuBookIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                        <Typography fontWeight={700} fontSize="0.95rem">{subject.subName}</Typography>
+                        <Typography variant="caption" color="text.secondary">{subject.subCode}</Typography>
+                    </Box>
+                </Box>
+                {hasMarks && (
+                    <Chip
+                        label={`${marks} marks`}
+                        color={pctColor(marks)}
+                        size="small"
+                        icon={<GradeIcon sx={{ fontSize: '0.8rem !important' }} />}
+                        sx={{ fontWeight: 700 }}
+                    />
+                )}
+            </Box>
 
-            <Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'linear-gradient(90deg, #050d18, #0a1628)', borderTop: '1px solid rgba(30,144,255,0.15)' }} elevation={3}>
-                                <BottomNavigation value={selectedSection} onChange={handleSectionChange} showLabels sx={{ background: 'transparent' }}>
-                                    <BottomNavigationAction
-                                        label="Table"
-                                        value="table"
-                                        icon={selectedSection === 'table' ? <TableChartIcon /> : <TableChartOutlinedIcon />}
-                                        sx={{ color: selectedSection === 'table' ? '#1e90ff' : 'rgba(232,244,253,0.5)', '&.Mui-selected': { color: '#1e90ff' } }}
-                                    />
-                                    <BottomNavigationAction
-                                        label="Chart"
-                                        value="chart"
-                                        icon={selectedSection === 'chart' ? <InsertChartIcon /> : <InsertChartOutlinedIcon />}
-                                        sx={{ color: selectedSection === 'chart' ? '#1e90ff' : 'rgba(232,244,253,0.5)', '&.Mui-selected': { color: '#1e90ff' } }}
-                                    />
-                                </BottomNavigation>
-                            </Paper>
-                        </>)
-                        :
-                        (<>
-                            {renderClassDetailsSection()}
-                        </>)
-                    }
-                </div>
+            <Divider sx={{ mb: 2 }} />
+
+            {/* Stats row */}
+            <Box sx={{ display: 'flex', gap: 2, mb: hasMarks ? 2 : 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                    <AssignmentIcon fontSize="small" color="action" />
+                    <Box>
+                        <Typography variant="caption" color="text.secondary" display="block">Assignments</Typography>
+                        <Typography fontWeight={700} fontSize="1rem">{assignmentCount}</Typography>
+                    </Box>
+                </Box>
+                <Divider orientation="vertical" flexItem />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                    <QuizIcon fontSize="small" color="action" />
+                    <Box>
+                        <Typography variant="caption" color="text.secondary" display="block">Tests</Typography>
+                        <Typography fontWeight={700} fontSize="1rem">{testCount}</Typography>
+                    </Box>
+                </Box>
+                {avgScore !== null && (
+                    <>
+                        <Divider orientation="vertical" flexItem />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                            <GradeIcon fontSize="small" color="action" />
+                            <Box>
+                                <Typography variant="caption" color="text.secondary" display="block">Avg Score</Typography>
+                                <Typography fontWeight={700} fontSize="1rem" sx={{ color: pctHex(avgScore) }}>
+                                    {avgScore}%
+                                </Typography>
+                            </Box>
+                        </Box>
+                    </>
+                )}
+            </Box>
+
+            {/* Marks progress bar */}
+            {hasMarks && (
+                <Box sx={{ mt: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">Exam Marks</Typography>
+                        <Typography variant="caption" fontWeight={700} sx={{ color: pctHex(marks) }}>{marks}%</Typography>
+                    </Box>
+                    <LinearProgress
+                        variant="determinate"
+                        value={Math.min(marks, 100)}
+                        color={pctColor(marks)}
+                        sx={{ height: 6, borderRadius: 3 }}
+                    />
+                </Box>
             )}
-        </>
+        </Paper>
+    );
+};
+
+// ── page ──────────────────────────────────────────────────────────────────────
+const StudentSubjects = () => {
+    const dispatch = useDispatch();
+    const { subjectsList } = useSelector((state) => state.sclass);
+    const { userDetails, currentUser, loading } = useSelector((state) => state.user);
+
+    const [assignments, setAssignments] = useState([]);
+    const [tests,       setTests]       = useState([]);
+    const [attempts,    setAttempts]    = useState([]);
+    const [dataLoading, setDataLoading] = useState(true);
+
+    const classId   = currentUser?.sclassName?._id || currentUser?.sclassName;
+    const studentId = currentUser?._id;
+
+    // Load subjects + user details
+    useEffect(() => {
+        dispatch(getUserDetails(studentId, 'Student'));
+        if (classId) dispatch(getSubjectList(classId, 'ClassSubjects'));
+    }, [dispatch, studentId, classId]);
+
+    // Load assignments, tests, attempts in parallel
+    useEffect(() => {
+        if (!classId || !studentId) return;
+        Promise.all([
+            axiosInstance.get(`/AssignmentsByClass/${classId}`).catch(() => ({ data: [] })),
+            axiosInstance.get(`/TestsForStudent/${studentId}`).catch(() => ({ data: [] })),
+            axiosInstance.get(`/AttemptsByStudent/${studentId}`).catch(() => ({ data: [] })),
+        ]).then(([asgRes, testRes, attRes]) => {
+            setAssignments(Array.isArray(asgRes.data) ? asgRes.data : (asgRes.data?.assignments || []));
+            setTests(Array.isArray(testRes.data) ? testRes.data : []);
+            setAttempts(Array.isArray(attRes.data) ? attRes.data : []);
+        }).finally(() => setDataLoading(false));
+    }, [classId, studentId]);
+
+    const subjectMarks = userDetails?.examResult || [];
+
+    // Build per-subject stats
+    const getSubjectStats = (subject) => {
+        const subId   = subject._id;
+        const subName = subject.subName;
+
+        // Marks from exam result
+        const markEntry = subjectMarks.find(r =>
+            (r.subName?._id || r.subName) === subId ||
+            r.subName?.subName === subName
+        );
+        const marks = markEntry?.marksObtained ?? null;
+
+        // Assignments for this subject
+        const subAssignments = assignments.filter(a =>
+            (a.subject?._id || a.subject) === subId ||
+            a.subject?.subName === subName
+        );
+
+        // Tests for this subject
+        const subTests = tests.filter(t =>
+            (t.subject?._id || t.subject) === subId ||
+            t.subject?.subName === subName
+        );
+
+        // Average score from attempts on this subject's tests
+        const subTestIds = new Set(subTests.map(t => t._id));
+        const subAttempts = attempts.filter(a => {
+            const tid = a.testId?._id || a.testId;
+            return subTestIds.has(tid);
+        });
+        const avgScore = subAttempts.length > 0
+            ? Math.round(subAttempts.reduce((s, a) => s + (a.score ?? 0), 0) / subAttempts.length)
+            : null;
+
+        return {
+            marks,
+            assignmentCount: subAssignments.length,
+            testCount:       subTests.length,
+            avgScore,
+        };
+    };
+
+    if (loading || dataLoading) return (
+        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CircularProgress />
+        </Box>
+    );
+
+    const subjects = subjectsList || [];
+
+    return (
+        <Box sx={{ minHeight: '100vh', p: { xs: 2, md: 3 } }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <MenuBookIcon />
+                    <Box>
+                        <Typography variant="h5" fontWeight={700}>My Subjects</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {subjects.length} subject{subjects.length !== 1 ? 's' : ''} enrolled
+                        </Typography>
+                    </Box>
+                </Box>
+                {/* Summary chips */}
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip icon={<AssignmentIcon />} label={`${assignments.length} Assignments`} variant="outlined" size="small" />
+                    <Chip icon={<QuizIcon />}       label={`${tests.length} Tests`}             variant="outlined" size="small" />
+                </Box>
+            </Box>
+
+            {subjects.length === 0 ? (
+                <Paper variant="outlined" sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
+                    <MenuBookIcon sx={{ fontSize: 48, opacity: 0.2, mb: 1 }} />
+                    <Typography color="text.secondary">No subjects enrolled yet.</Typography>
+                </Paper>
+            ) : (
+                <Grid container spacing={2.5}>
+                    {subjects.map((subject) => {
+                        const stats = getSubjectStats(subject);
+                        return (
+                            <Grid item xs={12} sm={6} md={4} key={subject._id}>
+                                <SubjectCard subject={subject} {...stats} />
+                            </Grid>
+                        );
+                    })}
+                </Grid>
+            )}
+        </Box>
     );
 };
 

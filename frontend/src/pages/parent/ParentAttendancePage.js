@@ -2,15 +2,14 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, Grid, CircularProgress, Button } from '@mui/material';
 import axiosInstance from '../../utils/axiosInstance';
 import { useSelector } from 'react-redux';
-import { theme } from '../../theme/studentTheme';
 import { sortSummariesAscending } from '../../components/attendanceUtils';
 import { SubjectCard } from '../student/StudentAttendancePage';
 
 const ParentAttendancePage = () => {
     const { currentUser } = useSelector(s => s.user);
-    const [summaries, setSummaries] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [summaries,  setSummaries]  = useState([]);
+    const [loading,    setLoading]    = useState(false);
+    const [error,      setError]      = useState(null);
     const [retryCount, setRetryCount] = useState(0);
 
     const childId = currentUser?.children?.[0]?._id || currentUser?.children?.[0];
@@ -19,53 +18,45 @@ const ParentAttendancePage = () => {
         if (!childId) return;
         setLoading(true);
         setError(null);
-        axiosInstance.get(`${process.env.REACT_APP_BASE_URL}/attendance-analytics/${childId}`)
-            .then(res => {
-                setSummaries(sortSummariesAscending(res.data));
-            })
-            .catch(() => {
-                setError('Failed to load attendance data. Please try again.');
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+        axiosInstance.get(`/attendance-analytics/${childId}`)
+            .then(res => setSummaries(sortSummariesAscending(res.data)))
+            .catch(() => setError('Failed to load attendance data. Please try again.'))
+            .finally(() => setLoading(false));
     }, [childId, retryCount]);
 
-    if (!currentUser?.children?.length) {
-        return (
-            <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography sx={{ color: theme.textMuted, fontSize: '1rem' }}>
-                    No student linked to this account
-                </Typography>
-            </Box>
-        );
-    }
+    if (!currentUser?.children?.length) return (
+        <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography color="text.secondary">No student linked to this account</Typography>
+        </Box>
+    );
 
     if (loading) return (
         <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CircularProgress sx={{ color: theme.accent }} />
+            <CircularProgress />
         </Box>
     );
 
     if (error) return (
         <Box sx={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-            <Typography sx={{ color: theme.danger }}>{error}</Typography>
-            <Button variant="contained" onClick={() => setRetryCount(c => c + 1)}
-                sx={{ bgcolor: theme.accent, '&:hover': { bgcolor: theme.accentHover } }}>
-                Retry
-            </Button>
+            <Typography color="error">{error}</Typography>
+            <Button variant="contained" onClick={() => setRetryCount(c => c + 1)}>Retry</Button>
         </Box>
     );
 
     return (
         <Box sx={{ p: 3 }}>
-            <Typography sx={{ color: theme.text, fontSize: '1.5rem', fontWeight: 700, mb: 3 }}>
+            <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
                 Child's Attendance Analytics
             </Typography>
 
             {summaries.length === 0 ? (
-                <Box sx={{ background: theme.card, border: theme.cardBorder, borderRadius: 3, p: 4, textAlign: 'center' }}>
-                    <Typography sx={{ color: theme.textMuted }}>No attendance records found</Typography>
+                <Box sx={{
+                    background: 'rgba(255,255,255,0.05)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 3, p: 4, textAlign: 'center',
+                }}>
+                    <Typography color="text.secondary">No attendance records found</Typography>
                 </Box>
             ) : (
                 <Grid container spacing={2}>
