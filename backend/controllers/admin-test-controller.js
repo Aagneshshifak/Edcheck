@@ -20,24 +20,51 @@ const getSchoolTests = async (req, res) => {
 
         const testIds = tests.map((t) => t._id);
 
-        const aggregation = await TestAttempt.aggregate([
-            { $match: { testId: { $in: testIds } } },
-            {
-                $group: {
-                    _id:           "$testId",
-                    attemptCount:  { $sum: 1 },
-                    classAvgScore: { $avg: { $multiply: [{ $divide: ["$score", { $ifNull: ["$totalMarks", 1] }] }, 100] } },
-                    // Cheating signal: attempts that completed in under 20% of duration
-                    fastSubmits:   { $sum: { $cond: [
-                        { $and: [
-                            { $ne: ["$startedAt", null] },
-                            { $lt: [{ $subtract: ["$submittedAt", "$startedAt"] }, 60000] } // < 1 min
-                        ]},
-                        1, 0
-                    ]}}
+        // Safe aggregation — guard against null dates and zero totalMarks
+        let aggregation = [];
+        if (testIds.length > 0) {
+            aggregation = await TestAttempt.aggregate([
+                { $match: { testId: { $in: testIds } } },
+                {
+                    $group: {
+                        _id:          "$testId",
+                        attemptCount: { $sum: 1 },
+                        classAvgScore: {
+                            $avg: {
+                                $multiply: [
+                                    {
+                                        $divide: [
+                                            { $ifNull: ["$score", 0] },
+                                            { $cond: [{ $gt: [{ $ifNull: ["$totalMarks", 0] }, 0] }, "$totalMarks", 1] }
+                                        ]
+                                    },
+                                    100
+                                ]
+                            }
+                        },
+                        fastSubmits: {
+                            $sum: {
+                                $cond: [
+                                    {
+                                        $and: [
+                                            { $ne: ["$startedAt",   null] },
+                                            { $ne: ["$submittedAt", null] },
+                                            {
+                                                $lt: [
+                                                    { $subtract: ["$submittedAt", "$startedAt"] },
+                                                    60000
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    1, 0
+                                ]
+                            }
+                        }
+                    }
                 }
-            }
-        ]);
+            ]);
+        }
 
         const statsMap = {};
         for (const row of aggregation) {
@@ -56,6 +83,7 @@ const getSchoolTests = async (req, res) => {
 
         res.status(200).json(enriched);
     } catch (err) {
+        console.error('[getSchoolTests] ERROR:', err.message, err.stack);
         res.status(500).json({ message: err.message });
     }
 };
