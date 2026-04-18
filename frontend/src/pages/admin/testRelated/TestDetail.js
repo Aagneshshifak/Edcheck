@@ -16,7 +16,7 @@ const TestDetail = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        axiosInstance.get(`${process.env.REACT_APP_BASE_URL}/AttemptsByTest/${id}`)
+        axiosInstance.get(`/AttemptsByTest/${id}`)
             .then(res => setAttempts(res.data))
             .catch(err => setError(err.response?.data?.message || 'Failed to load attempts'))
             .finally(() => setLoading(false));
