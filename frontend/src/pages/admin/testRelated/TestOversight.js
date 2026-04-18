@@ -46,7 +46,16 @@ const TestOversight = () => {
         ]).then(([t, c, s]) => {
             setTests(Array.isArray(t.data) ? t.data : []);
             setClasses(Array.isArray(c.data) ? c.data : []);
-            setSubjects(Array.isArray(s.data) ? s.data : []);
+            // Deduplicate subjects by subName
+            const raw = Array.isArray(s.data) ? s.data : [];
+            const seen = new Set();
+            const unique = raw.filter(sub => {
+                const name = sub.subName || sub.subjectName || '';
+                if (seen.has(name)) return false;
+                seen.add(name);
+                return true;
+            });
+            setSubjects(unique);
         }).catch(err => setError(err.response?.data?.message || 'Failed to load tests'))
           .finally(() => setLoading(false));
     }, [schoolId]);
