@@ -35,7 +35,7 @@ const AIDashboard = () => {
             <Box>
                 {tab === 0 && <NoteSuggestionsPanel teachSubjects={teachSubjects} />}
                 {tab === 1 && <WeakTopicsPanel teachSubjects={teachSubjects} classId={classId} />}
-                {tab === 2 && <QuestionGeneratorPanel />}
+                {tab === 2 && <QuestionGeneratorPanel teachSubjects={teachSubjects} />}
             </Box>
         </Container>
     );
