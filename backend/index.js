@@ -11,6 +11,7 @@ const responseTimeTracker = require("./utils/responseTimeTracker");
 const app = express();
 const Routes = require("./routes/route.js");
 const { startReminderScheduler } = require("./services/reminder-scheduler");
+const { startAIAnalysisScheduler } = require("./services/ai-analysis-scheduler");
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json({ limit: "10mb" }));
@@ -60,6 +61,7 @@ mongoose
     .then(() => {
         logger.info("Connected to MongoDB");
         startReminderScheduler();
+        startAIAnalysisScheduler();
     })
     .catch((err) => {
         logger.error("MongoDB connection failed", { message: err.message });

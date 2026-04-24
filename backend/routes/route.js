@@ -347,4 +347,21 @@ router.get('/TeacherSchedule/:teacherId/:day', auth, getTeacherDaySchedule);
 router.get('/Substitute/teacher/:teacherId/:date', auth, getSubstitutesByTeacher);
 router.get('/Substitute/:classId/:date', auth, getSubstitutesByClassDate);
 
+// ── AI Teaching Assistant ─────────────────────────────────────────────────────
+const { getNoteSuggestions, getSavedNoteSuggestions, detectWeakTopics, generateQuestions, getTopicPerformance, getQuestionBank, addBankQuestionsToTest } = require('../controllers/ai-teaching-controller');
+router.post('/AI/note-suggestions', auth, getNoteSuggestions);
+router.get('/AI/note-suggestions/saved', auth, getSavedNoteSuggestions);
+router.post('/AI/weak-topics', auth, detectWeakTopics);
+router.post('/AI/generate-questions', auth, generateQuestions);
+router.get('/AI/topic-performance', auth, getTopicPerformance);
+router.get('/AI/question-bank', auth, getQuestionBank);
+router.post('/AI/question-bank/:bankId/add-to-test', auth, addBankQuestionsToTest);
+
+// Manual trigger for nightly AI analysis (admin/dev use)
+const { runNightlyAnalysis } = require('../services/ai-analysis-scheduler');
+router.post('/AI/run-analysis', auth, async (req, res) => {
+    res.json({ message: 'AI nightly analysis started in background' });
+    runNightlyAnalysis().catch(() => {});
+});
+
 module.exports = router;

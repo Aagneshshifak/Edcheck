@@ -12,6 +12,7 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import CountUp from 'react-countup';
 import { getClassStudents } from '../../redux/sclassRelated/sclassHandle';
+import AIAssistantWidget from '../../components/ai/AIAssistantWidget';
 
 
 const StatCard = ({ icon, label, value, color, suffix = '' }) => (
@@ -201,6 +202,13 @@ const TeacherHomePage = () => {
                     </Box>
                 </Grid>
             </Grid>
+            {/* AI Assistant Panel */}
+            <Box mt={4}>
+                <AIAssistantWidget
+                    teachSubjects={currentUser?.teachSubjects || []}
+                    classId={classId || ''}
+                />
+            </Box>
         </Container>
     );
 };
