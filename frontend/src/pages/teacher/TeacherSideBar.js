@@ -19,6 +19,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import GradeIcon from '@mui/icons-material/Grade';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 // Styling constants — identical to SideBar.js (admin) for visual consistency
 const ACCENT       = '#0ea5e9';
@@ -157,6 +158,7 @@ const TeacherSideBar = () => (
             <Section label="Analytics" />
             <NavItem icon={<BarChartIcon fontSize="small" />} label="Performance" path="/Teacher/analytics" />
             <NavItem icon={<WarningAmberIcon fontSize="small" />} label="Weak Students" path="/Teacher/weak-students" />
+            <NavItem icon={<AutoAwesomeIcon fontSize="small" />} label="AI Assistant" path="/Teacher/ai-dashboard" />
 
             <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
 

@@ -347,4 +347,10 @@ router.get('/TeacherSchedule/:teacherId/:day', auth, getTeacherDaySchedule);
 router.get('/Substitute/teacher/:teacherId/:date', auth, getSubstitutesByTeacher);
 router.get('/Substitute/:classId/:date', auth, getSubstitutesByClassDate);
 
+// ── AI Teaching Assistant ─────────────────────────────────────────────────────
+const { getNoteSuggestions, detectWeakTopics, generateQuestions } = require('../controllers/ai-teaching-controller');
+router.post('/AI/note-suggestions', auth, getNoteSuggestions);
+router.post('/AI/weak-topics', auth, detectWeakTopics);
+router.post('/AI/generate-questions', auth, generateQuestions);
+
 module.exports = router;

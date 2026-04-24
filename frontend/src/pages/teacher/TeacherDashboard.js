@@ -36,6 +36,7 @@ import TeacherTimetable from './TeacherTimetable';
 import MarksEntry from './MarksEntry';
 import GenerateReport from './GenerateReport';
 import TeacherNotices from './TeacherNotices';
+import AIDashboard from './AIDashboard';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -115,6 +116,7 @@ const TeacherDashboard = () => {
                         <Route path="/Teacher/enter-marks" element={<MarksEntry />} />
                         <Route path="/Teacher/reports" element={<GenerateReport />} />
                         <Route path="/Teacher/notices" element={<TeacherNotices />} />
+                        <Route path="/Teacher/ai-dashboard" element={<AIDashboard />} />
 
                         <Route path="/logout" element={<Logout />} />
                     </Routes>
