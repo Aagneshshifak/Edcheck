@@ -27,6 +27,7 @@ import StudentExamMarks from '../admin/studentRelated/StudentExamMarks';
 import CreateTest from './CreateTest';
 import TestList from './TestList';
 import TestResults from './TestResults';
+import AddQuestions from './AddQuestions';
 import LearningProgressChart from '../student/LearningProgressChart';
 import TakeAttendance from './TakeAttendance';
 import WeakStudentsPanel from './WeakStudentsPanel';
@@ -104,6 +105,7 @@ const TeacherDashboard = () => {
 
                         <Route path="/Teacher/tests" element={<TestList />} />
                         <Route path="/Teacher/tests/create" element={<CreateTest />} />
+                        <Route path="/Teacher/tests/:testId/questions" element={<AddQuestions />} />
                         <Route path="/Teacher/tests/:testId/results" element={<TestResults />} />
 
                         <Route path="/Teacher/class/student/:id/progress" element={<LearningProgressChart viewerRole="Teacher" />} />
@@ -130,19 +132,18 @@ export default TeacherDashboard
 
 const styles = {
     boxStyled: {
-        backgroundColor: (theme) =>
-            theme.palette.mode === 'light'
-                ? theme.palette.grey[100]
-                : theme.palette.grey[900],
+        background: '#111111',
         flexGrow: 1,
-        height: '100vh',
-        overflow: 'auto',
+        minHeight: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
     },
     toolBarStyled: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
         px: [1],
+        background: '#000000',
     },
     drawerStyled: {
         display: "flex"

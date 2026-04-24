@@ -16,12 +16,12 @@ import ReportCard from '../../components/ReportCard';
 import AcademicPerformanceDashboard from '../student/AcademicPerformanceDashboard';
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
-const BG     = '#0b1120';
-const CARD   = '#111827';
-const CARD2  = '#1a2540';
-const ACCENT = '#0ea5e9';
-const MUTED  = 'rgba(148,163,184,0.7)';
-const TEXT   = '#f1f5f9';
+const BG     = '#111111';
+const CARD   = 'rgba(255,255,255,0.06)';
+const CARD2  = 'rgba(255,255,255,0.04)';
+const ACCENT = '#ffffff';
+const MUTED  = 'rgba(255,255,255,0.5)';
+const TEXT   = '#ffffff';
 
 const DAYS   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const JS_DAY = { 0: null, 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
@@ -35,21 +35,14 @@ const attendColor  = (p) => p >= 75 ? '#34d399' : p >= 50 ? '#f59e0b' : '#ef4444
 const getDaysLeft  = (d) => Math.ceil((new Date(d) - new Date()) / 86400000);
 
 // ── Reusable pieces ───────────────────────────────────────────────────────────
-const StatCard = ({ icon, label, value, color = ACCENT, sub }) => (
+const StatCard = ({ icon, label, value, color = '#ffffff', sub }) => (
     <Card sx={{
-        background: `linear-gradient(145deg, ${CARD2}, ${CARD})`,
-        border: `1px solid ${color}25`,
+        background: 'rgba(255,255,255,0.07)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.12)',
         borderRadius: 3,
-        position: 'relative',
-        overflow: 'hidden',
-        '&::after': {
-            content: '""',
-            position: 'absolute',
-            top: 0, right: 0,
-            width: 80, height: 80,
-            background: `radial-gradient(circle, ${color}18 0%, transparent 70%)`,
-            borderRadius: '50%',
-        },
+        boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
     }}>
         <CardContent sx={{ p: 2.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
@@ -74,7 +67,12 @@ const SectionHeader = ({ children }) => (
 );
 
 const EmptyState = ({ msg }) => (
-    <Box sx={{ background: CARD2, border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, p: 4, textAlign: 'center', mb: 4 }}>
+    <Box sx={{
+        background: 'rgba(255,255,255,0.04)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 3, p: 4, textAlign: 'center', mb: 4,
+    }}>
         <Typography sx={{ color: MUTED, fontSize: '0.85rem' }}>{msg}</Typography>
     </Box>
 );
@@ -237,11 +235,14 @@ const ChildDashboard = () => {
 
             {/* ── Student hero ── */}
             <Box sx={{
-                background: `linear-gradient(135deg, ${CARD2} 0%, ${CARD} 100%)`,
-                border: `1px solid ${color}30`,
+                background: 'rgba(255,255,255,0.07)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.12)',
                 borderRadius: 4, p: 3, mb: 4,
                 display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap',
                 position: 'relative', overflow: 'hidden',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
                 '&::before': {
                     content: '""', position: 'absolute',
                     top: 0, left: 0, right: 0, height: '3px',
@@ -305,10 +306,13 @@ const ChildDashboard = () => {
                         return (
                             <Grid item xs={12} sm={6} md={4} key={s.subjectId}>
                                 <Box sx={{
-                                    background: CARD2, border: `1px solid ${c}25`,
+                                    background: 'rgba(255,255,255,0.06)',
+                                    backdropFilter: 'blur(12px)',
+                                    WebkitBackdropFilter: 'blur(12px)',
+                                    border: `1px solid rgba(255,255,255,0.1)`,
                                     borderRadius: 3, p: 2.5,
                                     transition: 'transform 0.18s, box-shadow 0.18s',
-                                    '&:hover': { transform: 'translateY(-2px)', boxShadow: `0 6px 20px ${c}18` },
+                                    '&:hover': { transform: 'translateY(-2px)', boxShadow: `0 8px 24px rgba(0,0,0,0.4)` },
                                 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.2 }}>
                                         <Typography sx={{ color: TEXT, fontWeight: 600, fontSize: '0.88rem' }}>
@@ -319,7 +323,7 @@ const ChildDashboard = () => {
                                         </Typography>
                                     </Box>
                                     <LinearProgress variant="determinate" value={s.attendancePercentage}
-                                        sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.06)',
+                                        sx={{ height: 8, borderRadius: 4,
                                             '& .MuiLinearProgress-bar': { bgcolor: c, borderRadius: 4 } }} />
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
                                         <Typography sx={{ color: MUTED, fontSize: '0.7rem' }}>
@@ -342,10 +346,16 @@ const ChildDashboard = () => {
             {/* ── Assignments ── */}
             <SectionHeader>Assignments</SectionHeader>
             {assignments.length === 0 ? <EmptyState msg="No assignments found." /> : (
-                <Paper sx={{ bgcolor: CARD, border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden', mb: 4 }}>
+                <Paper sx={{
+                    background: 'rgba(255,255,255,0.06)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 3, overflow: 'hidden', mb: 4,
+                }}>
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ bgcolor: CARD2 }}>
+                            <TableRow sx={{ bgcolor: 'rgba(255,255,255,0.04)' }}>
                                 {['Title', 'Subject', 'Due Date', 'Status'].map(h => (
                                     <TableCell key={h} sx={{ color: MUTED, fontWeight: 700, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)', py: 1.5 }}>
                                         {h}
@@ -389,10 +399,16 @@ const ChildDashboard = () => {
             {/* ── Test results ── */}
             <SectionHeader>Test Results</SectionHeader>
             {attempts.length === 0 ? <EmptyState msg="No test attempts yet." /> : (
-                <Paper sx={{ bgcolor: CARD, border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden', mb: 4 }}>
+                <Paper sx={{
+                    background: 'rgba(255,255,255,0.06)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 3, overflow: 'hidden', mb: 4,
+                }}>
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ bgcolor: CARD2 }}>
+                            <TableRow sx={{ bgcolor: 'rgba(255,255,255,0.04)' }}>
                                 {['Test', 'Score', 'Total', 'Percentage'].map(h => (
                                     <TableCell key={h} sx={{ color: MUTED, fontWeight: 700, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)', py: 1.5 }}>
                                         {h}
@@ -440,13 +456,19 @@ const ChildDashboard = () => {
 
             {/* ── Timetable ── */}
             <SectionHeader>Weekly Timetable</SectionHeader>
-            <Paper sx={{ bgcolor: CARD, border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden', mb: 2 }}>
+            <Paper sx={{
+                background: 'rgba(255,255,255,0.06)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 3, overflow: 'hidden', mb: 2,
+            }}>
                 <Tabs value={ttDay} onChange={(_, v) => setTtDay(v)} variant="scrollable" scrollButtons="auto"
                     sx={{
                         borderBottom: '1px solid rgba(255,255,255,0.06)',
                         '& .MuiTab-root': { color: MUTED, fontWeight: 600, minWidth: 64, fontSize: '0.8rem' },
-                        '& .Mui-selected': { color: ACCENT },
-                        '& .MuiTabs-indicator': { bgcolor: ACCENT },
+                        '& .Mui-selected': { color: '#ffffff' },
+                        '& .MuiTabs-indicator': { bgcolor: '#ffffff' },
                     }}>
                     {DAYS.map(d => <Tab key={d} label={d} value={d} />)}
                 </Tabs>
@@ -458,7 +480,7 @@ const ChildDashboard = () => {
                 ) : (
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ bgcolor: CARD2 }}>
+                            <TableRow sx={{ bgcolor: 'rgba(255,255,255,0.04)' }}>
                                 {['#', 'Time', 'Subject', 'Teacher'].map(h => (
                                     <TableCell key={h} sx={{ color: MUTED, fontWeight: 700, fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)', py: 1.5 }}>
                                         {h}

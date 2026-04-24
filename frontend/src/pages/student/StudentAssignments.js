@@ -18,23 +18,23 @@ const AssignmentCard = ({ assignment, submission, onUpload }) => {
     const isOverdue = daysLeft < 0;
     const isSubmitted = !!submission;
     return (
-        <Box sx={{ background: 'linear-gradient(145deg,rgba(13,27,42,.9),rgba(10,22,40,.95))', border: `1px solid ${isSubmitted ? '#00e67644' : isOverdue ? '#ff525244' : 'rgba(30,144,255,.18)'}`, borderRadius: 2, p: 2.5, mb: 2, transition: 'all .2s', '&:hover': { transform: 'translateX(4px)' } }}>
+        <Box sx={{ background: '#1a1a1a', border: `1px solid ${isSubmitted ? theme.success + '44' : isOverdue ? theme.danger + '44' : 'rgba(255,255,255,0.1)'}`, borderRadius: 2, p: 2.5, mb: 2, transition: 'all .2s', '&:hover': { transform: 'translateX(4px)', boxShadow: theme.cardHover } }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                 <Box sx={{ flex: 1, mr: 1 }}>
                     <Typography sx={{ color: theme.text, fontWeight: 700, fontSize: '0.95rem' }}>{assignment.title}</Typography>
-                    <Typography sx={{ color: theme.accent, fontSize: '0.75rem', mt: 0.3 }}>Topic: {assignment.topic}</Typography>
+                    <Typography sx={{ color: theme.textMuted, fontSize: '0.75rem', mt: 0.3 }}>Topic: {assignment.topic}</Typography>
                 </Box>
                 {isSubmitted
-                    ? <Chip icon={<CheckCircleIcon sx={{ fontSize: 14 }} />} label={submission.status === 'graded' ? 'Graded: ' + submission.grade : 'Submitted'} size="small" sx={{ bgcolor: '#00e67622', color: '#00e676', border: '1px solid #00e67644', fontSize: '0.7rem' }} />
-                    : <Chip icon={<AccessTimeIcon sx={{ fontSize: 14 }} />} label={isOverdue ? 'Overdue' : daysLeft + 'd left'} size="small" sx={{ bgcolor: (isOverdue ? '#ff5252' : '#ffab40') + '22', color: isOverdue ? '#ff5252' : '#ffab40', border: '1px solid ' + (isOverdue ? '#ff525244' : '#ffab4044'), fontSize: '0.7rem' }} />
+                    ? <Chip icon={<CheckCircleIcon sx={{ fontSize: 14 }} />} label={submission.status === 'graded' ? 'Graded: ' + submission.grade : 'Submitted'} size="small" color="success" variant="outlined" sx={{ fontSize: '0.7rem' }} />
+                    : <Chip icon={<AccessTimeIcon sx={{ fontSize: 14 }} />} label={isOverdue ? 'Overdue' : daysLeft + 'd left'} size="small" color={isOverdue ? 'error' : 'warning'} variant="outlined" sx={{ fontSize: '0.7rem' }} />
                 }
             </Box>
             {assignment.description && <Typography sx={{ color: theme.textMuted, fontSize: '0.8rem', mb: 1.5 }}>{assignment.description}</Typography>}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
                 <Typography sx={{ color: theme.textMuted, fontSize: '0.72rem' }}>Due: {new Date(assignment.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Typography>
                 {isSubmitted
-                    ? <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><InsertDriveFileIcon sx={{ color: theme.accent, fontSize: 14 }} /><Typography sx={{ color: theme.accent, fontSize: '0.72rem' }}>{submission.fileName}</Typography></Box>
-                    : <Button size="small" startIcon={<UploadFileIcon />} onClick={() => onUpload(assignment)} sx={{ background: 'linear-gradient(135deg,#0050c8,#1e90ff)', color: '#fff', borderRadius: 2, px: 2, fontSize: '0.72rem', textTransform: 'none' }}>Submit</Button>
+                    ? <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><InsertDriveFileIcon sx={{ color: theme.accent, fontSize: 14 }} /><Typography sx={{ color: theme.textMuted, fontSize: '0.72rem' }}>{submission.fileName}</Typography></Box>
+                    : <Button size="small" variant="contained" startIcon={<UploadFileIcon />} onClick={() => onUpload(assignment)} sx={{ borderRadius: 2, px: 2, fontSize: '0.72rem', textTransform: 'none' }}>Submit</Button>
                 }
             </Box>
         </Box>
@@ -48,13 +48,13 @@ const SubjectSection = ({ subject, assignments, submissions, onUpload }) => {
     const pending = subjectAssignments.filter(a => !submissions[a._id]).length;
     return (
         <Box sx={{ background: theme.card, border: theme.cardBorder, borderRadius: 3, mb: 3, overflow: 'hidden', boxShadow: theme.cardShadow }}>
-            <Box onClick={() => setOpen(!open)} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, cursor: 'pointer', background: 'linear-gradient(90deg,rgba(30,144,255,.1),transparent)', borderBottom: open ? '1px solid rgba(30,144,255,.12)' : 'none', '&:hover': { background: 'linear-gradient(90deg,rgba(30,144,255,.18),transparent)' } }}>
+            <Box onClick={() => setOpen(!open)} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, cursor: 'pointer', borderBottom: open ? `1px solid ${theme.divider}` : 'none', '&:hover': { background: 'rgba(0,0,0,0.03)' } }}>
                 <Box>
                     <Typography sx={{ color: theme.text, fontWeight: 700, fontSize: '0.95rem' }}>{subject.subName || subject.subjectName}</Typography>
                     <Typography sx={{ color: theme.textMuted, fontSize: '0.72rem' }}>{subject.subCode} • {subjectAssignments.length} assignments{pending > 0 && ` • ${pending} pending`}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {pending > 0 && <Chip label={pending} size="small" sx={{ bgcolor: '#ffab4022', color: '#ffab40', border: '1px solid #ffab4044', minWidth: 28, height: 22, fontSize: '0.72rem' }} />}
+                    {pending > 0 && <Chip label={pending} size="small" color="warning" variant="outlined" sx={{ minWidth: 28, height: 22, fontSize: '0.72rem' }} />}
                     {open ? <ExpandLessIcon sx={{ color: theme.accent, fontSize: 20 }} /> : <ExpandMoreIcon sx={{ color: theme.accent, fontSize: 20 }} />}
                 </Box>
             </Box>
@@ -142,7 +142,7 @@ const StudentAssignments = () => {
         } finally { setUploading(false); }
     };
 
-    if (loading) return React.createElement(Box, { sx: { minHeight: '100vh', background: theme.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' } }, React.createElement(CircularProgress, { sx: { color: theme.accent } }));
+    if (loading) return <Box sx={{ minHeight: '100vh', background: theme.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>;
 
     var totalPending = assignments.filter(function(a) { return !submissions[a._id]; }).length;
 
@@ -159,35 +159,33 @@ const StudentAssignments = () => {
             }
             {hasMore && (
                 <Box sx={{ textAlign: 'center', mt: 1, mb: 2 }}>
-                    <Button onClick={handleLoadMore} disabled={loadingMore}
-                        sx={{ color: theme.accent, borderColor: `${theme.accent}44`, border: '1px solid', borderRadius: 2, px: 3, textTransform: 'none', fontSize: '0.82rem' }}>
-                        {loadingMore ? <CircularProgress size={16} sx={{ color: theme.accent }} /> : 'Load more assignments'}
+                    <Button onClick={handleLoadMore} disabled={loadingMore} variant="outlined"
+                        sx={{ borderRadius: 2, px: 3, textTransform: 'none', fontSize: '0.82rem' }}>
+                        {loadingMore ? <CircularProgress size={16} /> : 'Load more assignments'}
                     </Button>
                 </Box>
             )}
-            <Dialog open={uploadDialog} onClose={() => { if (!uploading) setUploadDialog(false); }} PaperProps={{ sx: { background: '#0a1628', border: theme.cardBorder, borderRadius: 3, minWidth: 380 } }}>
-                <DialogTitle sx={{ color: theme.text, borderBottom: '1px solid rgba(30,144,255,.12)', pb: 1.5 }}>
+            <Dialog open={uploadDialog} onClose={() => { if (!uploading) setUploadDialog(false); }}>
+                <DialogTitle>
                     Submit Assignment
-                    {selectedAssignment && <Typography sx={{ color: theme.accent, fontSize: '0.78rem', mt: 0.3 }}>{selectedAssignment.title}</Typography>}
+                    {selectedAssignment && <Typography variant="caption" display="block" color="text.secondary">{selectedAssignment.title}</Typography>}
                 </DialogTitle>
-                <DialogContent sx={{ pt: 3 }}>
-                    <Box sx={{ border: '2px dashed ' + (file ? theme.accent : 'rgba(30,144,255,.25)'), borderRadius: 2, p: 3, textAlign: 'center', cursor: 'pointer' }} onClick={() => document.getElementById('file-input').click()}>
-                        <UploadFileIcon sx={{ color: theme.accent, fontSize: 36, mb: 1 }} />
-                        <Typography sx={{ color: file ? theme.text : theme.textMuted, fontSize: '0.88rem' }}>
+                <DialogContent sx={{ pt: 3, minWidth: 380 }}>
+                    <Box sx={{ border: `2px dashed ${file ? theme.accent : 'rgba(0,0,0,0.2)'}`, borderRadius: 2, p: 3, textAlign: 'center', cursor: 'pointer' }} onClick={() => document.getElementById('file-input').click()}>
+                        <UploadFileIcon sx={{ fontSize: 36, mb: 1, color: 'text.secondary' }} />
+                        <Typography sx={{ fontSize: '0.88rem', color: file ? theme.text : 'text.secondary' }}>
                             {file
-                                ? (file instanceof FileList
-                                    ? `${file.length} file${file.length > 1 ? 's' : ''} selected`
-                                    : file.name)
+                                ? (file instanceof FileList ? `${file.length} file${file.length > 1 ? 's' : ''} selected` : file.name)
                                 : 'Click to select files (up to 5)'}
                         </Typography>
-                        <Typography sx={{ color: theme.textMuted, fontSize: '0.7rem', mt: 0.5 }}>PDF, PPT, PPTX, DOC, DOCX, JPG, PNG - max 20MB each</Typography>
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>PDF, PPT, PPTX, DOC, DOCX, JPG, PNG - max 20MB each</Typography>
                         <input id="file-input" type="file" accept={ALLOWED} multiple hidden onChange={function(e) { setFile(e.target.files); }} />
                     </Box>
-                    {uploading && <Box sx={{ mt: 2 }}><LinearProgress variant="determinate" value={uploadProgress} sx={{ height: 5, borderRadius: 3 }} /><Typography sx={{ color: theme.textMuted, fontSize: '0.72rem', mt: 0.5, textAlign: 'center' }}>{uploadProgress}%</Typography></Box>}
+                    {uploading && <Box sx={{ mt: 2 }}><LinearProgress variant="determinate" value={uploadProgress} sx={{ height: 5, borderRadius: 3 }} /><Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5, textAlign: 'center' }}>{uploadProgress}%</Typography></Box>}
                 </DialogContent>
-                <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(30,144,255,.12)' }}>
-                    <Button onClick={() => setUploadDialog(false)} disabled={uploading} sx={{ color: theme.textMuted, textTransform: 'none' }}>Cancel</Button>
-                    <Button onClick={handleSubmit} disabled={!file || uploading} sx={{ background: 'linear-gradient(135deg,#0050c8,#1e90ff)', color: '#fff', borderRadius: 2, px: 3, textTransform: 'none' }}>{uploading ? 'Uploading...' : 'Submit'}</Button>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setUploadDialog(false)} disabled={uploading} sx={{ textTransform: 'none' }}>Cancel</Button>
+                    <Button onClick={handleSubmit} disabled={!file || uploading} variant="contained" sx={{ borderRadius: 2, px: 3, textTransform: 'none' }}>{uploading ? 'Uploading...' : 'Submit'}</Button>
                 </DialogActions>
             </Dialog>
         </Box>

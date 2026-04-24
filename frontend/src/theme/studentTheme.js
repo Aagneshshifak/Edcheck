@@ -1,35 +1,36 @@
-// Black & Blue gradient design system
+// Black & White dark design system — matches global theme
 export const theme = {
     // Backgrounds
-    bg:          '#0f172a',
-    bgGradient:  'linear-gradient(135deg, #000428 0%, #004e92 100%)',
-    appBar:      'linear-gradient(90deg, #000428, #004e92)',
-    drawer:      'linear-gradient(180deg, #000428 0%, #001a4d 100%)',
+    bg:          '#111111',
+    bgGradient:  '#111111',
+    appBar:      '#000000',
+    drawer:      '#000000',
 
     // Cards
-    card:        '#111827',
-    cardBorder:  '1px solid rgba(14, 165, 233, 0.18)',
-    cardShadow:  '0 4px 24px rgba(0, 78, 146, 0.18)',
-    cardHover:   '0 8px 32px rgba(14, 165, 233, 0.22)',
+    card:        '#1a1a1a',
+    cardBorder:  '1px solid rgba(255,255,255,0.08)',
+    cardShadow:  '0 2px 12px rgba(0,0,0,0.4)',
+    cardHover:   '0 6px 24px rgba(0,0,0,0.6)',
 
-    // Accent
-    accent:      '#0ea5e9',
-    accentDark:  '#0369a1',
-    accentGlow:  'rgba(14, 165, 233, 0.25)',
-    accentGrad:  'linear-gradient(135deg, #0ea5e9, #0369a1)',
+    // Accent (white on dark)
+    accent:      '#ffffff',
+    accentDark:  '#cccccc',
+    accentGlow:  'rgba(255,255,255,0.08)',
+    accentGrad:  'linear-gradient(135deg, #ffffff, #cccccc)',
+    accentHover: '#e0e0e0',
 
     // Text
-    text:        '#e5e7eb',
-    textMuted:   'rgba(229, 231, 235, 0.5)',
+    text:        '#ffffff',
+    textMuted:   'rgba(255,255,255,0.55)',
 
     // Status
-    success:     '#22c55e',
-    warning:     '#f59e0b',
-    danger:      '#ef4444',
+    success:     '#16a34a',
+    warning:     '#d97706',
+    danger:      '#dc2626',
 
     // Misc
-    divider:     'rgba(14, 165, 233, 0.12)',
-    glass:       'rgba(17, 24, 39, 0.85)',
+    divider:     'rgba(255,255,255,0.08)',
+    glass:       'rgba(255,255,255,0.08)',
     radius:      '12px',
     transition:  'all 0.25s ease',
 };

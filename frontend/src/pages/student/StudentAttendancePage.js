@@ -53,7 +53,6 @@ export const SubjectCard = ({ subjectName, totalClasses, attendedClasses, attend
                     sx={{
                         height: 8,
                         borderRadius: 4,
-                        bgcolor: 'rgba(255,255,255,0.08)',
                         '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 4 }
                     }}
                 />
@@ -184,11 +183,6 @@ const StudentAttendancePage = () => {
                     exclusive
                     onChange={(_, val) => { if (val) setVisualisationMode(val); }}
                     size="small"
-                    sx={{
-                        '& .MuiToggleButton-root': { color: '#fff', borderColor: 'rgba(255,255,255,0.12)' },
-                        '& .Mui-selected': { color: '#fff', bgcolor: `${theme.accent}40` },
-                        '& .Mui-selected:hover': { bgcolor: `${theme.accent}55` }
-                    }}
                 >
                     <ToggleButton value="bar">Progress Bar</ToggleButton>
                     <ToggleButton value="circle">Circular Chart</ToggleButton>

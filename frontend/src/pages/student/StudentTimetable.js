@@ -6,10 +6,9 @@ import {
 } from '@mui/material';
 import { fetchWeeklyTimetable } from '../../redux/timetableRelated/timetableSlice';
 
-const BG    = '#0f172a';
-const CARD  = '#111827';
-const ACCENT = '#0ea5e9';
-const BREAK_BG = 'rgba(14,165,233,0.05)';
+const BG     = '#111111';
+const CARD   = '#1a1a1a';
+const BREAK_BG = 'rgba(255,255,255,0.04)';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -67,9 +66,9 @@ const StudentTimetable = () => {
     const getRowSx = (p) => {
         if (isBreak(p)) return { bgcolor: BREAK_BG };
         if (isToday && isCurrentPeriod(p.startTime, p.endTime, now)) {
-            return { bgcolor: '#0c4a6e', borderLeft: `3px solid ${ACCENT}` };
+            return { bgcolor: 'rgba(255,255,255,0.12)', borderLeft: '3px solid #ffffff' };
         }
-        return { bgcolor: CARD };
+        return {};
     };
 
     const getSubjectLabel = (p) => {
@@ -87,25 +86,36 @@ const StudentTimetable = () => {
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: BG, p: 3 }}>
-            <Typography variant="h5" fontWeight={700} color="#f1f5f9" mb={0.5}>
+            <Typography variant="h5" fontWeight={700} color="#ffffff" mb={0.5}>
                 My Timetable
             </Typography>
-            <Typography variant="body2" color="#94a3b8" mb={3}>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 3 }}>
                 {isToday ? `Today is ${selectedDay} — Current time: ${now}` : `Viewing ${selectedDay}`}
             </Typography>
 
-            {/* Day tabs */}
-            <Paper sx={{ bgcolor: CARD, borderRadius: 2, mb: 3, overflow: 'hidden' }}>
+            {/* Day tabs — glass effect */}
+            <Box
+                sx={{
+                    background: 'rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 2,
+                    mb: 3,
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.15)',
+                }}
+            >
                 <Tabs
                     value={selectedDay}
                     onChange={(_, v) => setSelectedDay(v)}
                     variant="scrollable"
                     scrollButtons="auto"
                     sx={{
-                        borderBottom: '1px solid #1e293b',
-                        '& .MuiTab-root': { color: '#64748b', fontWeight: 600, minWidth: 72 },
-                        '& .Mui-selected': { color: ACCENT },
-                        '& .MuiTabs-indicator': { bgcolor: ACCENT },
+                        '& .MuiTab-root': { color: 'rgba(255,255,255,0.5)', fontWeight: 600, minWidth: 72 },
+                        '& .Mui-selected': { color: '#ffffff !important', fontWeight: 700 },
+                        '& .MuiTabs-indicator': { bgcolor: '#ffffff', height: 3, borderRadius: 2 },
+                        '& .MuiTabScrollButton-root': { color: 'rgba(255,255,255,0.5)' },
                     }}
                 >
                     {DAYS.map(day => (
@@ -113,17 +123,16 @@ const StudentTimetable = () => {
                             key={day}
                             label={day}
                             value={day}
-                            sx={day === todayAbbr ? { color: `${ACCENT} !important` } : {}}
+                            sx={day === todayAbbr ? { color: 'rgba(255,255,255,0.9) !important' } : {}}
                         />
                     ))}
                 </Tabs>
-            </Paper>
+            </Box>
 
-            {/* Timetable content */}
             <Paper sx={{ bgcolor: CARD, borderRadius: 2, overflow: 'hidden' }}>
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
-                        <CircularProgress sx={{ color: ACCENT }} />
+                        <CircularProgress sx={{ color: '#ffffff' }} />
                     </Box>
                 ) : fetchError ? (
                     <Alert severity="error" sx={{ m: 2 }}>
@@ -131,14 +140,14 @@ const StudentTimetable = () => {
                     </Alert>
                 ) : sortedPeriods.length === 0 ? (
                     <Box sx={{ p: 4, textAlign: 'center' }}>
-                        <Typography color="#64748b">No timetable available for {selectedDay}.</Typography>
+                        <Typography sx={{ color: 'rgba(255,255,255,0.4)' }}>No timetable available for {selectedDay}.</Typography>
                     </Box>
                 ) : (
                     <Table>
                         <TableHead>
-                            <TableRow sx={{ bgcolor: '#1e293b' }}>
+                            <TableRow sx={{ bgcolor: '#000000' }}>
                                 {['Period #', 'Time', 'Subject', 'Teacher'].map(h => (
-                                    <TableCell key={h} sx={{ color: '#94a3b8', fontWeight: 700, borderBottom: '1px solid #334155' }}>
+                                    <TableCell key={h} sx={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: 0.8, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                                         {h}
                                     </TableCell>
                                 ))}
@@ -148,18 +157,18 @@ const StudentTimetable = () => {
                             {sortedPeriods.map((period, idx) => (
                                 <TableRow
                                     key={idx}
-                                    sx={{ ...getRowSx(period), '& td': { borderBottom: '1px solid #1e293b' } }}
+                                    sx={{ ...getRowSx(period), '& td': { borderBottom: '1px solid rgba(255,255,255,0.06)' } }}
                                 >
-                                    <TableCell sx={{ color: '#f1f5f9', fontWeight: 600 }}>
+                                    <TableCell sx={{ color: '#ffffff', fontWeight: 600 }}>
                                         {isBreak(period) ? '—' : period.periodNumber}
                                     </TableCell>
-                                    <TableCell sx={{ color: '#cbd5e1' }}>
+                                    <TableCell sx={{ color: 'rgba(255,255,255,0.7)' }}>
                                         {period.startTime} – {period.endTime}
                                     </TableCell>
-                                    <TableCell sx={{ color: isBreak(period) ? '#64748b' : '#cbd5e1', fontStyle: isBreak(period) ? 'italic' : 'normal' }}>
+                                    <TableCell sx={{ color: isBreak(period) ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)', fontStyle: isBreak(period) ? 'italic' : 'normal' }}>
                                         {getSubjectLabel(period)}
                                     </TableCell>
-                                    <TableCell sx={{ color: '#cbd5e1' }}>
+                                    <TableCell sx={{ color: 'rgba(255,255,255,0.7)' }}>
                                         {getTeacherLabel(period)}
                                     </TableCell>
                                 </TableRow>

@@ -15,17 +15,25 @@ import { getClassStudents } from '../../redux/sclassRelated/sclassHandle';
 
 
 const StatCard = ({ icon, label, value, color, suffix = '' }) => (
-    <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box sx={{
+        p: 3, height: '100%', display: 'flex', flexDirection: 'column', gap: 1,
+        background: 'rgba(255,255,255,0.06)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 3,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
+    }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color }}>
             {icon}
             <Typography variant="body2" color="text.secondary">{label}</Typography>
         </Box>
-        <Typography variant="h4" fontWeight={700} color={color}>
+        <Typography variant="h4" fontWeight={700} sx={{ color }}>
             {value != null
                 ? <CountUp start={0} end={value} duration={2} suffix={suffix} />
                 : <CircularProgress size={28} />}
         </Typography>
-    </Paper>
+    </Box>
 );
 
 const TeacherHomePage = () => {
@@ -99,44 +107,32 @@ const TeacherHomePage = () => {
             {/* Stat cards */}
             <Grid container spacing={3} mb={4}>
                 <Grid item xs={12} sm={6} md={3}>
-                    <StatCard
-                        icon={<PeopleIcon />}
-                        label="Class Students"
-                        value={studentCount}
-                        color="#0ea5e9"
-                    />
+                    <StatCard icon={<PeopleIcon />} label="Class Students" value={studentCount} color="#0ea5e9" />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <StatCard
-                        icon={<QuizIcon />}
-                        label="Tests Created"
-                        value={tests}
-                        color="#8b5cf6"
-                    />
+                    <StatCard icon={<QuizIcon />} label="Tests Created" value={tests} color="#8b5cf6" />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <StatCard
-                        icon={<AssignmentIcon />}
-                        label="Assignments"
-                        value={assignments}
-                        color="#f59e0b"
-                    />
+                    <StatCard icon={<AssignmentIcon />} label="Assignments" value={assignments} color="#f59e0b" />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                    <StatCard
-                        icon={<EventNoteIcon />}
-                        label="Class Attendance"
-                        value={attendance}
-                        color={attendance >= 75 ? '#22c55e' : '#ef4444'}
-                        suffix="%"
-                    />
+                    <StatCard icon={<EventNoteIcon />} label="Class Attendance" value={attendance}
+                        color={attendance >= 75 ? '#22c55e' : '#ef4444'} suffix="%" />
                 </Grid>
             </Grid>
 
             {/* Quick actions + Notices */}
             <Grid container spacing={3}>
                 <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, height: '100%' }}>
+                    <Box sx={{
+                        p: 3, height: '100%',
+                        background: 'rgba(255,255,255,0.06)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 3,
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
+                    }}>
                         <Typography variant="subtitle1" fontWeight={700} mb={2}>Quick Actions</Typography>
                         <Divider sx={{ mb: 2 }} />
                         {[
@@ -152,19 +148,31 @@ const TeacherHomePage = () => {
                                 sx={{
                                     p: 1.5, mb: 1, borderRadius: 2, cursor: 'pointer',
                                     borderLeft: `3px solid ${color}`,
-                                    bgcolor: 'action.hover',
-                                    '&:hover': { bgcolor: 'action.selected' },
+                                    background: 'rgba(255,255,255,0.04)',
+                                    backdropFilter: 'blur(8px)',
+                                    border: `1px solid rgba(255,255,255,0.06)`,
+                                    borderLeftColor: color,
+                                    borderLeftWidth: 3,
+                                    '&:hover': { background: 'rgba(255,255,255,0.08)' },
                                     transition: 'background 0.15s',
                                 }}
                             >
-                                <Typography variant="body2" fontWeight={600} color={color}>{label}</Typography>
+                                <Typography variant="body2" fontWeight={600} sx={{ color }}>{label}</Typography>
                             </Box>
                         ))}
-                    </Paper>
+                    </Box>
                 </Grid>
 
                 <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 3 }}>
+                    <Box sx={{
+                        p: 3,
+                        background: 'rgba(255,255,255,0.06)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 3,
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
+                    }}>
                         <Typography variant="subtitle1" fontWeight={700} mb={2}>Recent Notices</Typography>
                         <Divider sx={{ mb: 2 }} />
                         {notices.length === 0 ? (
@@ -190,7 +198,7 @@ const TeacherHomePage = () => {
                                 ))}
                             </List>
                         )}
-                    </Paper>
+                    </Box>
                 </Grid>
             </Grid>
         </Container>

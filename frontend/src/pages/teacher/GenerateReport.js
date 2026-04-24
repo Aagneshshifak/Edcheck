@@ -48,21 +48,17 @@ const GenerateReport = () => {
             .finally(() => setLoading(false));
     }, [classId]);
 
-    // ── Student list view ─────────────────────────────────────────────────────
     if (!selected) return (
-        <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: '#0b1120', minHeight: '100vh' }}>
+        <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                <AssessmentIcon sx={{ color: '#0ea5e9' }} />
-                <Typography sx={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.4rem' }}>
-                    Generate Report
-                </Typography>
+                <AssessmentIcon />
+                <Typography variant="h5" fontWeight={800}>Generate Report</Typography>
             </Box>
 
-            <Paper sx={{ bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 3, p: 2, mb: 3 }}>
+            <Paper sx={{ borderRadius: 3, p: 2, mb: 3 }}>
                 <FormControl size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel sx={{ color: 'rgba(148,163,184,0.6)' }}>Class</InputLabel>
-                    <Select value={classId} label="Class" onChange={e => setClassId(e.target.value)}
-                        sx={{ color: '#f1f5f9', '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(14,165,233,0.25)' } }}>
+                    <InputLabel>Class</InputLabel>
+                    <Select value={classId} label="Class" onChange={e => setClassId(e.target.value)}>
                         {classes.map(c => (
                             <MenuItem key={c._id || c} value={c._id || c}>
                                 {c.className || c.sclassName || c}
@@ -74,39 +70,33 @@ const GenerateReport = () => {
 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-                    <CircularProgress sx={{ color: '#0ea5e9' }} />
+                    <CircularProgress />
                 </Box>
             ) : (
-                <Paper sx={{ bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ bgcolor: '#1e293b' }}>
+                            <TableRow>
                                 {['Roll', 'Student Name', 'Action'].map(h => (
-                                    <TableCell key={h} sx={{ color: 'rgba(148,163,184,0.7)', fontWeight: 700, fontSize: '0.73rem', borderBottom: '1px solid rgba(255,255,255,0.07)', py: 1.5 }}>
-                                        {h}
-                                    </TableCell>
+                                    <TableCell key={h}>{h}</TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {students.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={3} align="center" sx={{ py: 5, color: 'rgba(148,163,184,0.35)', borderBottom: 'none' }}>
+                                    <TableCell colSpan={3} align="center" sx={{ py: 5 }}>
                                         {classId ? 'No students in this class' : 'Select a class'}
                                     </TableCell>
                                 </TableRow>
                             ) : students.map(s => (
-                                <TableRow key={s._id} sx={{
-                                    '& td': { borderBottom: '1px solid rgba(255,255,255,0.04)' },
-                                    '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' },
-                                }}>
-                                    <TableCell sx={{ color: 'rgba(148,163,184,0.5)', fontSize: '0.8rem', width: 60 }}>{s.rollNum}</TableCell>
-                                    <TableCell sx={{ color: '#f1f5f9', fontWeight: 500, fontSize: '0.85rem' }}>{s.name}</TableCell>
+                                <TableRow key={s._id}>
+                                    <TableCell sx={{ width: 60 }}>{s.rollNum}</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>{s.name}</TableCell>
                                     <TableCell>
                                         <Button size="small" variant="outlined"
                                             onClick={() => setSelected(s)}
-                                            sx={{ color: '#0ea5e9', borderColor: 'rgba(14,165,233,0.35)', borderRadius: 2, textTransform: 'none', fontSize: '0.75rem',
-                                                '&:hover': { bgcolor: 'rgba(14,165,233,0.1)', borderColor: '#0ea5e9' } }}>
+                                            sx={{ borderRadius: 2, textTransform: 'none', fontSize: '0.75rem' }}>
                                             View Report
                                         </Button>
                                     </TableCell>
@@ -119,11 +109,10 @@ const GenerateReport = () => {
         </Box>
     );
 
-    // ── Individual report card view ───────────────────────────────────────────
     return (
-        <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: '#0b1120', minHeight: '100vh' }}>
+        <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh' }}>
             <Button startIcon={<ArrowBackIcon />} onClick={() => setSelected(null)}
-                sx={{ color: 'rgba(148,163,184,0.6)', textTransform: 'none', mb: 3, '&:hover': { color: '#f1f5f9' } }}>
+                sx={{ textTransform: 'none', mb: 3 }}>
                 Back to Students
             </Button>
             <ReportCard studentId={selected._id} />

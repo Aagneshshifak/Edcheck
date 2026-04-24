@@ -98,7 +98,7 @@ const ReportCard = ({ studentId, compact = false }) => {
 
             {/* ── Overall summary ── */}
             <Paper sx={{
-                bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.15)',
+                bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.15)',
                 borderRadius: 3, p: 2.5, mb: 3,
                 display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap',
             }}>
@@ -135,10 +135,10 @@ const ReportCard = ({ studentId, compact = false }) => {
             </Paper>
 
             {/* ── Subject table ── */}
-            <Paper sx={{ bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+            <Paper sx={{ bgcolor: '#000000', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
                 <Table size="small">
                     <TableHead>
-                        <TableRow sx={{ bgcolor: '#1e293b' }}>
+                        <TableRow sx={{ bgcolor: '#000000' }}>
                             {['Subject', 'Exam %', 'Test %', 'Attendance', 'Total', 'Grade'].map(h => (
                                 <TableCell key={h} sx={{
                                     color: 'rgba(148,163,184,0.7)', fontWeight: 700,

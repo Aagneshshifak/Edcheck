@@ -110,7 +110,7 @@ const TeacherAssignments = () => {
     const subjectName  = a => a.subject?.subName || a.subject?.subjectName || '—';
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 6, bgcolor: '#0f172a', minHeight: '100vh', pt: 4 }}>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 6, minHeight: '100vh', pt: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AssignmentIcon sx={{ color: '#0ea5e9' }} />
@@ -128,9 +128,9 @@ const TeacherAssignments = () => {
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}><CircularProgress sx={{ color: '#0ea5e9' }} /></Box>
             ) : (
-                <TableContainer component={Paper} sx={{ bgcolor: '#111827' }}>
+                <TableContainer component={Paper} sx={{ bgcolor: '#000000' }}>
                     <Table size="small">
-                        <TableHead sx={{ bgcolor: '#1e293b' }}>
+                        <TableHead sx={{ bgcolor: '#000000' }}>
                             <TableRow>
                                 {['Title', 'Subject', 'Topic', 'Submissions', 'Due Date', 'Actions'].map(h => (
                                     <TableCell key={h} sx={{ color: '#94a3b8', fontWeight: 'bold' }}>{h}</TableCell>
@@ -140,12 +140,12 @@ const TeacherAssignments = () => {
                         <TableBody>
                             {assignments.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} align="center" sx={{ py: 4, color: '#64748b', bgcolor: '#111827' }}>
+                                    <TableCell colSpan={6} align="center" sx={{ py: 4, color: '#64748b', bgcolor: '#000000' }}>
                                         No assignments yet. Click "Create Assignment" to get started.
                                     </TableCell>
                                 </TableRow>
                             ) : assignments.map(a => (
-                                <TableRow key={a._id} hover sx={{ '&:hover': { bgcolor: '#1e293b' } }}>
+                                <TableRow key={a._id} hover sx={{ '&:hover': { bgcolor: '#000000' } }}>
                                     <TableCell sx={{ color: '#f1f5f9' }}>{a.title}</TableCell>
                                     <TableCell sx={{ color: '#cbd5e1' }}>{subjectName(a)}</TableCell>
                                     <TableCell sx={{ color: '#cbd5e1' }}>{a.topic}</TableCell>

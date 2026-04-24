@@ -23,25 +23,20 @@ import Logout from '../Logout';
 import AccountMenu from '../../components/AccountMenu';
 import NotificationBell from '../../components/NotificationBell';
 import { AppBar, Drawer } from '../../components/styles';
-import { theme } from '../../theme/studentTheme';
 
 const StudentDashboard = () => {
     const [open, setOpen] = useState(true);
 
     return (
-        <Box sx={{ display: 'flex', background: theme.bg, minHeight: '100vh' }}>
+        <Box sx={{ display: 'flex', background: '#111111' }}>
             <CssBaseline />
-            <AppBar open={open} position='absolute' sx={{
-                background: theme.appBar,
-                borderBottom: `1px solid ${theme.divider}`,
-                boxShadow: '0 2px 20px rgba(0,0,0,0.5)',
-            }}>
+            <AppBar open={open} position='absolute'>
                 <Toolbar sx={{ pr: '24px' }}>
                     <IconButton edge="start" color="inherit" onClick={() => setOpen(!open)}
                         sx={{ marginRight: '36px', ...(open && { display: 'none' }) }}>
                         <MenuIcon />
                     </IconButton>
-                    <Typography component="h1" variant="h6" noWrap sx={{ flexGrow: 1, color: theme.text, fontWeight: 700, letterSpacing: 0.5 }}>
+                    <Typography component="h1" variant="h6" noWrap sx={{ flexGrow: 1, fontWeight: 700 }}>
                         Student Dashboard
                     </Typography>
                     <NotificationBell />
@@ -49,32 +44,19 @@ const StudentDashboard = () => {
                 </Toolbar>
             </AppBar>
 
-            <Drawer variant="permanent" open={open} sx={open ? {
-                display: 'flex',
-                '& .MuiDrawer-paper': {
-                    background: theme.drawer,
-                    borderRight: `1px solid ${theme.divider}`,
-                }
-            } : {
-                display: 'flex',
-                '@media (max-width: 600px)': { display: 'none' },
-                '& .MuiDrawer-paper': {
-                    background: theme.drawer,
-                    borderRight: `1px solid ${theme.divider}`,
-                }
-            }}>
-                <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: [1] }}>
-                    <IconButton onClick={() => setOpen(!open)} sx={{ color: theme.accent }}>
+            <Drawer variant="permanent" open={open}>
+                <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: [1], background: '#000000' }}>
+                    <IconButton onClick={() => setOpen(!open)} sx={{ color: '#ffffff' }}>
                         <ChevronLeftIcon />
                     </IconButton>
                 </Toolbar>
-                <Divider sx={{ borderColor: 'rgba(30,144,255,0.15)' }} />
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
                 <List component="nav">
                     <StudentSideBar />
                 </List>
             </Drawer>
 
-            <Box component="main" sx={{ flexGrow: 1, height: '100vh', overflow: 'auto', background: theme.bg }}>
+            <Box component="main" sx={{ flexGrow: 1, minHeight: '100vh', overflowY: 'auto', overflowX: 'hidden', background: '#111111' }}>
                 <Toolbar />
                 <Routes>
                     <Route path="/" element={<StudentHomePage />} />

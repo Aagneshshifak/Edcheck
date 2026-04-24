@@ -136,7 +136,7 @@ const AddNotice = () => {
             {formError && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError('')}>{formError}</Alert>}
 
             <Paper component="form" onSubmit={submitHandler}
-                sx={{ bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 3, p: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                sx={{ bgcolor: '#000000', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 3, p: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
 
                 <TextField label="Title" required fullWidth value={title} onChange={e => setTitle(e.target.value)}
                     sx={fieldSx} InputLabelProps={{ sx: { color: 'rgba(148,163,184,0.6)' } }} />

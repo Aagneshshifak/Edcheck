@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, List, ListItemButton, ListItemIcon, ListItemText, Collapse, Divider, Typography } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import LogoutDialog from '../../pages/Logout';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -21,12 +22,11 @@ import GradeIcon from '@mui/icons-material/Grade';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
-// Styling constants — identical to SideBar.js (admin) for visual consistency
-const ACCENT       = '#0ea5e9';
-const ACCENT_DIM   = 'rgba(14,165,233,0.1)';
-const TEXT_ACTIVE  = '#e2e8f0';
-const TEXT_MUTED   = 'rgba(148,163,184,0.9)';
-const SECTION_COLOR = 'rgba(148,163,184,0.7)';
+const ACCENT       = '#ffffff';
+const ACCENT_DIM   = 'rgba(255,255,255,0.1)';
+const TEXT_ACTIVE  = '#ffffff';
+const TEXT_MUTED   = 'rgba(255,255,255,0.65)';
+const SECTION_COLOR = 'rgba(255,255,255,0.4)';
 
 // Non-interactive section label
 const Section = ({ label }) => (
@@ -57,15 +57,20 @@ const NavItem = ({ icon, label, path, indent = false }) => {
             onClick={() => navigate(path)}
             sx={{
                 mx: 1, my: 0.25,
-                borderRadius: '8px',
+                borderRadius: '10px',
                 pl: indent ? 4 : 2,
                 py: 0.75,
                 transition: 'all 0.18s ease',
-                borderLeft: active ? `3px solid ${ACCENT}` : '3px solid transparent',
-                bgcolor: active ? ACCENT_DIM : 'transparent',
+                // Glass effect on active
+                background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
+                backdropFilter: active ? 'blur(8px)' : 'none',
+                WebkitBackdropFilter: active ? 'blur(8px)' : 'none',
+                border: active ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+                boxShadow: active ? '0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)' : 'none',
                 '&:hover': {
-                    bgcolor: ACCENT_DIM,
-                    pl: indent ? 4.5 : 2.5,
+                    background: 'rgba(255,255,255,0.08)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255,255,255,0.12)',
                 },
             }}
         >
@@ -101,7 +106,7 @@ const CollapseGroup = ({ icon, label, prefix, children }) => {
                     '&:hover': { bgcolor: ACCENT_DIM },
                 }}
             >
-                <ListItemIcon sx={{ minWidth: 34, color: isOpen ? ACCENT : 'rgba(148,163,184,0.8)' }}>
+                <ListItemIcon sx={{ minWidth: 34, color: isOpen ? ACCENT : 'rgba(255,255,255,0.5)' }}>
                     {icon}
                 </ListItemIcon>
                 <ListItemText
@@ -109,12 +114,12 @@ const CollapseGroup = ({ icon, label, prefix, children }) => {
                     primaryTypographyProps={{
                         fontSize: '0.85rem',
                         fontWeight: isOpen ? 600 : 400,
-                        color: isOpen ? '#e2e8f0' : 'rgba(148,163,184,0.9)',
+                        color: isOpen ? '#ffffff' : 'rgba(255,255,255,0.65)',
                     }}
                 />
                 {open
-                    ? <ExpandLessIcon sx={{ fontSize: 16, color: 'rgba(148,163,184,0.6)' }} />
-                    : <ExpandMoreIcon sx={{ fontSize: 16, color: 'rgba(148,163,184,0.6)' }} />
+                    ? <ExpandLessIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.4)' }} />
+                    : <ExpandMoreIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.4)' }} />
                 }
             </ListItemButton>
             <Collapse in={open} timeout="auto" unmountOnExit>
@@ -124,12 +129,14 @@ const CollapseGroup = ({ icon, label, prefix, children }) => {
     );
 };
 
-const TeacherSideBar = () => (
+const TeacherSideBar = () => {
+    const [logoutOpen, setLogoutOpen] = useState(false);
+    return (
     <Box sx={{ py: 1, overflowY: 'auto', height: '100%' }}>
         <List disablePadding>
             <NavItem icon={<DashboardIcon fontSize="small" />} label="Dashboard" path="/" />
 
-            <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
+            <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />
 
             <Section label="Class Management" />
             <CollapseGroup icon={<SchoolIcon fontSize="small" />} label="Class Management" prefix="/Teacher/class">
@@ -137,7 +144,7 @@ const TeacherSideBar = () => (
                 <NavItem icon={<GroupsIcon fontSize="small" />} label="Students" path="/Teacher/class" indent />
             </CollapseGroup>
 
-            <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
+            <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />
 
             <Section label="Academics" />
             <NavItem icon={<EventNoteIcon fontSize="small" />} label="Attendance" path="/Teacher/attendance" />
@@ -147,25 +154,43 @@ const TeacherSideBar = () => (
             <NavItem icon={<GradeIcon fontSize="small" />} label="Enter Marks" path="/Teacher/marks" />
             <NavItem icon={<AssessmentIcon fontSize="small" />} label="Generate Report" path="/Teacher/reports" />
 
-            <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
+            <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />
 
             <Section label="Communication" />
             <NavItem icon={<AnnouncementOutlinedIcon fontSize="small" />} label="Notices" path="/Teacher/notices" />
             <NavItem icon={<MessageIcon fontSize="small" />} label="Messages" path="/Teacher/complain" />
 
-            <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
+            <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />
 
             <Section label="Analytics" />
             <NavItem icon={<BarChartIcon fontSize="small" />} label="Performance" path="/Teacher/analytics" />
             <NavItem icon={<WarningAmberIcon fontSize="small" />} label="Weak Students" path="/Teacher/weak-students" />
             <NavItem icon={<AutoAwesomeIcon fontSize="small" />} label="AI Assistant" path="/Teacher/ai-dashboard" />
 
-            <Divider sx={{ my: 1, borderColor: 'rgba(14,165,233,0.1)' }} />
+            <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />
 
             <NavItem icon={<AccountCircleOutlinedIcon fontSize="small" />} label="Profile" path="/Teacher/profile" />
-            <NavItem icon={<ExitToAppIcon fontSize="small" />} label="Logout" path="/logout" />
+
+            {/* Logout — dialog */}
+            <ListItemButton
+                onClick={() => setLogoutOpen(true)}
+                sx={{
+                    mx: 1, my: 0.25, borderRadius: '8px', pl: 2, py: 0.75,
+                    borderLeft: '3px solid transparent',
+                    transition: 'all 0.18s ease',
+                    '&:hover': { bgcolor: ACCENT_DIM, pl: 2.5 },
+                }}
+            >
+                <ListItemIcon sx={{ minWidth: 34, color: 'rgba(255,255,255,0.5)' }}>
+                    <ExitToAppIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Logout"
+                    primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 400, color: TEXT_MUTED }} />
+            </ListItemButton>
         </List>
+        <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </Box>
-);
+    );
+};
 
 export default TeacherSideBar;

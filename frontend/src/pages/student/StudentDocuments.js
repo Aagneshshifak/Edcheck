@@ -5,18 +5,19 @@ import {
     Box, Typography, Paper, Button, CircularProgress,
     Alert, Chip, IconButton, Tooltip, LinearProgress,
 } from '@mui/material';
-import FolderIcon       from '@mui/icons-material/Folder';
-import UploadFileIcon   from '@mui/icons-material/UploadFile';
-import DeleteIcon       from '@mui/icons-material/Delete';
-import OpenInNewIcon    from '@mui/icons-material/OpenInNew';
+import FolderIcon          from '@mui/icons-material/Folder';
+import UploadFileIcon      from '@mui/icons-material/UploadFile';
+import DeleteIcon          from '@mui/icons-material/Delete';
+import OpenInNewIcon       from '@mui/icons-material/OpenInNew';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 const ALLOWED = '.pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png';
 
-const FILE_ICON_COLOR = {
-    pdf:  '#ef4444', doc: '#0ea5e9', docx: '#0ea5e9',
-    ppt:  '#f97316', pptx: '#f97316',
-    jpg:  '#34d399', jpeg: '#34d399', png: '#34d399',
+// File type → MUI color name
+const FILE_COLOR = {
+    pdf: 'error', doc: 'primary', docx: 'primary',
+    ppt: 'warning', pptx: 'warning',
+    jpg: 'success', jpeg: 'success', png: 'success',
 };
 
 const formatSize = (bytes) => {
@@ -36,11 +37,10 @@ const StudentDocuments = () => {
     const [progress,  setProgress]  = useState(0);
     const [error,     setError]     = useState('');
     const [success,   setSuccess]   = useState('');
-    const [deleting,  setDeleting]  = useState(null); // publicId being deleted
+    const [deleting,  setDeleting]  = useState(null);
 
     const inputRef = useRef();
 
-    // Load documents
     useEffect(() => {
         if (!studentId) return;
         axiosInstance.get(`/api/student-docs/${studentId}`)
@@ -76,7 +76,6 @@ const StudentDocuments = () => {
         } finally {
             setUploading(false);
             setProgress(0);
-            // Reset input so same file can be re-selected
             if (inputRef.current) inputRef.current.value = '';
         }
     };
@@ -97,17 +96,17 @@ const StudentDocuments = () => {
     };
 
     return (
-        <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: '#0b1120', minHeight: '100vh' }}>
+        <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: '#111111', minHeight: '100vh' }}>
 
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <FolderIcon sx={{ color: '#0ea5e9', fontSize: '1.6rem' }} />
+                    <FolderIcon sx={{ fontSize: '1.6rem' }} />
                     <Box>
-                        <Typography sx={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.3rem', lineHeight: 1.2 }}>
+                        <Typography fontWeight={800} fontSize="1.3rem" lineHeight={1.2}>
                             My Documents
                         </Typography>
-                        <Typography sx={{ color: 'rgba(148,163,184,0.5)', fontSize: '0.78rem' }}>
+                        <Typography variant="caption" color="text.secondary">
                             {docs.length} document{docs.length !== 1 ? 's' : ''} stored
                         </Typography>
                     </Box>
@@ -118,12 +117,7 @@ const StudentDocuments = () => {
                     startIcon={<UploadFileIcon />}
                     disabled={uploading}
                     onClick={() => inputRef.current?.click()}
-                    sx={{
-                        bgcolor: '#0ea5e9', color: '#fff', borderRadius: 2.5,
-                        textTransform: 'none', fontWeight: 700,
-                        boxShadow: '0 4px 14px rgba(14,165,233,0.3)',
-                        '&:hover': { bgcolor: '#0284c7' },
-                    }}
+                    sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}
                 >
                     Upload Documents
                 </Button>
@@ -135,81 +129,72 @@ const StudentDocuments = () => {
 
             {/* Upload progress */}
             {uploading && (
-                <Paper sx={{ bgcolor: '#1e293b', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 3, p: 2, mb: 2 }}>
+                <Paper variant="outlined" sx={{ borderRadius: 3, p: 2, mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.8 }}>
-                        <Typography sx={{ color: 'rgba(148,163,184,0.7)', fontSize: '0.82rem' }}>Uploading…</Typography>
-                        <Typography sx={{ color: '#0ea5e9', fontWeight: 700, fontSize: '0.82rem' }}>{progress}%</Typography>
+                        <Typography variant="body2" color="text.secondary">Uploading…</Typography>
+                        <Typography variant="body2" fontWeight={700}>{progress}%</Typography>
                     </Box>
-                    <LinearProgress variant="determinate" value={progress} sx={{
-                        height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.06)',
-                        '& .MuiLinearProgress-bar': { bgcolor: '#0ea5e9', borderRadius: 3 },
-                    }} />
+                    <LinearProgress variant="determinate" value={progress} sx={{ height: 6, borderRadius: 3 }} />
                 </Paper>
             )}
 
             {/* Document list */}
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-                    <CircularProgress sx={{ color: '#0ea5e9' }} />
+                    <CircularProgress />
                 </Box>
             ) : docs.length === 0 ? (
-                <Paper sx={{
-                    bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.05)',
-                    borderRadius: 3, p: 6, textAlign: 'center',
-                }}>
-                    <FolderIcon sx={{ color: 'rgba(148,163,184,0.2)', fontSize: '3.5rem', mb: 1 }} />
-                    <Typography sx={{ color: 'rgba(148,163,184,0.4)', fontSize: '0.9rem' }}>
-                        No documents uploaded yet
-                    </Typography>
-                    <Typography sx={{ color: 'rgba(148,163,184,0.3)', fontSize: '0.78rem', mt: 0.5 }}>
+                <Paper variant="outlined" sx={{ borderRadius: 3, p: 6, textAlign: 'center' }}>
+                    <FolderIcon sx={{ fontSize: '3.5rem', opacity: 0.2, mb: 1 }} />
+                    <Typography color="text.secondary">No documents uploaded yet</Typography>
+                    <Typography variant="caption" color="text.disabled" display="block" sx={{ mt: 0.5 }}>
                         Upload PDFs, Word docs, images and more
                     </Typography>
                 </Paper>
             ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     {docs.map((doc, i) => {
-                        const ext   = doc.fileType || doc.documentName?.split('.').pop()?.toLowerCase() || '';
-                        const color = FILE_ICON_COLOR[ext] || '#64748b';
+                        const ext        = doc.fileType || doc.documentName?.split('.').pop()?.toLowerCase() || '';
+                        const chipColor  = FILE_COLOR[ext] || 'default';
                         const isDeleting = deleting === doc.publicId;
 
                         return (
-                            <Paper key={i} sx={{
-                                bgcolor: '#111827',
-                                border: '1px solid rgba(255,255,255,0.05)',
+                            <Paper key={i} variant="outlined" sx={{
                                 borderRadius: 3, p: 2,
                                 display: 'flex', alignItems: 'center', gap: 2,
-                                transition: 'border-color 0.15s',
-                                '&:hover': { borderColor: 'rgba(14,165,233,0.2)' },
+                                transition: 'box-shadow 0.15s',
+                                '&:hover': { boxShadow: 2 },
                             }}>
-                                {/* File type icon */}
+                                {/* File icon */}
                                 <Box sx={{
                                     width: 44, height: 44, borderRadius: 2, flexShrink: 0,
-                                    bgcolor: `${color}18`, border: `1px solid ${color}30`,
+                                    bgcolor: 'action.hover',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}>
-                                    <InsertDriveFileIcon sx={{ color, fontSize: '1.3rem' }} />
+                                    <InsertDriveFileIcon color={chipColor} sx={{ fontSize: '1.3rem' }} />
                                 </Box>
 
                                 {/* Name + meta */}
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                                    <Typography sx={{
-                                        color: '#f1f5f9', fontWeight: 600, fontSize: '0.88rem',
-                                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                    }}>
+                                    <Typography fontWeight={600} fontSize="0.88rem"
+                                        sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                         {doc.documentName}
                                     </Typography>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.3 }}>
-                                        <Chip label={ext.toUpperCase() || 'FILE'} size="small" sx={{
-                                            height: 18, fontSize: '0.62rem', fontWeight: 700,
-                                            bgcolor: `${color}18`, color, border: `1px solid ${color}30`,
-                                        }} />
+                                        <Chip
+                                            label={ext.toUpperCase() || 'FILE'}
+                                            size="small"
+                                            color={chipColor}
+                                            variant="outlined"
+                                            sx={{ height: 18, fontSize: '0.62rem', fontWeight: 700 }}
+                                        />
                                         {doc.size && (
-                                            <Typography sx={{ color: 'rgba(148,163,184,0.4)', fontSize: '0.7rem' }}>
+                                            <Typography variant="caption" color="text.disabled">
                                                 {formatSize(doc.size)}
                                             </Typography>
                                         )}
                                         {doc.uploadedAt && (
-                                            <Typography sx={{ color: 'rgba(148,163,184,0.35)', fontSize: '0.7rem' }}>
+                                            <Typography variant="caption" color="text.disabled">
                                                 {new Date(doc.uploadedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </Typography>
                                         )}
@@ -222,7 +207,6 @@ const StudentDocuments = () => {
                                         <IconButton
                                             component="a" href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
                                             size="small"
-                                            sx={{ color: '#0ea5e9', '&:hover': { bgcolor: 'rgba(14,165,233,0.1)' } }}
                                         >
                                             <OpenInNewIcon sx={{ fontSize: '1rem' }} />
                                         </IconButton>
@@ -230,12 +214,12 @@ const StudentDocuments = () => {
                                     <Tooltip title="Delete">
                                         <IconButton
                                             size="small"
+                                            color="error"
                                             disabled={isDeleting || !doc.publicId}
                                             onClick={() => handleDelete(doc.publicId, doc.documentName)}
-                                            sx={{ color: '#ef4444', '&:hover': { bgcolor: 'rgba(239,68,68,0.1)' } }}
                                         >
                                             {isDeleting
-                                                ? <CircularProgress size={14} sx={{ color: '#ef4444' }} />
+                                                ? <CircularProgress size={14} color="error" />
                                                 : <DeleteIcon sx={{ fontSize: '1rem' }} />}
                                         </IconButton>
                                     </Tooltip>
