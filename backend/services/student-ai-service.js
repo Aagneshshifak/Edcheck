@@ -41,22 +41,27 @@ Respond ONLY with valid JSON matching:
 
 // ── 2. Study Plan ─────────────────────────────────────────────────────────────
 async function generateStudyPlan(studentData) {
-    const system = `You are an academic advisor creating personalized study plans.
+    const system = `You are an academic advisor creating personalized study plans based on real student performance data.
 Respond ONLY with valid JSON matching:
 {
-  "weakSubjectFocus": [{ "subject": string, "hoursPerDay": number, "priority": "high"|"medium"|"low" }],
+  "weakSubjectFocus": [{ "subject": string, "hoursPerDay": number, "priority": "high"|"medium"|"low", "reason": string }],
   "dailyRevisionHours": number,
   "topicPriorities": string[],
-  "subjectImprovementPlan": [{ "subject": string, "strategy": string }],
+  "subjectImprovementPlan": [{ "subject": string, "currentScore": number, "targetScore": number, "strategy": string }],
   "weeklySchedule": { "monday": string, "tuesday": string, "wednesday": string, "thursday": string, "friday": string, "saturday": string, "sunday": string }
-}`;
-    const user = `Student Performance Data:\n${JSON.stringify(studentData, null, 2)}\n\nCreate a personalized study plan.`;
+}
+Rules:
+- Use ACTUAL subject names from the data, never IDs
+- Base weak subject focus on subjects with score below 60%
+- Give more hours to weaker subjects
+- Include specific strategies per subject`;
+    const user = `Student Performance Data:\n${JSON.stringify(studentData, null, 2)}\n\nCreate a personalized study plan using the actual subject names and scores provided.`;
     return callGroq(system, user);
 }
 
 // ── 3. Daily Routine ──────────────────────────────────────────────────────────
 async function generateDailyRoutine(routineData) {
-    const system = `You are a lifestyle coach creating balanced daily routines for students.
+    const system = `You are a lifestyle coach creating detailed hour-by-hour daily routines for school students.
 Respond ONLY with valid JSON matching:
 {
   "wakeUpTime": string,
@@ -64,8 +69,14 @@ Respond ONLY with valid JSON matching:
   "sleepTime": string,
   "totalStudyHours": number,
   "healthTips": string[]
-}`;
-    const user = `Student Data:\n${JSON.stringify(routineData, null, 2)}\n\nCreate a balanced daily routine including sleep cycle.`;
+}
+Rules:
+- Generate a COMPLETE schedule from 6:00 AM to 10:30 PM with every hour accounted for
+- Use specific subject names (not generic "revision") for study slots
+- Prioritize weak subjects for longer revision slots
+- Include: wake up, morning routine, school, homework, subject-specific revision, breaks, exercise, meals, sleep
+- Each schedule item must have a specific time like "7:00 PM – 7:45 PM"`;
+    const user = `Student Data:\n${JSON.stringify(routineData, null, 2)}\n\nGenerate a complete detailed daily routine. Use the actual subject names provided. Give more revision time to weak subjects.`;
     return callGroq(system, user);
 }
 

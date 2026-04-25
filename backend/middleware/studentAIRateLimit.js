@@ -1,12 +1,12 @@
 /**
  * Simple in-memory rate limiter for Student AI endpoints.
- * Allows max 10 requests per student per 15 minutes.
- * Uses node-cache so it auto-expires without manual cleanup.
+ * Allows max 30 requests per student per 15 minutes.
+ * Regenerate requests bypass the cache but still count.
  */
 const NodeCache = require('node-cache');
 const cache = new NodeCache({ stdTTL: 900 }); // 15 min window
 
-const MAX_REQUESTS = 10;
+const MAX_REQUESTS = 30; // generous limit for dev/testing
 
 const studentAIRateLimit = (req, res, next) => {
     const userId = req.user?.id || req.user?._id;

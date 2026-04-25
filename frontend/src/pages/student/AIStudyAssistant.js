@@ -111,10 +111,10 @@ const StudyPlanPanel = ({ studentId }) => {
             .catch(() => {});
     }, [studentId]);
 
-    const handleGenerate = async () => {
+    const handleGenerate = async (regenerate = false) => {
         setLoading(true); setError('');
         try {
-            const { data } = await axiosInstance.post('/api/ai/student/generate-study-plan', { studentId });
+            const { data } = await axiosInstance.post('/api/ai/student/generate-study-plan', { studentId, regenerate });
             setPlan(data.studyPlan);
         } catch (e) { setError(e.response?.data?.message || 'Failed'); }
         finally { setLoading(false); }
@@ -124,23 +124,56 @@ const StudyPlanPanel = ({ studentId }) => {
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" sx={{ color: theme.accent }}>My Study Plan</Typography>
-                <Button variant="contained" onClick={handleGenerate} disabled={loading}>
-                    {loading ? <CircularProgress size={18} color="inherit" /> : plan ? 'Regenerate' : 'Generate Plan'}
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {plan && (
+                        <Button variant="outlined" size="small" onClick={() => handleGenerate(true)} disabled={loading}>
+                            Regenerate
+                        </Button>
+                    )}
+                    {!plan && (
+                        <Button variant="contained" onClick={() => handleGenerate(false)} disabled={loading}>
+                            {loading ? <CircularProgress size={18} color="inherit" /> : 'Generate Plan'}
+                        </Button>
+                    )}
+                </Box>
             </Box>
+            {loading && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}><CircularProgress size={18} /><Typography variant="body2">Analysing your performance...</Typography></Box>}
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             {plan && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Card variant="outlined"><CardContent>
                         <Typography fontWeight={700} gutterBottom>📚 Weak Subject Focus</Typography>
                         {plan.weakSubjectFocus?.map((s, i) => (
-                            <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                <Typography variant="body2">{s.subject}</Typography>
-                                <Chip label={`${s.hoursPerDay}h/day · ${s.priority}`} size="small"
-                                    color={s.priority === 'high' ? 'error' : s.priority === 'medium' ? 'warning' : 'success'} />
+                            <Box key={i} sx={{ mb: 1 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="body2" fontWeight={600}>{s.subject}</Typography>
+                                    <Chip label={`${s.hoursPerDay}h/day · ${s.priority}`} size="small"
+                                        color={s.priority === 'high' ? 'error' : s.priority === 'medium' ? 'warning' : 'success'} />
+                                </Box>
+                                {s.reason && <Typography variant="caption" color="text.secondary">{s.reason}</Typography>}
                             </Box>
                         ))}
                     </CardContent></Card>
+
+                    {plan.subjectImprovementPlan?.length > 0 && (
+                        <Card variant="outlined"><CardContent>
+                            <Typography fontWeight={700} gutterBottom>🎯 Improvement Plan</Typography>
+                            {plan.subjectImprovementPlan.map((s, i) => (
+                                <Box key={i} sx={{ mb: 1.5 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                        <Typography variant="body2" fontWeight={600}>{s.subject}</Typography>
+                                        {s.currentScore != null && s.targetScore != null && (
+                                            <Typography variant="caption" color="text.secondary">
+                                                {s.currentScore}% → {s.targetScore}%
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary">{s.strategy}</Typography>
+                                </Box>
+                            ))}
+                        </CardContent></Card>
+                    )}
+
                     <Card variant="outlined"><CardContent>
                         <Typography fontWeight={700} gutterBottom>📅 Weekly Schedule</Typography>
                         {plan.weeklySchedule && Object.entries(plan.weeklySchedule).map(([day, task]) => (
@@ -153,7 +186,7 @@ const StudyPlanPanel = ({ studentId }) => {
                 </Box>
             )}
             {!plan && !loading && (
-                <Alert severity="info">Click "Generate Plan" to create your personalized study plan based on your performance.</Alert>
+                <Alert severity="info">Click "Generate Plan" to create your personalized study plan based on your test scores and learning progress.</Alert>
             )}
         </Box>
     );
@@ -171,10 +204,10 @@ const RoutinePanel = ({ studentId }) => {
             .catch(() => {});
     }, [studentId]);
 
-    const handleGenerate = async () => {
+    const handleGenerate = async (regenerate = false) => {
         setLoading(true); setError('');
         try {
-            const { data } = await axiosInstance.post('/api/ai/student/generate-daily-routine', { studentId });
+            const { data } = await axiosInstance.post('/api/ai/student/generate-daily-routine', { studentId, regenerate });
             setRoutine(data.routine);
         } catch (e) { setError(e.response?.data?.message || 'Failed'); }
         finally { setLoading(false); }
@@ -186,14 +219,24 @@ const RoutinePanel = ({ studentId }) => {
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" sx={{ color: theme.accent }}>Today's Routine</Typography>
-                <Button variant="contained" onClick={handleGenerate} disabled={loading}>
-                    {loading ? <CircularProgress size={18} color="inherit" /> : routine ? 'Regenerate' : 'Generate Routine'}
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {routine && (
+                        <Button variant="outlined" size="small" onClick={() => handleGenerate(true)} disabled={loading}>
+                            Regenerate
+                        </Button>
+                    )}
+                    {!routine && (
+                        <Button variant="contained" onClick={() => handleGenerate(false)} disabled={loading}>
+                            {loading ? <CircularProgress size={18} color="inherit" /> : 'Generate Routine'}
+                        </Button>
+                    )}
+                </Box>
             </Box>
+            {loading && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}><CircularProgress size={18} /><Typography variant="body2">Building your personalised routine...</Typography></Box>}
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             {routine && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 1, flexWrap: 'wrap' }}>
                         <Chip icon={<AccessTimeIcon />} label={`Wake up: ${routine.wakeUpTime}`} color="primary" />
                         <Chip icon={<AccessTimeIcon />} label={`Sleep: ${routine.sleepTime}`} color="secondary" />
                         <Chip label={`Study: ${routine.totalStudyHours}h`} color="success" />
@@ -205,7 +248,7 @@ const RoutinePanel = ({ studentId }) => {
                             borderLeft: `4px solid ${catColor[item.category] || '#888'}`,
                             background: 'rgba(255,255,255,0.03)',
                         }}>
-                            <Typography variant="body2" fontWeight={700} sx={{ minWidth: 80, color: catColor[item.category] || '#888' }}>
+                            <Typography variant="body2" fontWeight={700} sx={{ minWidth: 160, color: catColor[item.category] || '#888' }}>
                                 {item.time}
                             </Typography>
                             <Typography variant="body2" sx={{ flex: 1 }}>{item.activity}</Typography>
