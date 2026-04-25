@@ -107,10 +107,32 @@ const markAllAsRead = async (req, res) => {
     }
 };
 
+// DELETE /Notifications/:id  — delete a single notification
+const deleteNotificationById = async (req, res) => {
+    try {
+        await Notification.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// DELETE /Notifications/read/:userId  — delete all read notifications for a user
+const deleteReadNotifications = async (req, res) => {
+    try {
+        await Notification.deleteMany({ userId: req.params.userId, readStatus: true });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 module.exports = {
     createNotifications,
     streamNotifications,
     getNotifications,
     markAsRead,
     markAllAsRead,
+    deleteNotificationById,
+    deleteReadNotifications,
 };

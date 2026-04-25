@@ -1,5 +1,5 @@
 import axiosInstance from '../../utils/axiosInstance';
-import { setNotifications, markOneRead, markAllRead, setLoading } from "./notificationSlice";
+import { setNotifications, markOneRead, markAllRead, removeOne, removeAllRead, setLoading } from "./notificationSlice";
 
 export const fetchNotifications = (userId, before = null) => async (dispatch, getState) => {
     dispatch(setLoading());
@@ -22,4 +22,14 @@ export const readNotification = (id) => async (dispatch) => {
 export const readAllNotifications = (userId) => async (dispatch) => {
     dispatch(markAllRead());
     try { await axiosInstance.put(`/Notifications/readAll/${userId}`); } catch (_) {}
+};
+
+export const deleteNotification = (id) => async (dispatch) => {
+    dispatch(removeOne(id));
+    try { await axiosInstance.delete(`/Notifications/${id}`); } catch (_) {}
+};
+
+export const deleteReadNotifications = (userId) => async (dispatch) => {
+    dispatch(removeAllRead());
+    try { await axiosInstance.delete(`/Notifications/read/${userId}`); } catch (_) {}
 };

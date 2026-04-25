@@ -36,6 +36,24 @@ const TestOversight = () => {
     const [createOpen, setCreateOpen] = useState(false);
     const [form, setForm]             = useState(EMPTY_FORM);
     const [saving, setSaving]         = useState(false);
+    const [classSubjects, setClassSubjects] = useState([]);
+
+    // When class changes in the form, fetch subjects for that class only
+    useEffect(() => {
+        if (!form.classId) { setClassSubjects([]); return; }
+        axiosInstance.get(`/ClassSubjects/${form.classId}`)
+            .then(({ data }) => {
+                // Deduplicate by _id
+                const seen = new Set();
+                const unique = (Array.isArray(data) ? data : []).filter(s => {
+                    if (seen.has(s._id)) return false;
+                    seen.add(s._id);
+                    return true;
+                });
+                setClassSubjects(unique);
+            })
+            .catch(() => setClassSubjects([]));
+    }, [form.classId]);
 
     const fetchAll = useCallback(() => {
         setLoading(true); setError('');
@@ -200,15 +218,20 @@ const TestOversight = () => {
                     <TextField label="Title" value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))} required fullWidth />
                     <FormControl fullWidth required>
                         <InputLabel>Class</InputLabel>
-                        <Select value={form.classId} label="Class" onChange={e => setForm(f => ({...f, classId: e.target.value}))}>
-                            {classes.map(c => <MenuItem key={c._id} value={c._id}>{c.sclassName}</MenuItem>)}
+                        <Select value={form.classId} label="Class" onChange={e => setForm(f => ({...f, classId: e.target.value, subjectId: ''}))}>
+                            {classes.map(c => <MenuItem key={c._id} value={c._id}>{c.sclassName || c.className}</MenuItem>)}
                         </Select>
                     </FormControl>
                     <FormControl fullWidth>
                         <InputLabel>Subject (optional)</InputLabel>
-                        <Select value={form.subjectId} label="Subject (optional)" onChange={e => setForm(f => ({...f, subjectId: e.target.value}))}>
+                        <Select value={form.subjectId} label="Subject (optional)" onChange={e => setForm(f => ({...f, subjectId: e.target.value}))}
+                            disabled={!form.classId}>
                             <MenuItem value=""><em>None</em></MenuItem>
-                            {subjects.map(s => <MenuItem key={s._id} value={s._id}>{s.subName}</MenuItem>)}
+                            {classSubjects.map(s => (
+                                <MenuItem key={s._id} value={s._id}>
+                                    {s.subjectName || s.subName}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                     <TextField label="Duration (minutes)" type="number" value={form.durationMinutes}

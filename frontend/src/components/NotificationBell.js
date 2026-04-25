@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     IconButton, Badge, Box, Typography, Divider,
-    ClickAwayListener, Paper, Slide,
+    ClickAwayListener, Paper, Slide, Tooltip,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -10,8 +10,13 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import GradeIcon from '@mui/icons-material/Grade';
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloseIcon from '@mui/icons-material/Close';
-import { fetchNotifications, readNotification, readAllNotifications } from '../redux/notificationRelated/notificationHandle';
+import {
+    fetchNotifications, readNotification, readAllNotifications,
+    deleteNotification, deleteReadNotifications,
+} from '../redux/notificationRelated/notificationHandle';
 import { setNotifications } from '../redux/notificationRelated/notificationSlice';
 
 
@@ -122,6 +127,10 @@ const NotificationBell = () => {
 
     const handleMarkOne = (id) => dispatch(readNotification(id));
     const handleMarkAll = () => dispatch(readAllNotifications(currentUser._id));
+    const handleDeleteOne = (e, id) => { e.stopPropagation(); dispatch(deleteNotification(id)); };
+    const handleDeleteRead = () => dispatch(deleteReadNotifications(currentUser._id));
+
+    const hasRead = items.some(n => n.readStatus);
 
     return (
         <>
@@ -150,12 +159,22 @@ const NotificationBell = () => {
                                 <Typography sx={{ color: '#e8f4fd', fontWeight: 700, fontSize: '0.9rem' }}>
                                     Notifications {unread > 0 && `(${unread} new)`}
                                 </Typography>
-                                {unread > 0 && (
-                                    <IconButton size="small" onClick={handleMarkAll} title="Mark all as read"
-                                        sx={{ color: '#1e90ff' }}>
-                                        <DoneAllIcon fontSize="small" />
-                                    </IconButton>
-                                )}
+                                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                    {unread > 0 && (
+                                        <Tooltip title="Mark all as read">
+                                            <IconButton size="small" onClick={handleMarkAll} sx={{ color: '#1e90ff' }}>
+                                                <DoneAllIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
+                                    {hasRead && (
+                                        <Tooltip title="Delete all read">
+                                            <IconButton size="small" onClick={handleDeleteRead} sx={{ color: '#ef4444' }}>
+                                                <DeleteSweepIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
+                                </Box>
                             </Box>
                             <Divider sx={{ borderColor: 'rgba(30,144,255,0.15)' }} />
 
@@ -200,6 +219,19 @@ const NotificationBell = () => {
                                                 flexShrink: 0, mt: 0.5,
                                             }} />
                                         )}
+                                        <Tooltip title="Delete">
+                                            <IconButton
+                                                size="small"
+                                                onClick={(e) => handleDeleteOne(e, n._id)}
+                                                sx={{
+                                                    color: 'rgba(255,255,255,0.2)',
+                                                    p: 0.25, flexShrink: 0,
+                                                    '&:hover': { color: '#ef4444' },
+                                                }}
+                                            >
+                                                <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                                            </IconButton>
+                                        </Tooltip>
                                     </Box>
                                 ))}
                                 {hasMore && (

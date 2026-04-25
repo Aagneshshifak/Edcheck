@@ -33,7 +33,7 @@ const {
 const { getAttendanceAnalytics } = require('../controllers/attendanceAnalyticsController.js');
 const { getUpcomingDeadlines } = require('../controllers/deadlines-controller.js');
 const { getStudentProgress } = require('../controllers/progress-controller.js');
-const { getNotifications, markAsRead, markAllAsRead } = require('../controllers/notification-controller.js');
+const { getNotifications, markAsRead, markAllAsRead, deleteNotificationById, deleteReadNotifications } = require('../controllers/notification-controller.js');
 const { streamNotifications } = require('../controllers/notification-controller.js');
 const upload = require('../middleware/upload.js');
 
@@ -47,7 +47,7 @@ const { getSchoolAttendance, getClassAttendance, getStudentAttendance } = requir
 const { sendNotification, getSentNotifications, deleteNotification, previewRecipients } = require('../controllers/admin-notification-controller.js');
 const { getAnalyticsOverview, getLeaderboard, getSubjectDifficulty, getTeacherPerformance, getStudentRisk, getGradeDistribution, getCohortProgression, getRiskTrends, getParentEngagement } = require('../controllers/admin-analytics-controller.js');
 const { getStudentPerformance, getClassAttendanceReport, getTeacherActivity, getAssignmentCompletion } = require('../controllers/admin-report-controller.js');
-const { createTest, getTestsByClass, getTestsForStudent, updateTest, deleteTest } = require('../controllers/test-controller.js');
+const { createTest, getTestsByClass, getTestsByTeacher, getTestById, getTestsForStudent, updateTest, updateTestQuestions, publishTest, aiValidateAnswers, deleteTest } = require('../controllers/test-controller.js');
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
 
 const { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance: getTeacherIndividualPerformance, bulkDeleteTeachers, updateTeacherStatus, resetTeacherPassword } = require('../controllers/admin-teacher-controller.js');
@@ -311,6 +311,8 @@ router.get('/Notifications/stream/:userId', streamNotifications);
 router.get('/Notifications/:userId', auth, getNotifications);
 router.put('/Notifications/read/:id', auth, markAsRead);
 router.put('/Notifications/readAll/:userId', auth, markAllAsRead);
+router.delete('/Notifications/read/:userId', auth, deleteReadNotifications);
+router.delete('/Notifications/:id', auth, deleteNotificationById);
 
 // ── Serve uploaded files ──────────────────────────────────────────────────────
 const express = require('express');
@@ -318,8 +320,13 @@ router.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 router.post('/TestCreate', auth, createTest);
+router.post('/Test/ai-validate-answers', auth, aiValidateAnswers);
 router.get('/TestsByClass/:classId', auth, getTestsByClass);
+router.get('/TestsByTeacher/:teacherId', auth, getTestsByTeacher);
 router.get('/TestsForStudent/:studentId', auth, getTestsForStudent);
+router.get('/Test/:id', auth, getTestById);
+router.put('/Test/:id/questions', auth, updateTestQuestions);
+router.put('/Test/:id/publish', auth, publishTest);
 router.put('/Test/:id', auth, updateTest);
 router.delete('/Test/:id', auth, deleteTest);
 
@@ -357,6 +364,24 @@ router.get('/AI/topic-performance', auth, getTopicPerformance);
 router.get('/AI/question-bank', auth, getQuestionBank);
 router.post('/AI/question-bank/:bankId/add-to-test', auth, addBankQuestionsToTest);
 
+// ── Student AI Assistant ──────────────────────────────────────────────────────
+const {
+    generateClassNotesHandler, generateStudyPlanHandler, generateDailyRoutineHandler,
+    prepareNextTestHandler, assignmentHelpHandler,
+    getStudentNotes, getStudentStudyPlan, getStudentRoutine, getStudentTestPrep, getAssignmentHelp,
+} = require('../controllers/student-ai-controller');
+const { studentAIRateLimit, requireStudent } = require('../middleware/studentAIRateLimit');
+const studentAI = [auth, requireStudent, studentAIRateLimit];
+router.post('/api/ai/student/generate-class-notes',        studentAI, generateClassNotesHandler);
+router.post('/api/ai/student/generate-study-plan',         studentAI, generateStudyPlanHandler);
+router.post('/api/ai/student/generate-daily-routine',      studentAI, generateDailyRoutineHandler);
+router.post('/api/ai/student/prepare-next-test',           studentAI, prepareNextTestHandler);
+router.post('/api/ai/student/assignment-help',             studentAI, assignmentHelpHandler);
+router.get('/api/ai/student/notes',                        auth, getStudentNotes);
+router.get('/api/ai/student/study-plan/:studentId',        auth, getStudentStudyPlan);
+router.get('/api/ai/student/routine/:studentId',           auth, getStudentRoutine);
+router.get('/api/ai/student/test-prep/:studentId/:testId', auth, getStudentTestPrep);
+router.get('/api/ai/student/assignment-help/:studentId',   auth, getAssignmentHelp);
 // Manual trigger for nightly AI analysis (admin/dev use)
 const { runNightlyAnalysis } = require('../services/ai-analysis-scheduler');
 router.post('/AI/run-analysis', auth, async (req, res) => {
