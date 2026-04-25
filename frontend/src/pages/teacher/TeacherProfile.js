@@ -9,19 +9,26 @@ const TeacherProfile = () => {
   if (response) { console.log(response) }
   else if (error) { console.log(error) }
 
-  const teachSclass = currentUser.teachSclass
-  const teachSubject = currentUser.teachSubject
-  const teachSchool = currentUser.school
+  const teachSclass   = currentUser?.teachSclass;
+  const teachSubject  = currentUser?.teachSubject;
+  const teachSchool   = currentUser?.school;
+
+  // Support both single and multi-subject/class
+  const className   = teachSclass?.sclassName || teachSclass?.className
+      || currentUser?.teachClasses?.[0]?.sclassName || currentUser?.teachClasses?.[0]?.className || '—';
+  const subjectName = teachSubject?.subName || teachSubject?.subjectName
+      || currentUser?.teachSubjects?.[0]?.subName || currentUser?.teachSubjects?.[0]?.subjectName || '—';
+  const schoolName  = teachSchool?.schoolName || '—';
 
   return (
     <>
       <ProfileCard>
         <ProfileCardContent>
-          <ProfileText>Name: {currentUser.name}</ProfileText>
-          <ProfileText>Email: {currentUser.email}</ProfileText>
-          <ProfileText>Class: {teachSclass.sclassName}</ProfileText>
-          <ProfileText>Subject: {teachSubject.subName}</ProfileText>
-          <ProfileText>School: {teachSchool.schoolName}</ProfileText>
+          <ProfileText>Name: {currentUser?.name}</ProfileText>
+          <ProfileText>Email: {currentUser?.email}</ProfileText>
+          <ProfileText>Class: {className}</ProfileText>
+          <ProfileText>Subject: {subjectName}</ProfileText>
+          <ProfileText>School: {schoolName}</ProfileText>
         </ProfileCardContent>
       </ProfileCard>
     </>
