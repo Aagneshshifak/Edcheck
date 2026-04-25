@@ -33,7 +33,7 @@ const {
 const { getAttendanceAnalytics } = require('../controllers/attendanceAnalyticsController.js');
 const { getUpcomingDeadlines } = require('../controllers/deadlines-controller.js');
 const { getStudentProgress } = require('../controllers/progress-controller.js');
-const { getNotifications, markAsRead, markAllAsRead } = require('../controllers/notification-controller.js');
+const { getNotifications, markAsRead, markAllAsRead, deleteNotificationById, deleteReadNotifications } = require('../controllers/notification-controller.js');
 const { streamNotifications } = require('../controllers/notification-controller.js');
 const upload = require('../middleware/upload.js');
 
@@ -311,6 +311,8 @@ router.get('/Notifications/stream/:userId', streamNotifications);
 router.get('/Notifications/:userId', auth, getNotifications);
 router.put('/Notifications/read/:id', auth, markAsRead);
 router.put('/Notifications/readAll/:userId', auth, markAllAsRead);
+router.delete('/Notifications/read/:userId', auth, deleteReadNotifications);
+router.delete('/Notifications/:id', auth, deleteNotificationById);
 
 // ── Serve uploaded files ──────────────────────────────────────────────────────
 const express = require('express');
@@ -357,6 +359,21 @@ router.get('/AI/topic-performance', auth, getTopicPerformance);
 router.get('/AI/question-bank', auth, getQuestionBank);
 router.post('/AI/question-bank/:bankId/add-to-test', auth, addBankQuestionsToTest);
 
+// ── Student AI Assistant ──────────────────────────────────────────────────────
+const {
+    generateClassNotesHandler, generateStudyPlanHandler, generateDailyRoutineHandler,
+    prepareNextTestHandler, assignmentHelpHandler,
+    getStudentNotes, getStudentStudyPlan, getStudentRoutine, getStudentTestPrep, getAssignmentHelp,
+} = require('../controllers/student-ai-controller');
+router.post('/api/ai/student/generate-class-notes', auth, generateClassNotesHandler);
+router.post('/api/ai/student/generate-study-plan',  auth, generateStudyPlanHandler);
+router.post('/api/ai/student/generate-daily-routine', auth, generateDailyRoutineHandler);
+router.post('/api/ai/student/prepare-next-test',    auth, prepareNextTestHandler);
+router.post('/api/ai/student/assignment-help',      auth, assignmentHelpHandler);
+router.get('/api/ai/student/notes',                 auth, getStudentNotes);
+router.get('/api/ai/student/study-plan/:studentId', auth, getStudentStudyPlan);
+router.get('/api/ai/student/routine/:studentId',    auth, getStudentRoutine);
+router.get('/api/ai/student/test-prep/:studentId/:testId', auth, getStudentTestPrep);
 // Manual trigger for nightly AI analysis (admin/dev use)
 const { runNightlyAnalysis } = require('../services/ai-analysis-scheduler');
 router.post('/AI/run-analysis', auth, async (req, res) => {
