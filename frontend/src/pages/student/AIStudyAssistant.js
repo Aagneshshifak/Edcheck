@@ -243,16 +243,25 @@ const RoutinePanel = ({ studentId }) => {
                     </Box>
                     {routine.schedule?.map((item, i) => (
                         <Box key={i} sx={{
-                            display: 'flex', gap: 2, alignItems: 'center',
-                            px: 2, py: 1, borderRadius: 2,
+                            display: 'flex', gap: 2, alignItems: 'flex-start',
+                            px: 2, py: 1.5, borderRadius: 2,
                             borderLeft: `4px solid ${catColor[item.category] || '#888'}`,
                             background: 'rgba(255,255,255,0.03)',
                         }}>
-                            <Typography variant="body2" fontWeight={700} sx={{ minWidth: 160, color: catColor[item.category] || '#888' }}>
-                                {item.time}
-                            </Typography>
-                            <Typography variant="body2" sx={{ flex: 1 }}>{item.activity}</Typography>
-                            <Chip label={item.duration} size="small" variant="outlined" />
+                            <Box sx={{ minWidth: 170 }}>
+                                <Typography variant="body2" fontWeight={700} sx={{ color: catColor[item.category] || '#888' }}>
+                                    {item.time}{item.endTime ? ` – ${item.endTime}` : ''}
+                                </Typography>
+                                <Chip label={item.duration} size="small" variant="outlined" sx={{ mt: 0.5, fontSize: '0.68rem', height: 18 }} />
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                                <Typography variant="body2" fontWeight={600}>{item.activity}</Typography>
+                                {item.details && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+                                        {item.details}
+                                    </Typography>
+                                )}
+                            </Box>
                         </Box>
                     ))}
                     {routine.healthTips?.length > 0 && (
@@ -260,6 +269,25 @@ const RoutinePanel = ({ studentId }) => {
                             <Typography fontWeight={700} gutterBottom>💡 Health Tips</Typography>
                             {routine.healthTips.map((t, i) => <Typography key={i} variant="body2">• {t}</Typography>)}
                         </CardContent></Card>
+                    )}
+                    {routine.subjectRevisionBreakdown?.length > 0 && (
+                        <Card variant="outlined" sx={{ mt: 1 }}><CardContent>
+                            <Typography fontWeight={700} gutterBottom>📊 Subject Revision Breakdown</Typography>
+                            {routine.subjectRevisionBreakdown.map((s, i) => (
+                                <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                    <Typography variant="body2">{s.subject}</Typography>
+                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                        <Chip label={`${s.minutes} min`} size="small" color="primary" variant="outlined" />
+                                        <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>{s.timeSlot}</Typography>
+                                    </Box>
+                                </Box>
+                            ))}
+                        </CardContent></Card>
+                    )}
+                    {routine.motivationalNote && (
+                        <Box sx={{ px: 2, py: 1.5, borderRadius: 2, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', mt: 1 }}>
+                            <Typography variant="body2" sx={{ color: '#a78bfa', fontStyle: 'italic' }}>✨ {routine.motivationalNote}</Typography>
+                        </Box>
                     )}
                 </Box>
             )}

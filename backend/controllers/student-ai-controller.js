@@ -62,7 +62,6 @@ const generateStudyPlanHandler = async (req, res) => {
         const { studentId, regenerate } = req.body;
         if (!studentId) return res.status(400).json({ message: 'studentId is required' });
 
-        // Skip cache if regenerate=true
         const cacheKey = `studyplan:${studentId}`;
         if (!regenerate) {
             const cached = cache.get(cacheKey);
@@ -72,18 +71,24 @@ const generateStudyPlanHandler = async (req, res) => {
         }
 
         const student = await Student.findById(studentId)
-            .select('name examResult attendance classId')
+            .select('name examResult attendance classId sclassName')
             .lean();
         if (!student) return res.status(404).json({ message: 'Student not found' });
 
-        // ── Resolve subject names ──────────────────────────────────────────
-        const subjectIds = [...new Set((student.examResult || []).map(r => String(r.subjectId)))];
-        const subjects = await Subject.find({ _id: { $in: subjectIds } })
-            .select('subjectName subName').lean();
-        const subjectNameMap = {};
-        subjects.forEach(s => { subjectNameMap[String(s._id)] = s.subjectName || s.subName; });
+        const classId = student.classId || student.sclassName;
 
-        // ── Per-subject exam performance ───────────────────────────────────
+        // ── Always fetch ALL subjects for the student's class ──────────────
+        const Sclass = require('../models/sclassSchema');
+        const sclass = await Sclass.findById(classId).populate('subjects', 'subjectName subName').lean();
+        const classSubjects = sclass?.subjects || [];
+
+        // Build name map from class subjects
+        const subjectNameMap = {};
+        classSubjects.forEach(s => {
+            subjectNameMap[String(s._id)] = s.subjectName || s.subName || 'Unknown Subject';
+        });
+
+        // ── Per-subject exam performance (overlay on class subjects) ───────
         const subjectScores = {};
         for (const r of student.examResult || []) {
             const id = String(r.subjectId);
@@ -92,6 +97,23 @@ const generateStudyPlanHandler = async (req, res) => {
             subjectScores[id].max   += r.maxMarks;
             subjectScores[id].count += 1;
         }
+
+        // Build subject performance using class subjects as base
+        const subjectPerformance = classSubjects.map(s => {
+            const id = String(s._id);
+            const name = s.subjectName || s.subName || 'Unknown';
+            const scores = subjectScores[id];
+            if (!scores || scores.max === 0) {
+                return { subject: name, percentage: null, attempts: 0, status: 'no data' };
+            }
+            const pct = Math.round((scores.total / scores.max) * 100);
+            return {
+                subject:    name,
+                percentage: pct,
+                attempts:   scores.count,
+                status:     pct < 50 ? 'weak' : pct < 70 ? 'average' : 'strong',
+            };
+        });
 
         // ── Attendance % ───────────────────────────────────────────────────
         const totalAtt   = student.attendance?.length || 0;
@@ -107,19 +129,10 @@ const generateStudyPlanHandler = async (req, res) => {
             .lean();
 
         const testResults = attempts.map(a => ({
-            testTitle:   a.testId?.title || 'Test',
-            subject:     a.testId?.subject?.subjectName || a.testId?.subject?.subName || 'Unknown',
+            testTitle:    a.testId?.title || 'Test',
+            subject:      a.testId?.subject?.subjectName || a.testId?.subject?.subName || 'Unknown',
             scorePercent: a.totalMarks > 0 ? Math.round((a.score / a.totalMarks) * 100) : 0,
-            date:        a.submittedAt ? new Date(a.submittedAt).toLocaleDateString() : 'N/A',
-        }));
-
-        // ── Build rich subject performance with names ──────────────────────
-        const subjectPerformance = Object.entries(subjectScores).map(([id, v]) => ({
-            subject:    subjectNameMap[id] || `Subject ${id.slice(-4)}`,
-            percentage: v.max > 0 ? Math.round((v.total / v.max) * 100) : 0,
-            attempts:   v.count,
-            status:     v.max > 0 && (v.total / v.max) < 0.5 ? 'weak' :
-                        v.max > 0 && (v.total / v.max) < 0.7 ? 'average' : 'strong',
+            date:         a.submittedAt ? new Date(a.submittedAt).toLocaleDateString() : 'N/A',
         }));
 
         const avgTestScore = testResults.length
@@ -127,14 +140,16 @@ const generateStudyPlanHandler = async (req, res) => {
             : 0;
 
         const studentData = {
-            name: student.name,
+            name:                student.name,
             attendancePercentage: attendancePct,
-            averageTestScore: avgTestScore,
-            recentTestResults: testResults.slice(0, 5),
+            averageTestScore:    avgTestScore,
+            recentTestResults:   testResults.slice(0, 5),
             subjectPerformance,
-            weakSubjects:   subjectPerformance.filter(s => s.status === 'weak').map(s => s.subject),
-            averageSubjects: subjectPerformance.filter(s => s.status === 'average').map(s => s.subject),
-            strongSubjects:  subjectPerformance.filter(s => s.status === 'strong').map(s => s.subject),
+            allSubjects:         classSubjects.map(s => s.subjectName || s.subName),
+            weakSubjects:        subjectPerformance.filter(s => s.status === 'weak').map(s => s.subject),
+            averageSubjects:     subjectPerformance.filter(s => s.status === 'average').map(s => s.subject),
+            strongSubjects:      subjectPerformance.filter(s => s.status === 'strong').map(s => s.subject),
+            noDataSubjects:      subjectPerformance.filter(s => s.status === 'no data').map(s => s.subject),
         };
 
         const studyPlan = await generateStudyPlan(studentData);
@@ -164,10 +179,17 @@ const generateDailyRoutineHandler = async (req, res) => {
             cache.del(cacheKey);
         }
 
-        const student = await Student.findById(studentId).select('name classId examResult').lean();
+        const student = await Student.findById(studentId).select('name classId sclassName examResult').lean();
         if (!student) return res.status(404).json({ message: 'Student not found' });
 
-        // ── Resolve weak subject names ─────────────────────────────────────
+        const classId = student.classId || student.sclassName;
+
+        // ── Fetch class subjects for real names ────────────────────────────
+        const Sclass = require('../models/sclassSchema');
+        const sclass = await Sclass.findById(classId).populate('subjects', 'subjectName subName').lean();
+        const classSubjects = (sclass?.subjects || []).map(s => s.subjectName || s.subName);
+
+        // ── Resolve weak subject names from exam results ───────────────────
         const subjectScores = {};
         for (const r of student.examResult || []) {
             const id = String(r.subjectId);
@@ -183,18 +205,23 @@ const generateDailyRoutineHandler = async (req, res) => {
             .select('subjectName subName').lean();
         const weakSubjectNames = weakSubjectDocs.map(s => s.subjectName || s.subName);
 
-        // ── Study plan summary ─────────────────────────────────────────────
+        // ── Study plan — get today's schedule and revision hours ───────────
         const studyPlan = await StudentStudyPlan.findOne({ studentId }).lean();
         const dailyRevisionHours = studyPlan?.studyPlan?.dailyRevisionHours || 2;
         const weakFocus = studyPlan?.studyPlan?.weakSubjectFocus || [];
 
+        // Get today's specific schedule from the study plan weekly schedule
+        const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+        const todayName = days[new Date().getDay()];
+        const todayStudyPlan = studyPlan?.studyPlan?.weeklySchedule?.[todayName] || '';
+
         // ── Homework workload ──────────────────────────────────────────────
-        const assignments = await Assignment.find({ classId: student.classId }).lean();
+        const assignments = await Assignment.find({ classId }).lean();
 
         // ── Today's timetable ──────────────────────────────────────────────
         const Timetable = require('../models/timetableSchema');
         const today = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
-        const timetable = await Timetable.findOne({ classId: student.classId, day: today })
+        const timetable = await Timetable.findOne({ classId, day: today })
             .populate('periods.subject', 'subjectName subName').lean();
         const schoolPeriods = timetable?.periods?.map(p => ({
             period:    p.periodNumber,
@@ -204,17 +231,17 @@ const generateDailyRoutineHandler = async (req, res) => {
         })) || [];
 
         const routineData = {
-            studentName:        student.name,
-            homeworkWorkload:   assignments.length > 3 ? 'heavy' : assignments.length > 1 ? 'moderate' : 'light',
-            pendingAssignments: assignments.length,
+            studentName:          student.name,
+            allSubjects:          classSubjects,
+            weakSubjects:         weakSubjectNames.length > 0 ? weakSubjectNames : classSubjects.slice(0, 2),
+            weakSubjectFocus:     weakFocus.map(w => `${w.subject}: ${w.hoursPerDay}h/day`),
+            todayStudyPlanNote:   todayStudyPlan || `Focus on ${weakSubjectNames[0] || classSubjects[0] || 'weak subjects'}`,
+            homeworkWorkload:     assignments.length > 3 ? 'heavy' : assignments.length > 1 ? 'moderate' : 'light',
+            pendingAssignments:   assignments.length,
             dailyRevisionHours,
-            weakSubjects:       weakSubjectNames,
-            weakSubjectFocus:   weakFocus.map(w => `${w.subject}: ${w.hoursPerDay}h/day`),
-            schoolPeriodsToday: schoolPeriods.length,
-            schoolSchedule:     schoolPeriods,
-            sleepRequirement:   '8 hours',
-            gradeLevel:         'school student',
-            instructions:       'Generate a detailed hour-by-hour schedule from 6:00 AM to 10:30 PM. Include specific subject names for revision slots. Balance study with health.',
+            schoolPeriodsToday:  schoolPeriods.length,
+            schoolSchedule:      schoolPeriods,
+            sleepRequirement:    '8 hours',
         };
 
         const routine = await generateDailyRoutine(routineData);
