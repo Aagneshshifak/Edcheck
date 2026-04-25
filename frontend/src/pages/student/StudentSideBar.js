@@ -16,6 +16,8 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import FolderIcon from '@mui/icons-material/Folder';
 import CampaignIcon from '@mui/icons-material/Campaign';
 
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+
 const NavItem = ({ to, icon, label, active }) => (
     <ListItemButton
         component={Link}
@@ -102,6 +104,10 @@ const StudentSideBar = () => {
             <NavItem to="/Student/notices" icon={<CampaignIcon />} label="Notices" active={is('/Student/notices')} />
             <NavItem to="/Student/complain" icon={<AnnouncementOutlinedIcon />} label="Complain" active={is('/Student/complain')} />
             <NavItem to="/Student/documents" icon={<FolderIcon />} label="My Documents" active={is('/Student/documents')} />
+
+            <Divider sx={{ my: 1, mx: 2, borderColor: 'rgba(255,255,255,0.08)' }} />
+            <SectionLabel>AI Assistant</SectionLabel>
+            <NavItem to="/Student/ai-assistant" icon={<AutoAwesomeIcon />} label="AI Study Assistant" active={is('/Student/ai-assistant')} />
 
             <Divider sx={{ my: 1, mx: 2, borderColor: 'rgba(255,255,255,0.08)' }} />
             <SectionLabel>Account</SectionLabel>

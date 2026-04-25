@@ -24,6 +24,8 @@ import AccountMenu from '../../components/AccountMenu';
 import NotificationBell from '../../components/NotificationBell';
 import { AppBar, Drawer } from '../../components/styles';
 
+import AIStudyAssistant from './AIStudyAssistant';
+
 const StudentDashboard = () => {
     const [open, setOpen] = useState(true);
 
@@ -75,6 +77,7 @@ const StudentDashboard = () => {
                     <Route path="/Student/performance" element={<AcademicPerformanceDashboard />} />
                     <Route path="/Student/documents" element={<StudentDocuments />} />
                     <Route path="/Student/notices" element={<StudentNotices />} />
+                    <Route path="/Student/ai-assistant" element={<AIStudyAssistant />} />
                     <Route path="/logout" element={<Logout />} />
                     <Route path='*' element={<Navigate to="/" />} />
                 </Routes>

@@ -35,10 +35,10 @@ const teacherLogIn = async (req, res) => {
             const validated = await bcrypt.compare(req.body.password, teacher.password);
             if (validated) {
                 teacher = await teacher.populate("teachSubject",  "subName sessions")
-                teacher = await teacher.populate("teachSubjects", "subName sessions")
+                teacher = await teacher.populate("teachSubjects", "subName subjectName sessions")
                 teacher = await teacher.populate("school",        "schoolName")
-                teacher = await teacher.populate("teachSclass",   "sclassName")
-                teacher = await teacher.populate("teachClasses",  "sclassName")
+                teacher = await teacher.populate("teachSclass",   "_id sclassName className")
+                teacher = await teacher.populate("teachClasses",  "_id sclassName className")
                 const token = signToken(teacher);
                 teacher.password = undefined;
                 res.send({ ...teacher.toObject(), token });
@@ -60,9 +60,9 @@ const getTeachers = async (req, res) => {
                 $or: [{ school: req.params.id }, { schoolId: req.params.id }]
             })
                 .populate("teachSubject", "subName")
-                .populate("teachSubjects", "subName")
-                .populate("teachSclass", "sclassName")
-                .populate("teachClasses", "sclassName");
+                .populate("teachSubjects", "subName subjectName")
+                .populate("teachSclass", "_id sclassName className")
+                .populate("teachClasses", "_id sclassName className");
             return list.map(t => ({ ...t._doc, password: undefined }));
         }, 120);
 
@@ -80,9 +80,9 @@ const getTeacherDetail = async (req, res) => {
     try {
         let teacher = await Teacher.findById(req.params.id)
             .populate("teachSubject",  "subName sessions")
-            .populate("teachSubjects", "subName sessions")
-            .populate("teachSclass",   "sclassName")
-            .populate("teachClasses",  "sclassName")
+            .populate("teachSubjects", "subName subjectName sessions")
+            .populate("teachSclass",   "_id sclassName className")
+            .populate("teachClasses",  "_id sclassName className")
             .populate("school", "schoolName")
         if (teacher) {
             teacher.password = undefined;
