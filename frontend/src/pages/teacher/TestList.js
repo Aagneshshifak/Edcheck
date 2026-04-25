@@ -42,51 +42,11 @@ const TestList = () => {
     const fetchTests = async () => {
         setLoading(true);
         try {
-            // Build list of all class IDs this teacher is assigned to
-            const allClassIds = [
-                currentUser?.teachSclass?._id,
-                ...(currentUser?.teachClasses || []).map(c => c._id || c),
-            ].filter(id => id && String(id).length === 24) // valid ObjectId only
-             .filter((v, i, a) => a.findIndex(x => String(x) === String(v)) === i); // dedupe
+            const teacherId = currentUser?._id;
+            if (!teacherId) { setNoClass(true); setLoading(false); return; }
 
-            if (allClassIds.length === 0) {
-                setNoClass(true);
-                setLoading(false);
-                return;
-            }
-
-            // Subject IDs this teacher is assigned to
-            const teachSubjectIds = [
-                ...(currentUser?.teachSubjects || []).map(s => String(s._id || s)),
-                currentUser?.teachSubject ? String(currentUser.teachSubject._id || currentUser.teachSubject) : null,
-            ].filter(Boolean);
-
-            // Fetch all tests for all classes
-            const results = await Promise.all(
-                allClassIds.map(cid =>
-                    axiosInstance.get(`/TestsByClass/${cid}`).then(r => r.data).catch(() => [])
-                )
-            );
-
-            // Flatten and deduplicate
-            const seen = new Set();
-            let all = results.flat().filter(t => {
-                if (seen.has(t._id)) return false;
-                seen.add(t._id);
-                return true;
-            });
-
-            // Filter by subject only if teacher has subjects AND tests have subjects assigned
-            if (teachSubjectIds.length > 0) {
-                const subjectSet = new Set(teachSubjectIds);
-                all = all.filter(t => {
-                    if (!t.subject) return true; // no subject → visible to all
-                    const sid = String(t.subject._id || t.subject);
-                    return subjectSet.has(sid);
-                });
-            }
-
-            setTests(all);
+            const { data } = await axiosInstance.get(`/TestsByTeacher/${teacherId}`);
+            setTests(Array.isArray(data) ? data : []);
         } catch (err) {
             setSnackbar({ open: true, message: 'Failed to load tests', severity: 'error' });
         } finally {
