@@ -13,6 +13,15 @@ const AIDashboard = () => {
     const teachSubjects = currentUser?.teachSubjects || [];
     const classId = currentUser?.teachSclass?._id || '';
 
+    // Deduplicate subjects by name
+    const seenNames = new Set();
+    const uniqueSubjects = teachSubjects.filter(s => {
+        const name = (s.subjectName || s.subName || '').toLowerCase();
+        if (!name || seenNames.has(name)) return false;
+        seenNames.add(name);
+        return true;
+    });
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
@@ -33,9 +42,9 @@ const AIDashboard = () => {
             </Paper>
 
             <Box>
-                {tab === 0 && <NoteSuggestionsPanel teachSubjects={teachSubjects} />}
-                {tab === 1 && <WeakTopicsPanel teachSubjects={teachSubjects} classId={classId} />}
-                {tab === 2 && <QuestionGeneratorPanel teachSubjects={teachSubjects} />}
+                {tab === 0 && <NoteSuggestionsPanel teachSubjects={uniqueSubjects} />}
+                {tab === 1 && <WeakTopicsPanel teachSubjects={uniqueSubjects} classId={classId} />}
+                {tab === 2 && <QuestionGeneratorPanel teachSubjects={uniqueSubjects} />}
             </Box>
         </Container>
     );

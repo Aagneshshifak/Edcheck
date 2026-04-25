@@ -205,7 +205,15 @@ const TeacherHomePage = () => {
             {/* AI Assistant Panel */}
             <Box mt={4}>
                 <AIAssistantWidget
-                    teachSubjects={currentUser?.teachSubjects || []}
+                    teachSubjects={(() => {
+                        const seen = new Set();
+                        return (currentUser?.teachSubjects || []).filter(s => {
+                            const name = (s.subjectName || s.subName || '').toLowerCase();
+                            if (!name || seen.has(name)) return false;
+                            seen.add(name);
+                            return true;
+                        });
+                    })()}
                     classId={classId || ''}
                 />
             </Box>
