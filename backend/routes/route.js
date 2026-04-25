@@ -365,15 +365,18 @@ const {
     prepareNextTestHandler, assignmentHelpHandler,
     getStudentNotes, getStudentStudyPlan, getStudentRoutine, getStudentTestPrep, getAssignmentHelp,
 } = require('../controllers/student-ai-controller');
-router.post('/api/ai/student/generate-class-notes', auth, generateClassNotesHandler);
-router.post('/api/ai/student/generate-study-plan',  auth, generateStudyPlanHandler);
-router.post('/api/ai/student/generate-daily-routine', auth, generateDailyRoutineHandler);
-router.post('/api/ai/student/prepare-next-test',    auth, prepareNextTestHandler);
-router.post('/api/ai/student/assignment-help',      auth, assignmentHelpHandler);
-router.get('/api/ai/student/notes',                 auth, getStudentNotes);
-router.get('/api/ai/student/study-plan/:studentId', auth, getStudentStudyPlan);
-router.get('/api/ai/student/routine/:studentId',    auth, getStudentRoutine);
+const { studentAIRateLimit, requireStudent } = require('../middleware/studentAIRateLimit');
+const studentAI = [auth, requireStudent, studentAIRateLimit];
+router.post('/api/ai/student/generate-class-notes',        studentAI, generateClassNotesHandler);
+router.post('/api/ai/student/generate-study-plan',         studentAI, generateStudyPlanHandler);
+router.post('/api/ai/student/generate-daily-routine',      studentAI, generateDailyRoutineHandler);
+router.post('/api/ai/student/prepare-next-test',           studentAI, prepareNextTestHandler);
+router.post('/api/ai/student/assignment-help',             studentAI, assignmentHelpHandler);
+router.get('/api/ai/student/notes',                        auth, getStudentNotes);
+router.get('/api/ai/student/study-plan/:studentId',        auth, getStudentStudyPlan);
+router.get('/api/ai/student/routine/:studentId',           auth, getStudentRoutine);
 router.get('/api/ai/student/test-prep/:studentId/:testId', auth, getStudentTestPrep);
+router.get('/api/ai/student/assignment-help/:studentId',   auth, getAssignmentHelp);
 // Manual trigger for nightly AI analysis (admin/dev use)
 const { runNightlyAnalysis } = require('../services/ai-analysis-scheduler');
 router.post('/AI/run-analysis', auth, async (req, res) => {

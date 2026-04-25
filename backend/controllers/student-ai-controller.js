@@ -134,12 +134,40 @@ const generateDailyRoutineHandler = async (req, res) => {
         // Assignments count as homework workload
         const assignments = await Assignment.find({ classId: student.classId }).lean();
 
+        // Fetch timetable for school schedule context
+        const Timetable = require('../models/timetableSchema');
+        const today = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
+        const timetable = await Timetable.findOne({ classId: student.classId, day: today })
+            .populate('periods.subject', 'subjectName subName').lean();
+        const schoolPeriods = timetable?.periods?.map(p => ({
+            period: p.periodNumber,
+            subject: p.subject?.subjectName || p.subject?.subName || 'Period',
+            startTime: p.startTime,
+            endTime: p.endTime,
+        })) || [];
+
+        // Weak subjects from exam results
+        const subjectScores = {};
+        for (const r of student.examResult || []) {
+            const id = String(r.subjectId);
+            if (!subjectScores[id]) subjectScores[id] = { total: 0, max: 0 };
+            subjectScores[id].total += r.marks;
+            subjectScores[id].max   += r.maxMarks;
+        }
+        const weakSubjects = Object.entries(subjectScores)
+            .filter(([, v]) => v.max > 0 && (v.total / v.max) < 0.6)
+            .map(([id]) => id);
+
         const routineData = {
             studentName: student.name,
             homeworkWorkload: assignments.length > 3 ? 'heavy' : assignments.length > 1 ? 'moderate' : 'light',
+            pendingAssignments: assignments.length,
             studyPlanSummary: studyPlan?.studyPlan?.dailyRevisionHours
                 ? `${studyPlan.studyPlan.dailyRevisionHours} hours/day revision`
                 : 'No study plan yet',
+            weakSubjectCount: weakSubjects.length,
+            schoolPeriodsToday: schoolPeriods.length,
+            schoolSchedule: schoolPeriods,
             sleepRequirement: '8 hours',
             gradeLevel: 'school student',
         };
