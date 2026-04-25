@@ -425,10 +425,38 @@ const AIStudyAssistant = () => {
     const [tab, setTab] = useState(0);
     const { currentUser } = useSelector(s => s.user);
     const { subjectsList } = useSelector(s => s.sclass);
+    const [fetchedSubjects, setFetchedSubjects] = useState([]);
 
     const studentId = currentUser?._id;
     const classId   = currentUser?.sclassName?._id || currentUser?.classId?._id || currentUser?.classId;
-    const subjects  = subjectsList || [];
+
+    // Fetch subjects for the student's class if not already in Redux
+    useEffect(() => {
+        if (!classId) return;
+        axiosInstance.get(`/ClassSubjects/${classId}`)
+            .then(({ data }) => {
+                const list = Array.isArray(data) ? data : [];
+                // Deduplicate by _id
+                const seen = new Set();
+                const unique = list.filter(s => {
+                    if (seen.has(s._id)) return false;
+                    seen.add(s._id);
+                    return true;
+                });
+                setFetchedSubjects(unique);
+            })
+            .catch(() => {});
+    }, [classId]);
+
+    // Use fetched subjects, fall back to Redux subjectsList, deduplicate either way
+    const rawSubjects = fetchedSubjects.length > 0 ? fetchedSubjects : (subjectsList || []);
+    const seen = new Set();
+    const subjects = rawSubjects.filter(s => {
+        const name = s.subjectName || s.subName || '';
+        if (seen.has(name)) return false;
+        seen.add(name);
+        return true;
+    });
 
     const tabs = [
         { label: 'Notes',       icon: <MenuBookIcon fontSize="small" /> },

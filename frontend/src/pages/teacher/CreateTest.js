@@ -39,11 +39,21 @@ const emptyQuestion = () => ({
 const CreateTest = () => {
     const { currentUser } = useSelector((state) => state.user);
 
-    const subjects = currentUser?.teachSubjects?.length
+    const rawSubjects = currentUser?.teachSubjects?.length
         ? currentUser.teachSubjects
         : currentUser?.teachSubject
             ? Array.isArray(currentUser.teachSubject) ? currentUser.teachSubject : [currentUser.teachSubject]
             : [];
+
+    // Deduplicate by subject name
+    const seenNames = new Set();
+    const subjects = rawSubjects.filter(s => {
+        const name = (s.subName || s.subjectName || '').toLowerCase();
+        if (!name || seenNames.has(name)) return false;
+        seenNames.add(name);
+        return true;
+    });
+
     const classId = currentUser?.teachSclass?._id
         || currentUser?.teachClasses?.[0]?._id
         || currentUser?.teachClasses?.[0]
@@ -115,21 +125,46 @@ const CreateTest = () => {
                 const doc = parser.parseFromString(e.target.result, 'text/xml');
                 const qNodes = doc.querySelectorAll('question');
                 const parsed = Array.from(qNodes).map((q) => {
-                    const text = q.querySelector('text')?.textContent?.trim() || '';
+                    const text = q.querySelector('text')?.textContent?.trim()
+                        || q.querySelector('questionText')?.textContent?.trim() || '';
                     const optNodes = q.querySelectorAll('option');
-                    const options = [];
+                    const options = Array.from(optNodes).map(o => o.textContent.trim());
+
                     let correctAnswer = 0;
+
+                    // Method 1: correct="true" attribute on an <option>
+                    let foundByAttr = false;
                     optNodes.forEach((opt, i) => {
-                        options.push(opt.textContent.trim());
-                        if (opt.getAttribute('correct') === 'true') correctAnswer = i;
+                        if (opt.getAttribute('correct') === 'true') {
+                            correctAnswer = i;
+                            foundByAttr = true;
+                        }
                     });
+
+                    // Method 2: <correctAnswer> element — A/B/C/D or 1-based number
+                    if (!foundByAttr) {
+                        const caNode = q.querySelector('correctAnswer') || q.querySelector('answer');
+                        if (caNode) {
+                            const ca = caNode.textContent.trim().toUpperCase();
+                            if (['A','B','C','D','E','F'].includes(ca)) {
+                                correctAnswer = ['A','B','C','D','E','F'].indexOf(ca);
+                            } else {
+                                const num = Number(ca);
+                                correctAnswer = num > 0 ? num - 1 : 0;
+                            }
+                        }
+                    }
+
+                    correctAnswer = Math.max(0, Math.min(correctAnswer, options.length - 1));
+
                     return {
                         questionText: text,
                         options: options.length >= 2 ? options : ['', ''],
                         correctAnswer,
-                        marks: Number(q.getAttribute('marks') || 1),
+                        marks: Number(q.getAttribute('marks') || q.querySelector('marks')?.textContent || 1),
                     };
                 }).filter(q => q.questionText);
+
                 if (parsed.length === 0) {
                     setSnackbar({ open: true, message: 'No valid questions found in XML', severity: 'warning' });
                     return;
@@ -156,12 +191,60 @@ const CreateTest = () => {
     const downloadTemplate = () => {
         const ws = XLSX.utils.aoa_to_sheet([
             ['questionText', 'option1', 'option2', 'option3', 'option4', 'correctAnswer', 'marks'],
-            ['What is 2+2?', '3', '4', '5', '6', '2', '1'],
-            ['Capital of France?', 'Berlin', 'Paris', 'Rome', 'Madrid', '2', '1'],
+            ['', '', '', '', '', '← Use A, B, C or D', ''],
+            ['What is the SI unit of force?', 'Watt', 'Newton', 'Joule', 'Pascal', 'B', '1'],
+            ['Capital of France?', 'Berlin', 'Paris', 'Rome', 'Madrid', 'B', '1'],
+            ['What does CPU stand for?', 'Central Processing Unit', 'Computer Personal Unit', 'Central Program Utility', 'Core Processing Unit', 'A', '1'],
         ]);
+        ws['!cols'] = [{ wch: 50 }, { wch: 28 }, { wch: 28 }, { wch: 28 }, { wch: 28 }, { wch: 18 }, { wch: 8 }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Questions');
         XLSX.writeFile(wb, 'questions_template.xlsx');
+    };
+
+    const downloadXMLTemplate = () => {
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<questions>
+
+  <!-- METHOD 1: Mark correct answer with correct="true" on the option -->
+  <question marks="1">
+    <text>What is the SI unit of force?</text>
+    <option>Watt</option>
+    <option correct="true">Newton</option>
+    <option>Joule</option>
+    <option>Pascal</option>
+  </question>
+
+  <!-- METHOD 2: Use correctAnswer with letter A/B/C/D -->
+  <question marks="1">
+    <text>Capital of France?</text>
+    <option>Berlin</option>
+    <option>Paris</option>
+    <option>Rome</option>
+    <option>Madrid</option>
+    <correctAnswer>B</correctAnswer>
+  </question>
+
+  <!-- METHOD 3: Use correctAnswer with number 1/2/3/4 (1-based) -->
+  <question marks="2">
+    <text>What does CPU stand for?</text>
+    <option>Central Processing Unit</option>
+    <option>Computer Personal Unit</option>
+    <option>Central Program Utility</option>
+    <option>Core Processing Unit</option>
+    <correctAnswer>1</correctAnswer>
+  </question>
+
+</questions>`;
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'questions_template.xml';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     const handleAddQuestion = () => {
@@ -311,9 +394,14 @@ const CreateTest = () => {
 
                 {/* Bulk import */}
                 <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Tooltip title="Download Excel template">
+                    <Tooltip title="Download Excel template (.xlsx)">
                         <Button size="small" variant="outlined" startIcon={<DownloadIcon />} onClick={downloadTemplate}>
-                            Template
+                            Excel Template
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title="Download XML template (.xml)">
+                        <Button size="small" variant="outlined" startIcon={<DownloadIcon />} onClick={downloadXMLTemplate}>
+                            XML Template
                         </Button>
                     </Tooltip>
                     <Button size="small" variant="outlined" startIcon={<UploadFileIcon />} component="label">
@@ -321,7 +409,7 @@ const CreateTest = () => {
                         <input type="file" hidden accept=".xlsx,.xls,.csv,.xml" onChange={handleImport} />
                     </Button>
                     <Typography variant="caption" color="text.secondary">
-                        Supports .xlsx, .xls, .csv, .xml — replaces current questions
+                        Excel: use A/B/C/D in correctAnswer column · XML: use correct="true" or &lt;correctAnswer&gt;B&lt;/correctAnswer&gt;
                     </Typography>
                 </Box>
                 <Divider sx={{ mb: 2 }} />
