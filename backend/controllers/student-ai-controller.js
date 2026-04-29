@@ -9,6 +9,7 @@ const StudentStudyPlan= require('../models/studentStudyPlanSchema');
 const StudentRoutine  = require('../models/studentDailyRoutineSchema');
 const StudentTestPrep = require('../models/studentTestPrepSchema');
 const AssignmentHelp  = require('../models/studentAssignmentHelpSchema');
+const TopicPerformance= require('../models/topicPerformanceSchema');
 const {
     generateClassNotes, generateStudyPlan, generateDailyRoutine,
     generateTestPrep, generateAssignmentHelp,
@@ -202,8 +203,41 @@ const generateDailyRoutineHandler = async (req, res) => {
             .map(([id]) => id);
 
         const weakSubjectDocs = await Subject.find({ _id: { $in: weakSubjectIds } })
-            .select('subjectName subName').lean();
+            .select('subjectName subName topics').lean();
         const weakSubjectNames = weakSubjectDocs.map(s => s.subjectName || s.subName);
+
+        async function buildWeakTopicsPerSubject(subjectDocs, cId) {
+            const subjectIds = subjectDocs.map(s => s._id);
+            const topicPerfs = await TopicPerformance.find({
+                subjectId: { $in: subjectIds },
+                classId: cId,
+            }).lean();
+
+            const perfMap = {};
+            for (const tp of topicPerfs) {
+                const key = String(tp.subjectId);
+                if (!perfMap[key]) perfMap[key] = [];
+                perfMap[key].push({ topic: tp.topic, score: tp.averageScore, severity: tp.severity });
+            }
+
+            const result = {};
+            for (const subj of subjectDocs) {
+                const id = String(subj._id);
+                const name = subj.subjectName || subj.subName;
+                const perfs = perfMap[id] || [];
+                const weakTopics = perfs
+                    .filter(p => p.severity === 'high' || p.score < 60)
+                    .sort((a, b) => a.score - b.score)
+                    .map(p => p.topic)
+                    .slice(0, 4);
+                result[name] = weakTopics.length > 0
+                    ? weakTopics
+                    : (subj.topics || []).slice(0, 3);
+            }
+            return result;
+        }
+
+        const weakTopicsPerSubject = await buildWeakTopicsPerSubject(weakSubjectDocs, classId);
 
         // ── Study plan — get today's schedule and revision hours ───────────
         const studyPlan = await StudentStudyPlan.findOne({ studentId }).lean();
@@ -234,6 +268,7 @@ const generateDailyRoutineHandler = async (req, res) => {
             studentName:          student.name,
             allSubjects:          classSubjects,
             weakSubjects:         weakSubjectNames.length > 0 ? weakSubjectNames : classSubjects.slice(0, 2),
+            weakTopicsPerSubject,
             weakSubjectFocus:     weakFocus.map(w => `${w.subject}: ${w.hoursPerDay}h/day`),
             todayStudyPlanNote:   todayStudyPlan || `Focus on ${weakSubjectNames[0] || classSubjects[0] || 'weak subjects'}`,
             homeworkWorkload:     assignments.length > 3 ? 'heavy' : assignments.length > 1 ? 'moderate' : 'light',

@@ -151,7 +151,14 @@ const AttendanceAnalyticsChart = ({ summaries }) => (
                         </Box>
                         <LinearProgress variant="determinate" value={attendancePercentage} sx={{
                             height: 6, borderRadius: 3,
-                            '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 3 },
+                            transition: 'box-shadow 0.2s ease',
+                            '&:hover': {
+                                boxShadow: `0 0 8px 2px ${color}66`,
+                            },
+                            '&:hover .MuiLinearProgress-bar': {
+                                filter: 'brightness(1.25)',
+                            },
+                            '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 3, transition: 'filter 0.2s ease' },
                         }} />
                         <Typography sx={{ color: theme.textMuted, fontSize: '0.68rem', mt: 0.3 }}>
                             {attendedClasses} / {totalClasses} classes attended

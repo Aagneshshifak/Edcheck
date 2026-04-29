@@ -86,6 +86,31 @@ Create a detailed personalized study plan using ONLY the subject names listed ab
 }
 
 // ── 3. Daily Routine ──────────────────────────────────────────────────────────
+
+/**
+ * Builds the weak topics section string for the routine prompt.
+ * Exported as a pure helper to enable unit/property testing without calling Groq.
+ *
+ * @param {Object} weakTopicsPerSubject - Map of subject name → string[]
+ * @returns {string} Formatted multi-line section for inclusion in the user prompt
+ */
+function buildRoutineTopicsSection(weakTopicsPerSubject) {
+    const entries = Object.entries(weakTopicsPerSubject || {});
+    if (entries.length === 0) {
+        return `Weak Topics Per Subject (use these in study slot activity names):
+  None available — use subject-level revision`;
+    }
+    const topicsSection = entries
+        .map(([subj, topics]) =>
+            topics.length > 0
+                ? `  ${subj}: ${topics.join(', ')}`
+                : `  ${subj}: (no specific topics — use general revision)`
+        )
+        .join('\n');
+    return `Weak Topics Per Subject (use these in study slot activity names):
+${topicsSection}`;
+}
+
 async function generateDailyRoutine(routineData) {
     const system = `You are a lifestyle and academic coach creating a VERY DETAILED hour-by-hour daily routine for a school student.
 
@@ -115,7 +140,10 @@ STRICT RULES:
 - Strong subjects get lighter revision (20-30 min)
 - Include: morning routine, school, homework for specific subjects, subject-specific revision, short breaks, exercise, meals, dinner, wind-down, sleep
 - Each activity must have a "details" field explaining WHAT to do (e.g. "Solve 15 algebra equations from chapter 4")
-- time format: "6:00 AM", endTime: "6:30 AM"`;
+- time format: "6:00 AM", endTime: "6:30 AM"
+- Study slot "activity" names MUST follow the format "Subject: Topic — action" (e.g. "Mathematics: Quadratic Equations — solve 10 practice problems")`;
+
+    const topicsBlock = buildRoutineTopicsSection(routineData.weakTopicsPerSubject);
 
     const user = `Student: ${routineData.studentName}
 All Subjects: ${routineData.allSubjects?.join(', ') || 'Not specified'}
@@ -127,6 +155,8 @@ Homework Workload: ${routineData.homeworkWorkload} (${routineData.pendingAssignm
 School Periods Today: ${routineData.schoolPeriodsToday}
 ${routineData.schoolSchedule?.length > 0 ? `School Schedule: ${JSON.stringify(routineData.schoolSchedule)}` : 'No timetable data — assume school 8:45 AM to 3:30 PM'}
 Sleep Requirement: ${routineData.sleepRequirement}
+
+${topicsBlock}
 
 Generate a COMPLETE detailed daily routine. Name every study slot with the specific subject. Give weak subjects priority revision slots in the evening.`;
     return callGroq(system, user);
@@ -165,4 +195,5 @@ module.exports = {
     generateDailyRoutine,
     generateTestPrep,
     generateAssignmentHelp,
+    buildRoutineTopicsSection,
 };

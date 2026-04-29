@@ -36,6 +36,8 @@ const mockSubjectFindById = jest.fn();
 const mockTestFind = jest.fn();
 const mockTestAttemptFind = jest.fn();
 const mockTeacherFindById = jest.fn();
+const mockAiNoteSuggestionFindOneAndUpdate = jest.fn().mockResolvedValue({});
+const mockTopicPerformanceBulkWrite = jest.fn().mockResolvedValue({});
 
 jest.mock('../models/subjectSchema', () => ({
     findById: (...args) => mockSubjectFindById(...args),
@@ -51,6 +53,15 @@ jest.mock('../models/testAttemptSchema', () => ({
 
 jest.mock('../models/teacherSchema', () => ({
     findById: (...args) => mockTeacherFindById(...args),
+}));
+
+jest.mock('../models/aiNoteSuggestionSchema', () => ({
+    findOneAndUpdate: (...args) => mockAiNoteSuggestionFindOneAndUpdate(...args),
+}));
+
+jest.mock('../models/topicPerformanceSchema', () => ({
+    find: jest.fn().mockResolvedValue([]),
+    bulkWrite: (...args) => mockTopicPerformanceBulkWrite(...args),
 }));
 
 // ── Import controller after mocks are set up ─────────────────────────────────

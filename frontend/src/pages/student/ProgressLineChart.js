@@ -16,10 +16,13 @@ const CustomTooltip = ({ active, payload }) => {
 
     return (
         <div style={{
-            backgroundColor: '#fff',
-            borderRadius: 4,
-            padding: 10,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            backgroundColor: '#1e1e2e',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+            color: '#e2e8f0',
+            fontSize: '0.8rem',
         }}>
             {payload.map((entry) => {
                 const item = entry.payload[entry.dataKey + '_raw'];
@@ -27,9 +30,9 @@ const CustomTooltip = ({ active, payload }) => {
                 return (
                     <div key={entry.dataKey} style={{ marginBottom: 4 }}>
                         <p style={{ margin: 0, fontWeight: 'bold', color: entry.color }}>{item.subjectName}</p>
-                        <p style={{ margin: 0 }}>Date: {new Date(item.date).toLocaleDateString()}</p>
-                        <p style={{ margin: 0 }}>Marks: {item.marks} / {item.maxMarks}</p>
-                        <p style={{ margin: 0 }}>Score: {item.percentageScore}%</p>
+                        <p style={{ margin: '2px 0 0', color: '#94a3b8' }}>Date: {new Date(item.date).toLocaleDateString()}</p>
+                        <p style={{ margin: '2px 0 0', color: '#94a3b8' }}>Marks: {item.marks} / {item.maxMarks}</p>
+                        <p style={{ margin: '2px 0 0', color: '#e2e8f0' }}>Score: <strong style={{ color: entry.color }}>{item.percentageScore}%</strong></p>
                     </div>
                 );
             })}

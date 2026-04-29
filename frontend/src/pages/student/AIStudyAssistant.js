@@ -25,12 +25,13 @@ const glass = {
 
 // ── 1. Notes Panel ────────────────────────────────────────────────────────────
 const NotesPanel = ({ studentId, classId, subjects }) => {
-    const [subjectId, setSubjectId] = useState('');
-    const [topic, setTopic]         = useState('');
-    const [loading, setLoading]     = useState(false);
-    const [error, setError]         = useState('');
-    const [notes, setNotes]         = useState(null);
-    const [saved, setSaved]         = useState([]);
+    const [subjectId, setSubjectId]         = useState('');
+    const [topic, setTopic]                 = useState('');
+    const [availableTopics, setAvailableTopics] = useState([]);
+    const [loading, setLoading]             = useState(false);
+    const [error, setError]                 = useState('');
+    const [notes, setNotes]                 = useState(null);
+    const [saved, setSaved]                 = useState([]);
 
     useEffect(() => {
         if (!classId) return;
@@ -39,11 +40,23 @@ const NotesPanel = ({ studentId, classId, subjects }) => {
             .catch(() => {});
     }, [classId]);
 
+    // When subject changes, update available topics and reset selected topic
+    useEffect(() => {
+        if (!subjectId) {
+            setAvailableTopics([]);
+            setTopic('');
+            return;
+        }
+        const subject = subjects.find(s => s._id === subjectId);
+        setAvailableTopics(subject?.topics || []);
+        setTopic('');
+    }, [subjectId, subjects]);
+
     const handleGenerate = async () => {
-        if (!subjectId || !topic.trim()) return;
+        if (!subjectId || !topic) return;
         setLoading(true); setError(''); setNotes(null);
         try {
-            const { data } = await axiosInstance.post('/api/ai/student/generate-class-notes', { classId, subjectId, topic: topic.trim() });
+            const { data } = await axiosInstance.post('/api/ai/student/generate-class-notes', { classId, subjectId, topic });
             setNotes(data.notesContent);
         } catch (e) { setError(e.response?.data?.message || 'Failed'); }
         finally { setLoading(false); }
@@ -61,8 +74,16 @@ const NotesPanel = ({ studentId, classId, subjects }) => {
                         {subjects.map(s => <MenuItem key={s._id} value={s._id}>{s.subName || s.subjectName}</MenuItem>)}
                     </Select>
                 </FormControl>
-                <TextField size="small" label="Topic" value={topic} onChange={e => setTopic(e.target.value)} sx={{ minWidth: 200 }} />
-                <Button variant="contained" onClick={handleGenerate} disabled={loading || !subjectId || !topic.trim()}>
+                <FormControl size="small" sx={{ minWidth: 200 }} disabled={!subjectId || availableTopics.length === 0}>
+                    <InputLabel>Topic</InputLabel>
+                    <Select value={topic} label="Topic" onChange={e => setTopic(e.target.value)}>
+                        {availableTopics.length === 0
+                            ? <MenuItem value="" disabled>No topics configured</MenuItem>
+                            : availableTopics.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)
+                        }
+                    </Select>
+                </FormControl>
+                <Button variant="contained" onClick={handleGenerate} disabled={loading || !subjectId || !topic}>
                     {loading ? <CircularProgress size={18} color="inherit" /> : 'Generate Notes'}
                 </Button>
             </Box>
