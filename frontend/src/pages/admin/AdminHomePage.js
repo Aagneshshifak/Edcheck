@@ -117,10 +117,13 @@ const AdminHomePage = () => {
                                     <XAxis dataKey='className' angle={-30} textAnchor='end' tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
                                     <YAxis domain={[0, 100]} unit='%' tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
                                     <Tooltip
-                                        contentStyle={{ background: '#111111', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: '#ffffff' }}
+                                        cursor={{ fill: 'rgba(255,255,255,0.06)' }}
+                                        contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: '#ffffff' }}
+                                        labelStyle={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, marginBottom: 4 }}
+                                        itemStyle={{ color: '#ffffff' }}
                                         formatter={v => [`${v}%`, 'Avg Score']}
                                     />
-                                    <Bar dataKey='avgScore' fill='#ffffff' radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey='avgScore' fill='#6366f1' radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         }
