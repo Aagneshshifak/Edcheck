@@ -14,10 +14,10 @@ const {
     generateClassNotes, generateStudyPlan, generateDailyRoutine,
     generateTestPrep, generateAssignmentHelp,
 } = require('../services/student-ai-service');
+const { withAICache } = require('../services/ai-cache-service');
 
-// Cache: TTL 6 hours
+// Legacy in-memory cache (kept for generate-notes which is class-scoped, not user-scoped)
 const cache = new NodeCache({ stdTTL: 21600 });
-
 function isGroqError(err) {
     return err && (typeof err.status === 'number' || /^E(CONN|TIMEOUT|NOTFOUND)/.test(err.code || ''));
 }
@@ -63,12 +63,11 @@ const generateStudyPlanHandler = async (req, res) => {
         const { studentId, regenerate } = req.body;
         if (!studentId) return res.status(400).json({ message: 'studentId is required' });
 
-        const cacheKey = `studyplan:${studentId}`;
-        if (!regenerate) {
-            const cached = cache.get(cacheKey);
-            if (cached) return res.status(200).json(cached);
-        } else {
-            cache.del(cacheKey);
+        // Force-invalidate if regenerate requested
+        if (regenerate) {
+            const { invalidateByUserId } = require('../services/ai-cache-service');
+            await invalidateByUserId(studentId).catch(() => {});
+            cache.del(`studyplan:${studentId}`);
         }
 
         const student = await Student.findById(studentId)
@@ -78,18 +77,15 @@ const generateStudyPlanHandler = async (req, res) => {
 
         const classId = student.classId || student.sclassName;
 
-        // ── Always fetch ALL subjects for the student's class ──────────────
         const Sclass = require('../models/sclassSchema');
         const sclass = await Sclass.findById(classId).populate('subjects', 'subjectName subName').lean();
         const classSubjects = sclass?.subjects || [];
 
-        // Build name map from class subjects
         const subjectNameMap = {};
         classSubjects.forEach(s => {
             subjectNameMap[String(s._id)] = s.subjectName || s.subName || 'Unknown Subject';
         });
 
-        // ── Per-subject exam performance (overlay on class subjects) ───────
         const subjectScores = {};
         for (const r of student.examResult || []) {
             const id = String(r.subjectId);
@@ -99,7 +95,6 @@ const generateStudyPlanHandler = async (req, res) => {
             subjectScores[id].count += 1;
         }
 
-        // Build subject performance using class subjects as base
         const subjectPerformance = classSubjects.map(s => {
             const id = String(s._id);
             const name = s.subjectName || s.subName || 'Unknown';
@@ -116,12 +111,10 @@ const generateStudyPlanHandler = async (req, res) => {
             };
         });
 
-        // ── Attendance % ───────────────────────────────────────────────────
         const totalAtt   = student.attendance?.length || 0;
         const presentAtt = student.attendance?.filter(a => a.status === 'Present').length || 0;
         const attendancePct = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0;
 
-        // ── Test attempts with subject names ───────────────────────────────
         const attempts = await TestAttempt.find({ studentId })
             .populate({ path: 'testId', select: 'title subject', populate: { path: 'subject', select: 'subjectName subName' } })
             .select('score totalMarks submittedAt testId')
@@ -153,7 +146,14 @@ const generateStudyPlanHandler = async (req, res) => {
             noDataSubjects:      subjectPerformance.filter(s => s.status === 'no data').map(s => s.subject),
         };
 
-        const studyPlan = await generateStudyPlan(studentData);
+        const { data: studyPlan, fromCache, cachedAt } = await withAICache({
+            endpointName: 'generate-study-plan',
+            userId:       studentId,
+            userRole:     'student',
+            inputObj:     { studentId, subjectPerformance: studentData.subjectPerformance, avgTestScore },
+            relatedTestId: null,
+            fn: () => generateStudyPlan(studentData),
+        });
 
         const doc = await StudentStudyPlan.findOneAndUpdate(
             { studentId },
@@ -161,8 +161,7 @@ const generateStudyPlanHandler = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        cache.set(cacheKey, doc);
-        return res.status(200).json(doc);
+        return res.status(200).json({ ...doc.toObject(), fromCache, cachedAt });
     } catch (err) { return errResponse(res, err); }
 };
 
@@ -172,12 +171,8 @@ const generateDailyRoutineHandler = async (req, res) => {
         const { studentId, regenerate } = req.body;
         if (!studentId) return res.status(400).json({ message: 'studentId is required' });
 
-        const cacheKey = `routine:${studentId}`;
-        if (!regenerate) {
-            const cached = cache.get(cacheKey);
-            if (cached) return res.status(200).json(cached);
-        } else {
-            cache.del(cacheKey);
+        if (regenerate) {
+            cache.del(`routine:${studentId}`);
         }
 
         const student = await Student.findById(studentId).select('name classId sclassName examResult').lean();
@@ -185,12 +180,10 @@ const generateDailyRoutineHandler = async (req, res) => {
 
         const classId = student.classId || student.sclassName;
 
-        // ── Fetch class subjects for real names ────────────────────────────
         const Sclass = require('../models/sclassSchema');
         const sclass = await Sclass.findById(classId).populate('subjects', 'subjectName subName').lean();
         const classSubjects = (sclass?.subjects || []).map(s => s.subjectName || s.subName);
 
-        // ── Resolve weak subject names from exam results ───────────────────
         const subjectScores = {};
         for (const r of student.examResult || []) {
             const id = String(r.subjectId);
@@ -239,20 +232,16 @@ const generateDailyRoutineHandler = async (req, res) => {
 
         const weakTopicsPerSubject = await buildWeakTopicsPerSubject(weakSubjectDocs, classId);
 
-        // ── Study plan — get today's schedule and revision hours ───────────
         const studyPlan = await StudentStudyPlan.findOne({ studentId }).lean();
         const dailyRevisionHours = studyPlan?.studyPlan?.dailyRevisionHours || 2;
         const weakFocus = studyPlan?.studyPlan?.weakSubjectFocus || [];
 
-        // Get today's specific schedule from the study plan weekly schedule
         const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
         const todayName = days[new Date().getDay()];
         const todayStudyPlan = studyPlan?.studyPlan?.weeklySchedule?.[todayName] || '';
 
-        // ── Homework workload ──────────────────────────────────────────────
         const assignments = await Assignment.find({ classId }).lean();
 
-        // ── Today's timetable ──────────────────────────────────────────────
         const Timetable = require('../models/timetableSchema');
         const today = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
         const timetable = await Timetable.findOne({ classId, day: today })
@@ -279,7 +268,14 @@ const generateDailyRoutineHandler = async (req, res) => {
             sleepRequirement:    '8 hours',
         };
 
-        const routine = await generateDailyRoutine(routineData);
+        const { data: routine, fromCache, cachedAt } = await withAICache({
+            endpointName: 'generate-daily-routine',
+            userId:       studentId,
+            userRole:     'student',
+            inputObj:     { studentId, weakSubjectNames, todayName, pendingAssignments: assignments.length },
+            relatedTestId: null,
+            fn: () => generateDailyRoutine(routineData),
+        });
 
         const doc = await StudentRoutine.findOneAndUpdate(
             { studentId },
@@ -287,8 +283,7 @@ const generateDailyRoutineHandler = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        cache.set(cacheKey, doc);
-        return res.status(200).json(doc);
+        return res.status(200).json({ ...doc.toObject(), fromCache, cachedAt });
     } catch (err) { return errResponse(res, err); }
 };
 
@@ -298,14 +293,9 @@ const prepareNextTestHandler = async (req, res) => {
         const { studentId, testId } = req.body;
         if (!studentId || !testId) return res.status(400).json({ message: 'studentId and testId are required' });
 
-        const cacheKey = `testprep:${studentId}:${testId}`;
-        const cached = cache.get(cacheKey);
-        if (cached) return res.status(200).json(cached);
-
         const test = await Test.findById(testId).populate('subject', 'subjectName subName').lean();
         if (!test) return res.status(404).json({ message: 'Test not found' });
 
-        // Previous attempts for this student on this test
         const prevAttempts = await TestAttempt.find({ studentId, testId }).lean();
         const avgPrev = prevAttempts.length
             ? Math.round(prevAttempts.reduce((s, a) => s + (a.score / (a.totalMarks || 1)) * 100, 0) / prevAttempts.length)
@@ -320,7 +310,14 @@ const prepareNextTestHandler = async (req, res) => {
             previousAverageScore: avgPrev,
         };
 
-        const revisionPlan = await generateTestPrep(testData);
+        const { data: revisionPlan, fromCache, cachedAt } = await withAICache({
+            endpointName:  'prepare-next-test',
+            userId:        studentId,
+            userRole:      'student',
+            inputObj:      { studentId, testId, avgPrev },
+            relatedTestId: testId,
+            fn: () => generateTestPrep(testData),
+        });
 
         const doc = await StudentTestPrep.findOneAndUpdate(
             { studentId, testId },
@@ -328,8 +325,7 @@ const prepareNextTestHandler = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        cache.set(cacheKey, doc);
-        return res.status(200).json(doc);
+        return res.status(200).json({ ...doc.toObject(), fromCache, cachedAt });
     } catch (err) { return errResponse(res, err); }
 };
 

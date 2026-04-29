@@ -1,5 +1,6 @@
 const Test        = require("../models/testSchema");
 const TestAttempt = require("../models/testAttemptSchema");
+const { invalidateByTestId } = require('../services/ai-cache-service');
 
 // ── Score Calculator ─────────────────────────────────────────────────────────
 
@@ -53,6 +54,10 @@ const submitAttempt = async (req, res) => {
         });
 
         const saved = await attempt.save();
+
+        // Invalidate AI cache entries linked to this test (non-blocking)
+        invalidateByTestId(String(testId)).catch(() => {});
+
         res.send(saved);
     } catch (err) {
         res.status(500).json({ message: err.message });

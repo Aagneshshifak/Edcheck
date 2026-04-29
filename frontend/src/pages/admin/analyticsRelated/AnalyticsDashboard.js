@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import axiosInstance from '../../../utils/axiosInstance';
+import AIIntelligenceDashboard from './AIIntelligenceDashboard';
 import {
     Container, Typography, Box, Paper, CircularProgress, Alert,
     Button, TextField, MenuItem, Select, FormControl, InputLabel,
@@ -678,6 +679,7 @@ const AnalyticsDashboard = ({ initialTab = 0 }) => {
         { label: 'Cohort Progression' },
         { label: 'Risk Trends' },
         { label: 'Parent Engagement' },
+        { label: '🤖 AI School Intelligence' },
     ];
 
     return (
@@ -726,6 +728,7 @@ const AnalyticsDashboard = ({ initialTab = 0 }) => {
                     {tab === 5 && <CohortProgression cohortProgression={cohortProgression} loadingCohort={loadingCohort} />}
                     {tab === 6 && <RiskTrends riskTrends={riskTrends} loadingRisk={loadingRisk} />}
                     {tab === 7 && <ParentEngagement parentEngagement={parentEngagement} loadingParent={loadingParent} />}
+                    {tab === 8 && <AIIntelligenceDashboard schoolId={schoolId} />}
                 </>
             )}
         </Container>

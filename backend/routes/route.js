@@ -389,4 +389,33 @@ router.post('/AI/run-analysis', auth, async (req, res) => {
     runNightlyAnalysis().catch(() => {});
 });
 
+// ── Admin AI Intelligence ─────────────────────────────────────────────────────
+const {
+    predictStudentRisk,
+    analyseClassPerformance,
+    analyseTeacherPerformance,
+    generateSchoolSummary,
+    generateRecommendations,
+} = require('../controllers/admin-ai-intelligence-controller');
+const { runAdminNightlyAnalysis } = require('../services/admin-ai-scheduler');
+const { getCacheStats } = require('../services/ai-cache-service');
+
+router.post('/api/ai/admin/predict-student-risk',          auth, predictStudentRisk);
+router.post('/api/ai/admin/class-performance-analysis',    auth, analyseClassPerformance);
+router.post('/api/ai/admin/teacher-performance-analysis',  auth, analyseTeacherPerformance);
+router.post('/api/ai/admin/school-performance-summary',    auth, generateSchoolSummary);
+router.post('/api/ai/admin/generate-recommendations',      auth, generateRecommendations);
+router.post('/api/ai/admin/run-nightly-analysis',          auth, async (req, res) => {
+    res.json({ message: 'Admin AI nightly analysis started in background' });
+    runAdminNightlyAnalysis().catch(() => {});
+});
+router.get('/api/ai/admin/cache-stats', auth, async (req, res) => {
+    try {
+        const stats = await getCacheStats();
+        res.json(stats);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;

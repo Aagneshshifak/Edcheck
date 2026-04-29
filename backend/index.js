@@ -13,6 +13,7 @@ const Routes = require("./routes/route.js");
 const { startReminderScheduler } = require("./services/reminder-scheduler");
 const { startAIAnalysisScheduler } = require("./services/ai-analysis-scheduler");
 const { startStudentAIScheduler } = require("./services/student-ai-scheduler");
+const { startAdminAIScheduler } = require("./services/admin-ai-scheduler");
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json({ limit: "10mb" }));
@@ -64,6 +65,7 @@ mongoose
         startReminderScheduler();
         startAIAnalysisScheduler();
         startStudentAIScheduler();
+        startAdminAIScheduler();
     })
     .catch((err) => {
         logger.error("MongoDB connection failed", { message: err.message });
