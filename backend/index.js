@@ -1,5 +1,4 @@
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config({ path: __dirname + "/.env" });
 
 const express = require("express");
 const cors = require("cors");
@@ -14,78 +13,78 @@ const Routes = require("./routes/route.js");
 const aiRoutes = require("./routes/aiRoutes.js");
 const { startAllAISchedulers } = require("./services/aiScheduler");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
-const PORT = process.env.PORT || 5000;
+
+const PORT = process.env.PORT || 5001;
 
 app.use(express.json({ limit: "10mb" }));
 
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
-// General API rate limit: 200 requests per minute per IP
 const generalLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 200,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { message: 'Too many requests. Please slow down.' },
-    skip: (req) => req.path === '/api/logs/stream', // skip SSE stream
+    message: { message: "Too many requests. Please slow down." },
+    skip: (req) => req.path === "/api/logs/stream",
 });
-app.use('/api', generalLimiter);
+app.use("/api", generalLimiter);
 
-// Auth endpoints: stricter limit — 20 login attempts per minute per IP
 const authLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 20,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { message: 'Too many login attempts. Please wait a minute.' },
+    message: { message: "Too many login attempts. Please wait a minute." },
 });
-app.use('/AdminLogin',   authLimiter);
-app.use('/TeacherLogin', authLimiter);
-app.use('/StudentLogin', authLimiter);
-app.use('/ParentLogin',  authLimiter);
+app.use("/AdminLogin",   authLimiter);
+app.use("/TeacherLogin", authLimiter);
+app.use("/StudentLogin", authLimiter);
+app.use("/ParentLogin",  authLimiter);
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-// In production set FRONTEND_URL (and optionally ALLOWED_ORIGINS) in .env
-// e.g. FRONTEND_URL=https://yourschool.netlify.app
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : [
-        'http://localhost:3000',
-        'https://edcheck-topaz.vercel.app',
-      ];
+const allowedOrigins = [
+    "http://localhost:3000",
+    "https://edcheck-topaz.vercel.app",
+];
 
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allow server-to-server / curl (no origin) and whitelisted origins
+    origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            // Log rejected origin for debugging
-            logger.warn(`CORS: origin ${origin} not in allowed list: ${allowedOrigins.join(', ')}`);
-            callback(new Error(`CORS: origin ${origin} not allowed`));
+            console.warn("CORS blocked origin:", origin);
+            callback(new Error("Not allowed by CORS"));
         }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-// Response time tracking middleware (before routes)
+app.options("*", cors());
+
+// ── Response time tracking ────────────────────────────────────────────────────
 app.use((req, res, next) => {
     const start = Date.now();
     res.on("finish", () => responseTimeTracker.record(Date.now() - start));
     next();
 });
 
-// Request/response logger (before routes)
+// ── Request logger ────────────────────────────────────────────────────────────
 app.use(requestLogger);
 
-// SSE log stream endpoint
+// ── SSE log stream ────────────────────────────────────────────────────────────
 app.get("/api/logs/stream", sseHandler);
 
-// Serve uploaded assignment files
+// ── Static uploads ────────────────────────────────────────────────────────────
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// MongoDB connection
+// ── Health / root route ───────────────────────────────────────────────────────
+app.get("/", (req, res) => {
+    res.json({ status: "ok", message: "School Management API is running" });
+});
+
+// ── MongoDB connection ────────────────────────────────────────────────────────
 mongoose
     .connect(process.env.MONGO_URL)
     .then(() => {
@@ -97,14 +96,15 @@ mongoose
         process.exit(1);
     });
 
+// ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/", Routes);
-// ── Unified AI routes (new canonical paths) ───────────────────────────────────
 app.use("/api/ai", aiRoutes);
 
 // ── Error handling (must be last) ─────────────────────────────────────────────
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+// ── Start server ──────────────────────────────────────────────────────────────
 const server = app.listen(PORT, "0.0.0.0", () => {
     logger.info(`Server started on port ${PORT}`);
 });
