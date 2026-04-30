@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axiosInstance from '../../../utils/axiosInstance';
+import API_URL from '../../../config/api';
 import {
     Container, Typography, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, Chip, CircularProgress, Alert,
@@ -27,7 +28,7 @@ const AssignmentDetail = () => {
     const [gradeInputs, setGradeInputs] = useState({});
 
     useEffect(() => {
-        axiosInstance.get(`${process.env.REACT_APP_BASE_URL}/AssignmentSubmissions/${id}`)
+        axiosInstance.get(`${API_URL}/AssignmentSubmissions/${id}`)
             .then(res => setSubmissions(res.data))
             .catch(err => setError(err.response?.data?.message || 'Failed to load submissions'))
             .finally(() => setLoading(false));
@@ -51,7 +52,7 @@ const AssignmentDetail = () => {
         }));
         try {
             await axiosInstance.put(
-                `${process.env.REACT_APP_BASE_URL}/GradeSubmission/${submissionId}`,
+                `${API_URL}/GradeSubmission/${submissionId}`,
                 { grade: input.grade, feedback: input.feedback }
             );
             setSubmissions(prev =>
@@ -120,7 +121,7 @@ const AssignmentDetail = () => {
                                     const colors = statusColor[s.status] || { bg: '#f5f5f5', text: '#757575' };
                                     const fileHref = s.fileUrl?.startsWith('http')
                                         ? s.fileUrl
-                                        : `${process.env.REACT_APP_BASE_URL}${s.fileUrl}`;
+                                        : `${API_URL}${s.fileUrl}`;
                                     const input = gradeInputs[s._id] || {};
                                     return (
                                         <TableRow key={s._id} hover>

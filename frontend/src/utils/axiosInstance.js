@@ -1,4 +1,5 @@
 import axios from 'axios';
+import API_URL from '../config/api';
 
 /**
  * Central axios instance.
@@ -7,7 +8,8 @@ import axios from 'axios';
  * Response interceptor handles 401/403 by clearing the session.
  */
 const axiosInstance = axios.create({
-    baseURL: process.env.REACT_APP_BASE_URL,
+    baseURL: API_URL,
+    withCredentials: true,
 });
 
 // ── Request interceptor — attach token ────────────────────────────────────────

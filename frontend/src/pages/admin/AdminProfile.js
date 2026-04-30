@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import axiosInstance from '../../utils/axiosInstance';
+import API_URL from '../../config/api';
 import {
     Box, Button, TextField, Typography, Avatar, Alert,
     CircularProgress, Paper, Stack
@@ -48,7 +49,7 @@ const AdminProfile = () => {
             if (logoFile) formData.append('logo', logoFile);
 
             const { data } = await axiosInstance.put(
-                `${process.env.REACT_APP_BASE_URL}/Admin/${currentUser._id}`,
+                `${API_URL}/Admin/${currentUser._id}`,
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );
@@ -83,7 +84,7 @@ const AdminProfile = () => {
         setPwLoading(true);
         try {
             const { data } = await axiosInstance.put(
-                `${process.env.REACT_APP_BASE_URL}/Admin/${currentUser._id}/password`,
+                `${API_URL}/Admin/${currentUser._id}/password`,
                 { currentPassword, newPassword },
                 { headers: { 'Content-Type': 'application/json' } }
             );

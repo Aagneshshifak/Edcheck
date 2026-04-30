@@ -11,6 +11,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { useDevLog } from '../context/DevLogContext';
+import API_URL from '../config/api';
 
 const LEVEL_COLORS = {
     error: '#d32f2f',
@@ -19,7 +20,7 @@ const LEVEL_COLORS = {
     debug: '#7b1fa2',
 };
 
-const SERVER_LOG_URL = `${process.env.REACT_APP_BASE_URL}/api/logs/stream`;
+const SERVER_LOG_URL = `${API_URL}/api/logs/stream`;
 
 const DevLogPanel = () => {
     const { logs, addLog, clearLogs } = useDevLog();

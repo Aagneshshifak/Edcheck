@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
+import API_URL from '../../config/api';
 
 const TestResults = () => {
     const { testId } = useParams();
@@ -25,7 +26,7 @@ const TestResults = () => {
         const fetchAttempts = async () => {
             try {
                 const res = await axiosInstance.get(
-                    `${process.env.REACT_APP_BASE_URL}/AttemptsByTest/${testId}`
+                    `${API_URL}/AttemptsByTest/${testId}`
                 );
                 setAttempts(Array.isArray(res.data) ? res.data : []);
             } catch (err) {

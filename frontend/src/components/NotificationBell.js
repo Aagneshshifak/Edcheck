@@ -18,6 +18,7 @@ import {
     deleteNotification, deleteReadNotifications,
 } from '../redux/notificationRelated/notificationHandle';
 import { setNotifications } from '../redux/notificationRelated/notificationSlice';
+import API_URL from '../config/api';
 
 
 const TYPE_ICON = {
@@ -101,8 +102,6 @@ const NotificationBell = () => {
 
     // SSE — real-time push
     useEffect(() => {
-        const API_URL = import.meta.env.VITE_API_URL;
-
         if (!API_URL) {
             console.error("VITE_API_URL is not defined");
             return;

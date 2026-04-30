@@ -6,6 +6,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axiosInstance from '../../utils/axiosInstance';
+import API_URL from '../../config/api';
 import { theme } from '../../theme/studentTheme';
 import VideocamIcon      from '@mui/icons-material/Videocam';
 import VideocamOffIcon   from '@mui/icons-material/VideocamOff';
@@ -25,7 +26,6 @@ const TestRunner = () => {
     const { testId } = useParams();
     const navigate = useNavigate();
     const { currentUser } = useSelector(s => s.user);
-    const BASE = process.env.REACT_APP_BASE_URL;
 
     const [test, setTest] = useState(null);
     const [questions, setQuestions] = useState([]);
@@ -78,7 +78,7 @@ const TestRunner = () => {
             submittedRef.current = false;
             setSubmitting(false);
         }
-    }, [answers, permutation, BASE, currentUser._id, testId, startedAt, navigate]);
+    }, [answers, permutation, currentUser._id, testId, startedAt, navigate]);
 
     // Fetch test on mount
     useEffect(() => {
@@ -102,7 +102,7 @@ const TestRunner = () => {
                 setLoading(false);
             })
             .catch(() => { setError('Failed to load test.'); setLoading(false); });
-    }, [BASE, currentUser._id, testId]);
+    }, [currentUser._id, testId]);
 
     // Fullscreen on mount + fullscreenchange listener
     useEffect(() => {
