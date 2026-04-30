@@ -71,6 +71,7 @@ import StudentManagement from './studentRelated/StudentManagement';
 import SubjectManagement from './subjectRelated/SubjectManagement';
 import TimetableBuilder from './timetableRelated/TimetableBuilder';
 import TeacherAttendanceManager from './timetableRelated/TeacherAttendanceManager';
+import AILogViewer from './systemRelated/AILogViewer';
 
 const AdminDashboardInner = () => {
     const [open, setOpen] = useState(true);
@@ -232,6 +233,7 @@ const AdminDashboardInner = () => {
                         <Route path="/Admin/analytics" element={<AnalyticsDashboard />} />
                         <Route path="/Admin/timetable" element={<TimetableBuilder />} />
                         <Route path="/Admin/teacher-attendance" element={<TeacherAttendanceManager />} />
+                        <Route path="/Admin/ai-logs" element={<AILogViewer />} />
                     </Routes>
                 </Box>
             </Box>
