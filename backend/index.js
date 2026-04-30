@@ -45,6 +45,7 @@ app.use("/ParentLogin",  authLimiter);
 const allowedOrigins = [
     "http://localhost:3000",
     "https://edcheck-topaz.vercel.app",
+    "https://edcheck.onrender.com",
 ];
 
 // Also allow any *.onrender.com subdomain (covers Render preview + production URLs)
