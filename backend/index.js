@@ -5,17 +5,43 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
+const rateLimit = require("express-rate-limit");
 const { logger, requestLogger, sseHandler } = require("./utils/serverLogger");
 const responseTimeTracker = require("./utils/responseTimeTracker");
 
 const app = express();
 const Routes = require("./routes/route.js");
-const { startReminderScheduler } = require("./services/reminder-scheduler");
-const { startAIAnalysisScheduler } = require("./services/ai-analysis-scheduler");
-const { startStudentAIScheduler } = require("./services/student-ai-scheduler");
+const aiRoutes = require("./routes/aiRoutes.js");
+const { startAllAISchedulers } = require("./services/aiScheduler");
+const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json({ limit: "10mb" }));
+
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+// General API rate limit: 200 requests per minute per IP
+const generalLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests. Please slow down.' },
+    skip: (req) => req.path === '/api/logs/stream', // skip SSE stream
+});
+app.use('/api', generalLimiter);
+
+// Auth endpoints: stricter limit — 20 login attempts per minute per IP
+const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many login attempts. Please wait a minute.' },
+});
+app.use('/AdminLogin',   authLimiter);
+app.use('/TeacherLogin', authLimiter);
+app.use('/StudentLogin', authLimiter);
+app.use('/ParentLogin',  authLimiter);
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 // In production set FRONTEND_URL (and optionally ALLOWED_ORIGINS) in .env
@@ -61,9 +87,7 @@ mongoose
     .connect(process.env.MONGO_URL)
     .then(() => {
         logger.info("Connected to MongoDB");
-        startReminderScheduler();
-        startAIAnalysisScheduler();
-        startStudentAIScheduler();
+        startAllAISchedulers();
     })
     .catch((err) => {
         logger.error("MongoDB connection failed", { message: err.message });
@@ -71,6 +95,12 @@ mongoose
     });
 
 app.use("/", Routes);
+// ── Unified AI routes (new canonical paths) ───────────────────────────────────
+app.use("/api/ai", aiRoutes);
+
+// ── Error handling (must be last) ─────────────────────────────────────────────
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 const server = app.listen(PORT, () => {
     logger.info(`Server started at http://localhost:${PORT}`);

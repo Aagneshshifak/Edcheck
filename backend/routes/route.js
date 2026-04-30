@@ -389,4 +389,9 @@ router.post('/AI/run-analysis', auth, async (req, res) => {
     runNightlyAnalysis().catch(() => {});
 });
 
+// ── AI Logs (Admin viewer) ────────────────────────────────────────────────────
+const { getAILogs, getAILogStats } = require('../controllers/ai-log-controller');
+router.get('/api/ai/logs',       auth, getAILogs);
+router.get('/api/ai/logs/stats', auth, getAILogStats);
+
 module.exports = router;

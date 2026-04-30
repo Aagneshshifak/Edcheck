@@ -127,3 +127,62 @@ a {
     border-radius: 12px;
   }
 }
+
+/* ── Print / PDF styles for Report Card ─────────────────────────────────────── */
+@media print {
+  /* Hide everything except the report card */
+  body > * { display: none !important; }
+  .print-report-card,
+  .print-report-card * { display: revert !important; }
+
+  /* Force white background and black text for printing */
+  .print-report-card {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 24px !important;
+    font-size: 12px !important;
+  }
+
+  /* Override dark MUI Paper backgrounds */
+  .print-report-card .MuiPaper-root {
+    background: #ffffff !important;
+    border: 1px solid #cccccc !important;
+    box-shadow: none !important;
+  }
+
+  /* Override dark text colours */
+  .print-report-card .MuiTypography-root,
+  .print-report-card td,
+  .print-report-card th {
+    color: #000000 !important;
+  }
+
+  /* Table borders */
+  .print-report-card .MuiTableCell-root {
+    border-bottom: 1px solid #dddddd !important;
+  }
+
+  /* Chips — show as plain text badges */
+  .print-report-card .MuiChip-root {
+    background: #f0f0f0 !important;
+    color: #000000 !important;
+    border: 1px solid #cccccc !important;
+  }
+
+  /* Progress bars — show as grey */
+  .print-report-card .MuiLinearProgress-root {
+    background: #eeeeee !important;
+  }
+  .print-report-card .MuiLinearProgress-bar {
+    background: #555555 !important;
+  }
+
+  /* Hide the Download button itself when printing */
+  .print-report-card button { display: none !important; }
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+}

@@ -26,6 +26,7 @@ import AccountCircleIcon     from '@mui/icons-material/AccountCircle';
 import ExitToAppIcon         from '@mui/icons-material/ExitToApp';
 import ExpandLessIcon        from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon        from '@mui/icons-material/ExpandMore';
+import StorageIcon           from '@mui/icons-material/Storage';
 
 const ACCENT = '#ffffff';
 const ACCENT_DIM = 'rgba(255,255,255,0.1)';
@@ -173,6 +174,7 @@ const SideBar = () => {
             {/* System */}
             <Section label="System" />
             <NavItem icon={<AccountCircleIcon fontSize="small" />} label="Profile"  path="/Admin/profile" />
+            <NavItem icon={<StorageIcon       fontSize="small" />} label="AI Logs"  path="/Admin/ai-logs" />
 
             {/* Logout — triggers dialog */}
             <ListItemButton
