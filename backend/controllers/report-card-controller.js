@@ -12,20 +12,30 @@ const GRADE = (pct) => {
 };
 
 /**
+ * Returns the current academic year string, e.g. '2024-25'.
+ * Academic year starts in April (month index 3).
+ */
+function getCurrentAcademicYear() {
+    const now   = new Date();
+    const year  = now.getFullYear();
+    const month = now.getMonth(); // 0-indexed
+    if (month >= 3) {
+        return `${year}-${String(year + 1).slice(2)}`;
+    }
+    return `${year - 1}-${String(year).slice(2)}`;
+}
+
+/**
  * GET /api/report/student/:studentId
- *
- * Builds a full report card by aggregating:
- *   - examResult (teacher-entered marks)
- *   - test attempts (online tests)
- *   - attendance (subject-wise %)
- *   - assignment submissions (graded)
- *
- * Returns per-subject rows with testMarks, assignmentMarks,
- * attendancePercent, totalMarks, grade.
+ * Query params:
+ *   term         {string}  'Term 1' | 'Term 2' | 'Final' | 'Annual' (default: 'Annual')
+ *   academicYear {string}  e.g. '2024-25' (default: current year)
  */
 const getReportCard = async (req, res) => {
     try {
         const { studentId } = req.params;
+        const term         = req.query.term         || 'Annual';
+        const academicYear = req.query.academicYear || getCurrentAcademicYear();
 
         const student = await Student.findById(studentId)
             .populate('examResult.subjectId', 'subName subjectName subCode')
@@ -36,7 +46,7 @@ const getReportCard = async (req, res) => {
         if (!student) return res.status(404).json({ message: 'Student not found' });
 
         // ── 1. Exam results (teacher-entered) ─────────────────────────────────
-        const examMap = new Map(); // subjectId → { marks, maxMarks, subjectName, subCode }
+        const examMap = new Map();
         for (const r of student.examResult || []) {
             const sub = r.subjectId;
             if (!sub) continue;
@@ -59,7 +69,7 @@ const getReportCard = async (req, res) => {
         const attempts = await TestAttempt.find({ studentId })
             .populate({ path: 'testId', populate: { path: 'subject', select: 'subName subjectName subCode' } });
 
-        const testMap = new Map(); // subjectId → { totalScore, totalMax, count }
+        const testMap = new Map();
         for (const a of attempts) {
             const sub = a.testId?.subject;
             if (!sub) continue;
@@ -81,7 +91,7 @@ const getReportCard = async (req, res) => {
         }
 
         // ── 3. Attendance per subject ─────────────────────────────────────────
-        const attMap = new Map(); // subjectId → { present, total }
+        const attMap = new Map();
         for (const rec of student.attendance || []) {
             const sub = rec.subjectId;
             if (!sub) continue;
@@ -108,17 +118,14 @@ const getReportCard = async (req, res) => {
             const subjectName = exam?.subjectName || test?.subjectName || 'Unknown';
             const subCode     = exam?.subCode     || test?.subCode     || '';
 
-            // Exam marks (out of 100 normalised)
             const examPct = exam && exam.examMax > 0
                 ? Math.round((exam.examMarks / exam.examMax) * 100)
                 : null;
 
-            // Test marks — average across all attempts (out of 100 normalised)
             const testPct = test && test.totalMax > 0
                 ? Math.round((test.totalScore / test.totalMax) * 100)
                 : null;
 
-            // Combined test marks: weight exam 60%, online tests 40%
             let testMarks = null;
             if (examPct !== null && testPct !== null) {
                 testMarks = Math.round(examPct * 0.6 + testPct * 0.4);
@@ -130,7 +137,6 @@ const getReportCard = async (req, res) => {
                 ? Math.round((att.present / att.total) * 100)
                 : null;
 
-            // Total = 80% test marks + 20% attendance bonus
             let totalMarks = null;
             if (testMarks !== null) {
                 const attBonus = attendancePercent !== null ? Math.round(attendancePercent * 0.2) : 0;
@@ -149,10 +155,8 @@ const getReportCard = async (req, res) => {
             });
         }
 
-        // Sort alphabetically
         subjects.sort((a, b) => a.subjectName.localeCompare(b.subjectName));
 
-        // Overall
         const graded = subjects.filter(s => s.totalMarks !== null);
         const overallPercent = graded.length > 0
             ? Math.round(graded.reduce((s, x) => s + x.totalMarks, 0) / graded.length)
@@ -160,12 +164,14 @@ const getReportCard = async (req, res) => {
 
         return res.json({
             studentId,
-            name:           student.name,
-            rollNum:        student.rollNum,
-            className:      student.sclassName?.className || student.sclassName?.sclassName || '—',
+            name:         student.name,
+            rollNum:      student.rollNum,
+            className:    student.sclassName?.className || student.sclassName?.sclassName || '—',
+            term,
+            academicYear,
             subjects,
             overallPercent,
-            overallGrade:   overallPercent !== null ? GRADE(overallPercent) : '—',
+            overallGrade: overallPercent !== null ? GRADE(overallPercent) : '—',
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });

@@ -10,6 +10,7 @@ const {
     analyzeWeakTopics,
     generatePracticeQuestions,
 } = require('../services/ai-teaching-service');
+const AILog = require('../models/aiLogSchema');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -73,7 +74,18 @@ const getNoteSuggestions = async (req, res) => {
 
         const subjectName = subject.subjectName || subject.subName || '';
 
-        const result = await suggestNotes(subjectName, topic);
+        const start1 = Date.now();
+        let result;
+        try {
+            result = await suggestNotes(subjectName, topic);
+        } finally {
+            AILog.create({
+                userId: req.user.id, userRole: 'teacher', endpointName: 'generate-notes',
+                model: 'llama-3.1-8b-instant', promptSummary: `Subject: ${subjectName}, Topic: ${topic}`,
+                responseSummary: result ? JSON.stringify(result).slice(0, 500) : '',
+                responseTimeMs: Date.now() - start1, success: !!result, fromCache: false,
+            }).catch(() => {});
+        }
 
         // Persist to AINoteSuggestion collection
         await AINoteSuggestion.findOneAndUpdate(
@@ -137,7 +149,18 @@ const detectWeakTopics = async (req, res) => {
         const subjectName = subject.subjectName || subject.subName || '';
         const subjectTopics = subject.topics || [];
 
-        const result = await analyzeWeakTopics(tests, attempts, subjectTopics, subjectName);
+        const start2 = Date.now();
+        let result;
+        try {
+            result = await analyzeWeakTopics(tests, attempts, subjectTopics, subjectName);
+        } finally {
+            AILog.create({
+                userId: req.user.id, userRole: 'teacher', endpointName: 'detect-weak-topics',
+                model: 'llama-3.3-70b-versatile', promptSummary: `Subject: ${subjectName}, Class: ${classId}`,
+                responseSummary: result ? JSON.stringify(result.weakTopics || []).slice(0, 500) : '',
+                responseTimeMs: Date.now() - start2, success: !!result, fromCache: false,
+            }).catch(() => {});
+        }
 
         // Persist topic performance to MongoDB (upsert per topic)
         const now = new Date();
@@ -208,7 +231,18 @@ const generateQuestions = async (req, res) => {
             return res.status(400).json({ message: 'difficulty must be easy, medium, or hard' });
         }
 
-        const questions = await generatePracticeQuestions(topic, subjectName, difficulty, Number(count));
+        const start3 = Date.now();
+        let questions;
+        try {
+            questions = await generatePracticeQuestions(topic, subjectName, difficulty, Number(count));
+        } finally {
+            AILog.create({
+                userId: req.user.id, userRole: 'teacher', endpointName: 'generate-questions',
+                model: 'llama-3.3-70b-versatile', promptSummary: `Topic: ${topic}, Subject: ${subjectName}, Difficulty: ${difficulty}, Count: ${count}`,
+                responseSummary: questions ? `${questions.length} questions generated` : '',
+                responseTimeMs: Date.now() - start3, success: !!questions, fromCache: false,
+            }).catch(() => {});
+        }
 
         // Persist to AIQuestionBank if subjectId provided
         if (subjectId) {
