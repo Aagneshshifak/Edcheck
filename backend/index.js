@@ -48,7 +48,10 @@ app.use('/ParentLogin',  authLimiter);
 // e.g. FRONTEND_URL=https://yourschool.netlify.app
 const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : [process.env.FRONTEND_URL || 'http://localhost:3000'];
+    : [
+        'http://localhost:3000',
+        'https://edcheck-topaz.vercel.app',
+      ];
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -102,8 +105,8 @@ app.use("/api/ai", aiRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-const server = app.listen(PORT, () => {
-    logger.info(`Server started at http://localhost:${PORT}`);
+const server = app.listen(PORT, "0.0.0.0", () => {
+    logger.info(`Server started on port ${PORT}`);
 });
 
 server.on("error", (err) => {
