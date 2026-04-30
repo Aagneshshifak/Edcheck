@@ -101,13 +101,24 @@ const NotificationBell = () => {
 
     // SSE — real-time push
     useEffect(() => {
+        const API_URL = import.meta.env.VITE_API_URL;
+
+        if (!API_URL) {
+            console.error("VITE_API_URL is not defined");
+            return;
+        }
+
         if (!currentUser?._id) return;
 
-        const es = new EventSource(`${process.env.REACT_APP_BASE_URL}/Notifications/stream/${currentUser._id}`);
+        const url = `${API_URL}/api/notifications?userId=${currentUser._id}`;
+        console.log("Connecting to notifications:", url);
+
+        const es = new EventSource(url);
 
         es.onmessage = (e) => {
             try {
                 const notification = JSON.parse(e.data);
+                console.log("Notification received:", notification);
                 // Prepend to Redux store preserving hasMore/nextCursor
                 dispatch(setNotifications({
                     items: [notification, ...itemsRef.current],
@@ -115,14 +126,20 @@ const NotificationBell = () => {
                     nextCursor: null,
                 }));
                 setToast(notification);
-            } catch (_) {}
+            } catch (error) {
+                console.error("Error parsing notification:", error);
+            }
         };
 
-        es.onerror = () => {
+        es.onerror = (error) => {
+            console.error("Notification connection error:", error);
             // Browser will auto-reconnect; nothing to do
         };
 
-        return () => es.close();
+        return () => {
+            console.log("Closing notification connection");
+            es.close();
+        };
     }, [dispatch, currentUser?._id]);
 
     const handleMarkOne = (id) => dispatch(readNotification(id));
