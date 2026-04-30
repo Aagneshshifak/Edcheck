@@ -47,9 +47,17 @@ const allowedOrigins = [
     "https://edcheck-topaz.vercel.app",
 ];
 
+// Also allow any *.onrender.com subdomain (covers Render preview + production URLs)
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true; // server-to-server / curl
+    if (allowedOrigins.includes(origin)) return true;
+    if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/.test(origin)) return true;
+    return false;
+};
+
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (isAllowedOrigin(origin)) {
             callback(null, true);
         } else {
             console.warn("CORS blocked origin:", origin);
