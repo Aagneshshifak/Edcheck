@@ -49,13 +49,13 @@ const allowedOrigins = [
 
 // Also allow any *.onrender.com subdomain (covers Render preview + production URLs)
 const isAllowedOrigin = (origin) => {
-    if (!origin) return true; // server-to-server / curl
+    if (!origin) return true; // server-to-server / curl / same-origin
     if (allowedOrigins.includes(origin)) return true;
     if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/.test(origin)) return true;
     return false;
 };
 
-app.use(cors({
+const corsOptions = {
     origin: function (origin, callback) {
         if (isAllowedOrigin(origin)) {
             callback(null, true);
@@ -67,9 +67,12 @@ app.use(cors({
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-}));
+    optionsSuccessStatus: 200, // some browsers (IE11) choke on 204
+};
 
-app.options("*", cors());
+// Handle preflight for ALL routes first, before any other middleware
+app.options("*", cors(corsOptions));
+app.use(cors(corsOptions));
 
 // ── Response time tracking ────────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -87,7 +90,7 @@ app.get("/api/logs/stream", sseHandler);
 // ── Static uploads ────────────────────────────────────────────────────────────
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ── Health / root route ───────────────────────────────────────────────────────
+// ── Health / root route (before DB — Render needs this to pass health checks) ─
 app.get("/", (req, res) => {
     res.json({ status: "ok", message: "School Management API is running" });
 });
