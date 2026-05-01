@@ -1,5 +1,5 @@
-// Safely read VITE_API_URL — works even if import.meta.env is undefined
-// (can happen in certain bundler edge cases or older WebViews)
+// Safely read VITE_API_URL injected by Vite at build time.
+// Set VITE_API_URL in Vercel environment variables to your GCP backend URL.
 let API_URL;
 
 try {
@@ -12,9 +12,10 @@ try {
     API_URL = null;
 }
 
-// Final fallback — replace this with your Render backend URL once deployed
 if (!API_URL) {
+    // Fallback: update this to your GCP backend URL
     API_URL = "https://edcheck.onrender.com";
+    console.warn("VITE_API_URL not set — using fallback:", API_URL);
 }
 
 console.log("Using API URL:", API_URL);

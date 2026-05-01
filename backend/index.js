@@ -42,17 +42,20 @@ app.use("/StudentLogin", authLimiter);
 app.use("/ParentLogin",  authLimiter);
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
+// FRONTEND_URL env var lets you set the production origin without code changes
+// e.g. on GCP: FRONTEND_URL=https://edcheck-topaz.vercel.app
 const allowedOrigins = [
     "http://localhost:3000",
     "https://edcheck-topaz.vercel.app",
-    "https://edcheck.onrender.com",
+    // Additional origins can be added via EXTRA_ORIGINS env var (comma-separated)
+    ...(process.env.EXTRA_ORIGINS
+        ? process.env.EXTRA_ORIGINS.split(",").map((o) => o.trim())
+        : []),
 ];
 
-// Also allow any *.onrender.com subdomain (covers Render preview + production URLs)
 const isAllowedOrigin = (origin) => {
     if (!origin) return true; // server-to-server / curl / same-origin
     if (allowedOrigins.includes(origin)) return true;
-    if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/.test(origin)) return true;
     return false;
 };
 
