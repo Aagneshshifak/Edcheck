@@ -14,7 +14,7 @@ try {
 
 if (!API_URL) {
     // Fallback: update this to your GCP backend URL
-    API_URL = "https://edcheck.onrender.com";
+    API_URL = "https://edcheck-backend-464744907316.asia-south1.run.app";
     console.warn("VITE_API_URL not set — using fallback:", API_URL);
 }
 

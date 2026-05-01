@@ -10,8 +10,7 @@
     "dev": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"cd backend && node index.js\" \"cd frontend && npm start\"",
     "dev:backend": "cd backend && node index.js",
     "dev:frontend": "cd frontend && npm start",
-    "seed": "cd backend && npm run seed",
-    "install": "npm install && cd backend && npm install && cd ../frontend && npm install"
+    "seed": "cd backend && npm run seed"
   },
   "keywords": [
     "school-management",
