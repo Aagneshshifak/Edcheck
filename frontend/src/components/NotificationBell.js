@@ -109,7 +109,7 @@ const NotificationBell = () => {
 
         if (!currentUser?._id) return;
 
-        const url = `${API_URL}/api/notifications?userId=${currentUser._id}`;
+        const url = `${API_URL}/Notifications/stream/${currentUser._id}`;
         console.log("Connecting to notifications:", url);
 
         const es = new EventSource(url);

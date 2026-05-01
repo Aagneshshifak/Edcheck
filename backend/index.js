@@ -44,33 +44,37 @@ app.use("/ParentLogin",  authLimiter);
 // ── CORS ──────────────────────────────────────────────────────────────────────
 // FRONTEND_URL env var lets you set the production origin without code changes
 // e.g. on GCP: FRONTEND_URL=https://edcheck-topaz.vercel.app
+
 const allowedOrigins = [
     "http://localhost:3000",
     "https://edcheck-topaz.vercel.app",
-    // Additional origins can be added via EXTRA_ORIGINS env var (comma-separated)
-    ...(process.env.EXTRA_ORIGINS
-        ? process.env.EXTRA_ORIGINS.split(",").map((o) => o.trim())
-        : []),
+    "https://*.vercel.app"
 ];
 
 const isAllowedOrigin = (origin) => {
     if (!origin) return true; // server-to-server / curl / same-origin
     if (allowedOrigins.includes(origin)) return true;
+     if (origin && origin.endsWith(".vercel.app")) return true;
     return false;
 };
 
 const corsOptions = {
-    origin: function (origin, callback) {
-        if (isAllowedOrigin(origin)) {
-            callback(null, true);
-        } else {
-            console.warn("CORS blocked origin:", origin);
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
+	origin: function (origin, callback) {
+    if (!origin || isAllowedOrigin(origin)) {
+        callback(null, true);
+    } else {
+        console.warn("CORS blocked origin:", origin);
+        callback(null, false);
+    }
+},    
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Cache-Control",
+    "X-Requested-With"
+],    
     optionsSuccessStatus: 200, // some browsers (IE11) choke on 204
 };
 
