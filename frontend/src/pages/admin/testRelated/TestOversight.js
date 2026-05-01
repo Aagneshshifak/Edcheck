@@ -103,6 +103,7 @@ const TestOversight = () => {
     };
 
     const classOptions = [...new Map(tests.map(t => [t.classId?._id, t.classId])).values()].filter(Boolean);
+    // Note: classes state is already fetched from /SclassList — use it for the filter dropdown
 
     const filtered = tests.filter(t => {
         if (classFilter && t.classId?._id !== classFilter) return false;
@@ -147,7 +148,7 @@ const TestOversight = () => {
                     <InputLabel>Class</InputLabel>
                     <Select value={classFilter} label="Class" onChange={e => setClassFilter(e.target.value)}>
                         <MenuItem value="">All Classes</MenuItem>
-                        {classOptions.map(c => <MenuItem key={c._id} value={c._id}>{c.sclassName || c.className}</MenuItem>)}
+                        {classes.map(c => <MenuItem key={c._id} value={c._id}>{c.sclassName}</MenuItem>)}
                     </Select>
                 </FormControl>
             </Box>
@@ -219,7 +220,7 @@ const TestOversight = () => {
                     <FormControl fullWidth required>
                         <InputLabel>Class</InputLabel>
                         <Select value={form.classId} label="Class" onChange={e => setForm(f => ({...f, classId: e.target.value, subjectId: ''}))}>
-                            {classes.map(c => <MenuItem key={c._id} value={c._id}>{c.sclassName || c.className}</MenuItem>)}
+                            {classes.map(c => <MenuItem key={c._id} value={c._id}>{c.sclassName}</MenuItem>)}
                         </Select>
                     </FormControl>
                     <FormControl fullWidth>

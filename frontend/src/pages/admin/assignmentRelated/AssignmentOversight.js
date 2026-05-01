@@ -16,12 +16,14 @@ const AssignmentOversight = () => {
     const navigate  = useNavigate();
     const schoolId  = useSelector(s => s.user.currentUser._id);
 
-    const [assignments, setAssignments] = useState([]);
-    const [loading, setLoading]         = useState(true);
-    const [error, setError]             = useState('');
-    const [classFilter, setClassFilter] = useState('');
-    const [subjectFilter, setSubjectFilter] = useState('');
-    const [tab, setTab]                 = useState(0); // 0=All, 1=Active, 2=Overdue
+    const [assignments,    setAssignments]    = useState([]);
+    const [classes,        setClasses]        = useState([]);   // fetched independently
+    const [subjects,       setSubjects]       = useState([]);   // fetched independently
+    const [loading,        setLoading]        = useState(true);
+    const [error,          setError]          = useState('');
+    const [classFilter,    setClassFilter]    = useState('');
+    const [subjectFilter,  setSubjectFilter]  = useState('');
+    const [tab,            setTab]            = useState(0); // 0=All, 1=Active, 2=Overdue
 
     const fetchAssignments = () => {
         setLoading(true); setError('');
@@ -30,6 +32,17 @@ const AssignmentOversight = () => {
             .catch(err => setError(err.response?.data?.message || 'Failed to load assignments'))
             .finally(() => setLoading(false));
     };
+
+    // Fetch classes and subjects independently — don't rely on assignments being populated
+    useEffect(() => {
+        if (!schoolId) return;
+        axiosInstance.get(`/SclassList/${schoolId}`)
+            .then(res => setClasses(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setClasses([]));
+        axiosInstance.get(`/AllSubjects/${schoolId}`)
+            .then(res => setSubjects(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setSubjects([]));
+    }, [schoolId]);
 
     useEffect(() => { fetchAssignments(); }, [schoolId]); // eslint-disable-line
 
@@ -42,8 +55,8 @@ const AssignmentOversight = () => {
         } catch (err) { alert(err.response?.data?.message || 'Delete failed'); }
     };
 
-    const classOptions = [...new Map(assignments.map(a => [a.sclassName?._id, a.sclassName])).values()].filter(Boolean);
-    const subjectOptions = [...new Map(assignments.map(a => [a.subject?._id, a.subject])).values()].filter(Boolean);
+    const classOptions   = classes;   // already distinct from /SclassList
+    const subjectOptions = subjects;  // already distinct from /AllSubjects
 
     const filtered = assignments.filter(a => {
         if (classFilter   && a.sclassName?._id !== classFilter)   return false;
@@ -79,14 +92,18 @@ const AssignmentOversight = () => {
                     <InputLabel>Class</InputLabel>
                     <Select value={classFilter} label="Class" onChange={e => setClassFilter(e.target.value)}>
                         <MenuItem value="">All Classes</MenuItem>
-                        {classOptions.map(c => <MenuItem key={c._id} value={c._id}>{c.sclassName || c.className}</MenuItem>)}
+                        {classOptions.map(c => (
+                            <MenuItem key={c._id} value={c._id}>{c.sclassName}</MenuItem>
+                        ))}
                     </Select>
                 </FormControl>
                 <FormControl size="small" sx={{ minWidth: 160 }}>
                     <InputLabel>Subject</InputLabel>
                     <Select value={subjectFilter} label="Subject" onChange={e => setSubjectFilter(e.target.value)}>
                         <MenuItem value="">All Subjects</MenuItem>
-                        {subjectOptions.map(s => <MenuItem key={s._id} value={s._id}>{s.subName || s.subjectName}</MenuItem>)}
+                        {subjectOptions.map(s => (
+                            <MenuItem key={s._id} value={s._id}>{s.subName}</MenuItem>
+                        ))}
                     </Select>
                 </FormControl>
             </Box>
