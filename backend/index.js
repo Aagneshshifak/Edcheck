@@ -48,7 +48,7 @@ app.use("/ParentLogin",  authLimiter);
 const allowedOrigins = [
     "http://localhost:3000",
     "https://edcheck-topaz.vercel.app",
-    "https://*.vercel.app"
+    "https://edcheck-neon.vercel.app"
 ];
 
 const isAllowedOrigin = (origin) => {
