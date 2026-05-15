@@ -9,6 +9,10 @@ const { logger, requestLogger, sseHandler } = require("./utils/serverLogger");
 const responseTimeTracker = require("./utils/responseTimeTracker");
 
 const app = express();
+
+// Trust GCP Cloud Run / load balancer proxy headers (required for express-rate-limit)
+app.set("trust proxy", 1);
+
 const Routes = require("./routes/route.js");
 const aiRoutes = require("./routes/aiRoutes.js");
 const { startAllAISchedulers } = require("./services/aiScheduler");
