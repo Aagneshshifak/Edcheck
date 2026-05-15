@@ -25,7 +25,7 @@ const generalLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Too many requests. Please slow down." },
-    skip: (req) => req.path === "/api/logs/stream",
+    skip: (req) => req.path === "/api/logs/stream" || req.path.startsWith("/Notifications/stream/"),
 });
 app.use("/api", generalLimiter);
 
@@ -95,19 +95,6 @@ app.use(requestLogger);
 // ── SSE log stream ────────────────────────────────────────────────────────────
 app.get("/api/logs/stream", sseHandler);
 
-app.use((req, res, next) => {
-    res.header(
-        "Access-Control-Allow-Origin",
-        "https://edcheck-neon.vercel.app"
-    );
-
-    res.header(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    );
-
-    next();
-});
 // ── Static uploads ────────────────────────────────────────────────────────────
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

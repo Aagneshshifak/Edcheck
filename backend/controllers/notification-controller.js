@@ -41,21 +41,21 @@ const createNotifications = async (userIds, message, type, extra = {}) => {
 const streamNotifications = (req, res) => {
     const { userId } = req.params;
 
-res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://edcheck-neon.vercel.app"
-);
-res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
+    // Do NOT set Access-Control-Allow-Origin here — it is already handled
+    // by the global cors() middleware in index.js. Setting it twice causes
+    // browsers to reject the response with a CORS error.
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
-    res.setHeader("X-Accel-Buffering", "no"); // disable nginx buffering if present
+    res.setHeader("X-Accel-Buffering", "no"); // disable nginx/GCP buffering
     res.flushHeaders();
 
-    // Send a heartbeat comment every 25s to keep the connection alive
+    // Send a heartbeat comment every 20s to keep the connection alive
+    // (GCP Cloud Run has a 60s idle timeout; 20s keeps us well under it)
+    res.write("retry: 3000\n\n"); // tell browser to reconnect after 3s if dropped
     const heartbeat = setInterval(() => {
         try { res.write(": heartbeat\n\n"); } catch (_) {}
-    }, 25000);
+    }, 20000);
 
     addClient(userId, res);
 
