@@ -95,6 +95,19 @@ app.use(requestLogger);
 // ── SSE log stream ────────────────────────────────────────────────────────────
 app.get("/api/logs/stream", sseHandler);
 
+app.use((req, res, next) => {
+    res.header(
+        "Access-Control-Allow-Origin",
+        "https://edcheck-neon.vercel.app"
+    );
+
+    res.header(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    );
+
+    next();
+});
 // ── Static uploads ────────────────────────────────────────────────────────────
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

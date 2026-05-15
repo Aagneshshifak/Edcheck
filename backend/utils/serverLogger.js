@@ -56,6 +56,10 @@ const requestLogger = (req, res, next) => {
 // ── SSE handler: GET /api/logs/stream ────────────────────────────────────────
 
 const sseHandler = (req, res) => {
+
+res.setHeader("Access-Control-Allow-Origin", "*");
+res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
+res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader('Content-Type',  'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection',    'keep-alive');

@@ -225,42 +225,58 @@ const updateExamResult = async (req, res) => {
 };
 
 const studentAttendance = async (req, res) => {
-    const { subName, status, date } = req.body;
+    // Accept both `subName` (legacy frontend field) and `subjectId`
+    const subjectId = req.body.subjectId || req.body.subName;
+    const { status, date } = req.body;
+
+    if (!subjectId || !status || !date) {
+        return res.status(400).json({ message: 'subjectId (or subName), status, and date are required' });
+    }
 
     try {
         const student = await Student.findById(req.params.id);
 
         if (!student) {
-            return res.send({ message: 'Student not found' });
+            return res.status(404).send({ message: 'Student not found' });
         }
 
-        const subject = await Subject.findById(subName);
+        const subject = await Subject.findById(subjectId);
+
+        if (!subject) {
+            return res.status(404).send({ message: 'Subject not found' });
+        }
 
         const existingAttendance = student.attendance.find(
             (a) =>
-                a.date.toDateString() === new Date(date).toDateString() &&
-                a.subName.toString() === subName
+                new Date(a.date).toDateString() === new Date(date).toDateString() &&
+                a.subjectId?.toString() === subjectId.toString()
         );
 
         if (existingAttendance) {
             existingAttendance.status = status;
         } else {
-            // Check if the student has already attended the maximum number of sessions
             const attendedSessions = student.attendance.filter(
-                (a) => a.subName.toString() === subName
+                (a) => a.subjectId?.toString() === subjectId.toString()
             ).length;
 
-            if (attendedSessions >= subject.sessions) {
+            if (attendedSessions >= (subject.sessions || 9999)) {
                 return res.send({ message: 'Maximum attendance limit reached' });
             }
 
-            student.attendance.push({ date, status, subName });
+            student.attendance.push({
+                date,
+                status,
+                subjectId,   // ← correct field name matching attendanceSchema
+            });
         }
 
         const result = await student.save();
-        return res.send(result);
+
+        return res.status(200).send(result);
+
     } catch (error) {
-        res.status(500).json(error);
+        console.error('studentAttendance error:', error);
+        return res.status(500).json({ message: error.message });
     }
 };
 

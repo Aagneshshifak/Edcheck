@@ -41,6 +41,11 @@ const createNotifications = async (userIds, message, type, extra = {}) => {
 const streamNotifications = (req, res) => {
     const { userId } = req.params;
 
+res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://edcheck-neon.vercel.app"
+);
+res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
