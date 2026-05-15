@@ -1,13 +1,14 @@
-FROM node:18
+FROM node:18-slim
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm install --omit=dev
 
 COPY . .
 
-EXPOSE 5001
+# Cloud Run injects $PORT at runtime — your index.js already reads process.env.PORT
+EXPOSE 8080
 
 CMD ["node", "index.js"]
