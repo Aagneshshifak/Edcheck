@@ -100,44 +100,94 @@ const NotificationBell = () => {
         }
     }, [dispatch, currentUser?._id]);
 
-    // SSE — real-time push
+    // SSE — real-time push with polling fallback for GCP Cloud Run
     useEffect(() => {
-        if (!API_URL) {
-            console.error("VITE_API_URL is not defined");
-            return;
-        }
-
         if (!currentUser?._id) return;
 
         const url = `${API_URL}/Notifications/stream/${currentUser._id}`;
-        console.log("Connecting to notifications:", url);
+        let es = null;
+        let pollInterval = null;
+        let sseWorking = false;
+        let lastSeenId = null;
 
-        const es = new EventSource(url);
+        const startPolling = () => {
+            if (pollInterval) return; // already polling
+            console.log("SSE unavailable — falling back to polling every 15s");
+            pollInterval = setInterval(async () => {
+                try {
+                    const token = JSON.parse(localStorage.getItem('user') || 'null')?.token || '';
+                    const res = await fetch(`${API_URL}/Notifications/${currentUser._id}?limit=5`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    const incoming = json.notifications || [];
+                    if (!incoming.length) return;
 
-        es.onmessage = (e) => {
-            try {
-                const notification = JSON.parse(e.data);
-                console.log("Notification received:", notification);
-                // Prepend to Redux store preserving hasMore/nextCursor
-                dispatch(setNotifications({
-                    items: [notification, ...itemsRef.current],
-                    hasMore: false,
-                    nextCursor: null,
-                }));
-                setToast(notification);
-            } catch (error) {
-                console.error("Error parsing notification:", error);
-            }
+                    // Only surface notifications newer than what we've seen
+                    const newOnes = lastSeenId
+                        ? incoming.filter(n => n._id > lastSeenId)
+                        : incoming.slice(0, 1);
+
+                    if (newOnes.length > 0) {
+                        lastSeenId = incoming[0]._id;
+                        dispatch(setNotifications({
+                            items: [...newOnes, ...itemsRef.current],
+                            hasMore: false,
+                            nextCursor: null,
+                        }));
+                        if (newOnes[0] && !newOnes[0].readStatus) setToast(newOnes[0]);
+                    }
+                } catch (_) { /* silent — network may be temporarily down */ }
+            }, 15000);
         };
 
-        es.onerror = (error) => {
-            console.error("Notification connection error:", error);
-            // Browser will auto-reconnect; nothing to do
+        const stopPolling = () => {
+            if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         };
+
+        // Try SSE first
+        try {
+            es = new EventSource(url);
+
+            // If we get a message, SSE is working — stop any fallback polling
+            es.onopen = () => {
+                sseWorking = true;
+                stopPolling();
+                console.log("Notification SSE connected");
+            };
+
+            es.onmessage = (e) => {
+                try {
+                    const notification = JSON.parse(e.data);
+                    dispatch(setNotifications({
+                        items: [notification, ...itemsRef.current],
+                        hasMore: false,
+                        nextCursor: null,
+                    }));
+                    setToast(notification);
+                } catch (error) {
+                    console.error("Error parsing notification:", error);
+                }
+            };
+
+            es.onerror = () => {
+                // SSE failed (common on GCP Cloud Run with HTTP/1.1 load balancer)
+                // Close it and fall back to polling — don't spam reconnects
+                if (!sseWorking) {
+                    es.close();
+                    startPolling();
+                }
+                // If SSE was working and then dropped, browser auto-reconnects — let it
+            };
+        } catch (_) {
+            // EventSource not supported or URL invalid — go straight to polling
+            startPolling();
+        }
 
         return () => {
-            console.log("Closing notification connection");
-            es.close();
+            if (es) es.close();
+            stopPolling();
         };
     }, [dispatch, currentUser?._id]);
 

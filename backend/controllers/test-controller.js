@@ -86,6 +86,7 @@ const getTestsByTeacher = async (req, res) => {
         const Teacher = require('../models/teacherSchema');
         const teacher = await Teacher.findById(req.params.teacherId)
             .populate('teachSubjects', 'subName subjectName')
+            .populate('teachSubject',  'subName subjectName')   // ← also populate singular alias
             .populate('teachClasses', '_id')
             .lean();
 
@@ -96,9 +97,16 @@ const getTestsByTeacher = async (req, res) => {
             teacher.teachSclass,
         ].filter(Boolean);
 
+        // Collect all subject IDs this teacher is assigned to
+        const subjectIds = [
+            ...(teacher.teachSubjects || []).map(s => String(s._id)),
+            teacher.teachSubject ? String(teacher.teachSubject._id) : null,
+        ].filter(Boolean);
+
+        // Also keep name-based matching as a fallback for legacy data
         const subjectNames = [
             ...(teacher.teachSubjects || []).map(s => s.subName || s.subjectName),
-            teacher.teachSubject?.subName,
+            teacher.teachSubject?.subName || teacher.teachSubject?.subjectName,
         ].filter(Boolean).map(n => n.toLowerCase());
 
         if (classIds.length === 0) return res.json([]);
@@ -107,10 +115,12 @@ const getTestsByTeacher = async (req, res) => {
             .populate('subject', 'subName subjectName subCode')
             .lean();
 
-        // Filter by subject name match (case-insensitive)
-        const filtered = subjectNames.length > 0
+        // Filter by subject — match on _id first, fall back to name
+        const filtered = (subjectIds.length > 0 || subjectNames.length > 0)
             ? tests.filter(t => {
-                if (!t.subject) return true;
+                if (!t.subject) return true; // no subject set — show it
+                const subId = String(t.subject._id);
+                if (subjectIds.includes(subId)) return true;
                 const name = (t.subject.subName || t.subject.subjectName || '').toLowerCase();
                 return subjectNames.includes(name);
             })
