@@ -1,10 +1,8 @@
-<<<<<<< HEAD
+
 <h1 align="center">
-    LEARNING MANAGEMENT SYSTEM
+     Edcheck — AI-Driven School Management Platform
 </h1>
 =======
-# Edcheck — AI-Driven School Management Platform
->>>>>>> 5d1b2d3 (edit in readme)
 
 Edcheck is a full-stack school management system built on the MERN stack with AI-powered learning intelligence. It brings together attendance tracking, performance analytics, test management, and real-time notifications into one platform for admins, teachers, students, and parents.
 
