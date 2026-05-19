@@ -1,230 +1,250 @@
+<<<<<<< HEAD
 <h1 align="center">
     LEARNING MANAGEMENT SYSTEM
 </h1>
+=======
+# Edcheck — AI-Driven School Management Platform
+>>>>>>> 5d1b2d3 (edit in readme)
 
-<h3 align="center">
-Streamline school management, class organization, and add students and faculty.<br>
-Seamlessly track attendance, assess performance, and provide feedback. <br>
-Access records, view marks, and communicate effortlessly.
-</h3>
+Edcheck is a full-stack school management system built on the MERN stack with AI-powered learning intelligence. It brings together attendance tracking, performance analytics, test management, and real-time notifications into one platform for admins, teachers, students, and parents.
 
-# About
+Live at: https://edcheck-neon.vercel.app
 
-The School Management System is a web-based application built using the MERN (MongoDB, Express.js, React.js, Node.js) stack. It aims to streamline school management, class organization, and facilitate communication between students, teachers, and administrators.
+---
 
-## Features
+## What it does
 
-- **User Roles:** The system supports three user roles: Admin, Teacher, and Student. Each role has specific functionalities and access levels.
+Admins get a full dashboard to manage classes, teachers, students, assignments, and tests. They can see school-wide analytics, attendance reports, and AI-generated risk assessments for struggling students.
 
-- **Admin Dashboard:** Administrators can add new students and teachers, create classes and subjects, manage user accounts, and oversee system settings.
+Teachers can take attendance, create and assign tests, grade submissions, view class insights, and use the AI teaching assistant to generate notes, detect weak topics, and build question banks.
 
-- **Attendance Tracking:** Teachers can easily take attendance for their classes, mark students as present or absent, and generate attendance reports.
+Students get a personalised dashboard with their attendance, marks, upcoming tests, AI-generated study plans, daily routines, and assignment help.
 
-- **Performance Assessment:** Teachers can assess students' performance by providing marks and feedback. Students can view their marks and track their progress over time.
+Parents can log in to track their child's attendance, marks, and progress without needing to contact the school directly.
 
-- **Data Visualization:** Students can visualize their performance data through interactive charts and tables, helping them understand their academic performance at a glance.
+---
 
-- **Communication:** Users can communicate effortlessly through the system. Teachers can send messages to students and vice versa, promoting effective communication and collaboration.
+## Demo accounts
 
-## Technologies Used
+The database is pre-seeded with a full school setup including 10 classes, 20 teachers, 450 students, and their parents. Use any of the accounts below to explore the platform.
 
-- Frontend: React.js, Material UI, Redux
-- Backend: Node.js, Express.js
-- Database: MongoDB
+### Admin
 
-<br>
+There is one admin account for the entire school.
 
-# Installation
+| Field    | Value               |
+|----------|---------------------|
+| Email    | admin@school.com    |
+| Password | admin123            |
 
-Clone the project:
+The admin account gives you access to the full dashboard, analytics, test control panel, teacher and student management, and all AI intelligence features.
+
+### Teachers
+
+There are 20 teacher accounts. Each teacher is assigned to specific subjects and classes.
+
+| Email                    | Password    |
+|--------------------------|-------------|
+| teacher1@school.com      | teacher123  |
+| teacher2@school.com      | teacher123  |
+| teacher3@school.com      | teacher123  |
+| teacher4@school.com      | teacher123  |
+| teacher5@school.com      | teacher123  |
+| teacher6@school.com      | teacher123  |
+| teacher7@school.com      | teacher123  |
+| teacher8@school.com      | teacher123  |
+| teacher9@school.com      | teacher123  |
+| teacher10@school.com     | teacher123  |
+| teacher11@school.com     | teacher123  |
+| teacher12@school.com     | teacher123  |
+| teacher13@school.com     | teacher123  |
+| teacher14@school.com     | teacher123  |
+| teacher15@school.com     | teacher123  |
+| teacher16@school.com     | teacher123  |
+| teacher17@school.com     | teacher123  |
+| teacher18@school.com     | teacher123  |
+| teacher19@school.com     | teacher123  |
+| teacher20@school.com     | teacher123  |
+
+All teacher accounts use the same password: teacher123
+
+### Students
+
+There are 45 students per class across 10 classes (450 students total). Students log in using their name and roll number, not an email address.
+
+To try a student account, use any student name visible in the admin panel after logging in as admin. The roll numbers run from 1 to 45 within each class.
+
+| Field    | Value       |
+|----------|-------------|
+| Password | student123  |
+
+### Parents
+
+Each student has a linked parent account. Parent emails follow this pattern:
 
 ```
+parent.{rollNumber}.class{classNumber}@school.com
 ```
 
-There are three branches in this repository. Each serves a different purpose.
+Examples:
 
-`main` contains the work that reflects my current standards. I am rebuilding the project architecture here with updated patterns, cleaner structure, and better practices than the original version.
+| Email                          | Password    | Child                        |
+|--------------------------------|-------------|------------------------------|
+| parent.1.class1@school.com     | parent123   | Roll 1, Class 6 Section A    |
+| parent.1.class2@school.com     | parent123   | Roll 1, Class 6 Section B    |
+| parent.1.class3@school.com     | parent123   | Roll 1, Class 7 Section A    |
+| parent.5.class1@school.com     | parent123   | Roll 5, Class 6 Section A    |
 
-`community-version` collects community contributions and external PRs. It stays separate from main while I rebuild the core.
+All parent accounts use the same password: parent123
 
-`legacy-version` contains the same code shown in the YouTube tutorial. If you came from the video and want the exact version demonstrated there, switch to this branch after cloning.
-Open a terminal and paste this command to switch to the `legacy-version` branch. But if you want to try the latest one then you can stay in the main branch.
+---
 
-```
-git checkout legacy-version
-```
+## Classes in the system
 
-Open two terminals.
+The school has 10 classes across grades 6 to 10.
 
-Backend setup:
+| Class              |
+|--------------------|
+| Class 6 Section A  |
+| Class 6 Section B  |
+| Class 7 Section A  |
+| Class 7 Section B  |
+| Class 8 Section A  |
+| Class 8 Section B  |
+| Class 9 Section A  |
+| Class 9 Section B  |
+| Class 10 Section A |
+| Class 10 Section B |
 
-```
+Each class has 7 subjects: Mathematics, Physics, Chemistry, Biology, English, French, and Computer Science.
+
+---
+
+## Running locally
+
+You need Node.js 18 or higher and a MongoDB connection (local or Atlas).
+
+Clone the repository and set up the backend:
+
+```bash
 cd backend
 npm install
 ```
 
-Create a .env file in the backend folder. Add the following:
+Create a .env file inside the backend folder:
 
 ```
-MONGO_URL = mongodb://127.0.0.1/smsproject
-
-SECRET_KEY = 'secret123key'
+MONGO_URL=mongodb://127.0.0.1/edcheck
+JWT_SECRET=your_secret_key_here
+PORT=5001
+GROQ_API_KEY=your_groq_api_key
 ```
-
-Fill MONGO_URL using the instructions below. SECRET_KEY is any random string.
 
 Start the backend:
 
-```
+```bash
 npm start
 ```
 
-Frontend setup:
+Set up the frontend:
 
-```
+```bash
 cd frontend
 npm install
 ```
 
-Create a .env file in the frontend folder and add:
+Create a .env file inside the frontend folder:
 
 ```
-REACT_APP_BASE_URL=http://localhost:5000
+VITE_API_URL=http://localhost:5001
 ```
 
-If a .env file already exists and the line is commented out, remove the comment.
+Start the frontend:
 
-```
+```bash
 npm start
 ```
 
-Frontend runs at localhost:3000. Backend runs at localhost:5000.
+Frontend runs at localhost:3000. Backend runs at localhost:5001.
 
-# MONGO_URL instructions
+To seed the database with demo data:
 
-Use one of these two methods depending on whether you want a local development database or a cloud database.
-
-## Option 1 — Local MongoDB
-
-You need two components: the MongoDB server and Compass.
-
-Install MongoDB Community Server from <a href="https://mongodb.com/try/download/community">mongodb.com/try/download/community</a>. This install includes the mongod server. Install Compass from <a href="https://mongodb.com/try/download/compass">mongodb.com/try/download/compass</a>..
-
-Start the MongoDB service. On Windows or macOS the installer usually sets it to run automatically. If it is not running, you can start it manually:
-
-```
-mongod
+```bash
+cd backend
+npm run seed
 ```
 
-Open Compass. Connect using:
+This creates the admin, all 20 teachers, 450 students, their parents, timetables, and subjects.
+
+---
+
+## Tech stack
+
+- Frontend: React, Material UI, Redux Toolkit, Recharts
+- Backend: Node.js, Express
+- Database: MongoDB with Mongoose
+- AI: Groq (llama-3.3-70b-versatile)
+- Auth: JWT
+- File uploads: Cloudinary
+- Process manager: PM2
+- Reverse proxy: Nginx
+- Frontend hosting: Vercel
+- Backend hosting: Google Compute Engine
+
+---
+
+## Project structure
 
 ```
-mongodb://127.0.0.1:27017/yourdbname
+Edcheck/
+├── backend/
+│   ├── controllers/       API route handlers
+│   ├── models/            Mongoose schemas
+│   ├── routes/            Express route definitions
+│   ├── services/          AI services, schedulers, caching
+│   ├── middleware/        Auth, rate limiting, uploads
+│   ├── scripts/           Seed and diagnostic scripts
+│   └── index.js           Server entry point
+├── frontend/
+│   └── src/
+│       ├── pages/         Admin, Teacher, Student, Parent views
+│       ├── components/    Shared UI components
+│       ├── redux/         State management
+│       └── config/        API URL config
+├── deployment/
+│   ├── nginx/             Nginx reverse proxy config
+│   ├── setup-ssl.sh       One-time SSL setup script
+│   ├── deploy.sh          Deploy updates script
+│   └── README.md          Production deployment guide
+└── ecosystem.config.js    PM2 process config
 ```
 
-Replace yourdbname with any name. Use that full connection string as your MONGO_URL.
+---
 
-## Option 2 — MongoDB Atlas (cloud)
+## Deployment
 
-Create an Atlas account at <a href="https://mongodb.com/atlas">mongodb.com/atlas</a> and create a free cluster.
+The frontend is deployed on Vercel at https://edcheck-neon.vercel.app
 
-In the cluster page, select:
+For backend deployment on a GCE VM with Nginx and SSL, see the full guide in deployment/README.md.
 
-Database → Connect → Connect your application
+---
 
-Atlas shows you a connection string:
+## Environment variables reference
 
-```
-mongodb+srv://<user>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority
-```
+Backend (.env):
 
-Replace the placeholders. Use that full string as your MONGO_URL.
+| Variable                | Required | Description                          |
+|-------------------------|----------|--------------------------------------|
+| MONGO_URL               | Yes      | MongoDB connection string            |
+| JWT_SECRET              | Yes      | Secret key for signing JWTs          |
+| PORT                    | No       | Server port, defaults to 5001        |
+| GROQ_API_KEY            | Yes      | Groq API key for AI features         |
+| CLOUDINARY_CLOUD_NAME   | No       | Cloudinary for file uploads          |
+| CLOUDINARY_API_KEY      | No       | Cloudinary API key                   |
+| CLOUDINARY_API_SECRET   | No       | Cloudinary API secret                |
 
-Use Atlas if you plan to deploy the project.
+Frontend (.env):
 
-# Branch selection
-
-If you are learning from the YouTube video and want the same project the tutorial was based on, use legacy-version.
-
-If you want the original project but also want to apply new changes yourself, stay on legacy-version and modify it as needed.
-
-If you want the updated architecture, use main. This is under active development and contains major improvements.
-
-If you want to contribute, use community-version. All external PRs land there.
-
-# Deployment
-
-There are multiple ways to deploy the project. Use any combination depending on how you prefer to manage the client and server.
-
-## Deploying the backend
-
-### Render
-
-Render works well for Express-based APIs and requires almost no infrastructure setup.
-
-1. Push your code to GitHub.
-2. Create a new Web Service in Render.
-3. Select your backend folder as the root.
-4. Set the build command to:
-
-```
-npm install
-```
-
-5. Set the start command to:
-
-```
-npm start
-```
-
-6. Add the required environment variables from your .env file (MONGO_URL and SECRET_KEY).
-
-Render automatically redeploys on every push.
-
-## Deploying the frontend
-
-### Netlify
-
-Netlify builds and serves the React application.
-
-Steps:
-
-1. Push your frontend folder to GitHub.
-2. Create a new Netlify project.
-3. Set the build command:
-
-```
-npm run build
-```
-
-4. Set the publish directory:
-
-```
-build
-```
-
-5. Add an environment variable if needed for the API endpoint:
-
-```
-REACT_APP_BASE_URL=https://your-backend-url
-```
-
-Netlify auto-builds on every push.
-
-### Vercel
-
-Vercel deploys React-based frontends easily. Same build command. Same publish directory.
-
-## Connecting frontend and backend
-
-After deploying both sides, set the frontend environment variable to point to your backend URL. For example:
-
-```
-REACT_APP_BASE_URL=https://your-backend.onrender.com
-```
-
-Rebuild the frontend when deploying to Netlify or Vercel.
-
-# Notes
-
-The legacy-version branch remains available for anyone who needs the original two-year-old tutorial code. The main branch will continue to evolve as I rebuild the project's architecture using the practices I use today. The community-version branch is available for contributions without affecting the core redesign.
+| Variable      | Description                  |
+|---------------|------------------------------|
+| VITE_API_URL  | Backend API base URL         |
