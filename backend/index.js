@@ -58,7 +58,9 @@ const allowedOrigins = [
 const isAllowedOrigin = (origin) => {
     if (!origin) return true; // server-to-server / curl / same-origin
     if (allowedOrigins.includes(origin)) return true;
-     if (origin && origin.endsWith(".vercel.app")) return true;
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return true;
+    if (origin && origin.endsWith(".vercel.app")) return true;
+    if (origin && origin.endsWith(".onrender.com")) return true;
     return false;
 };
 
