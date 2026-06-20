@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import axiosInstance from '../../utils/axiosInstance';
 import { Box, Typography, Grid, CircularProgress, Paper } from '@mui/material';
 import {
-    RadialBarChart, RadialBar, Legend, ResponsiveContainer, Tooltip,
+    Legend, ResponsiveContainer, Tooltip,
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
     PieChart, Pie,
 } from 'recharts';
@@ -43,7 +43,7 @@ const ChartTooltip = ({ active, payload, label }) => {
     );
 };
 
-// ── 1. Attendance Radial Chart ────────────────────────────────────────────────
+// ── 1. Attendance Percentage View ─────────────────────────────────────────────
 const AttendanceChart = ({ studentId }) => {
     const [data, setData]       = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,24 +58,35 @@ const AttendanceChart = ({ studentId }) => {
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress size={28} /></Box>;
     if (!data.length) return <Empty msg="No attendance records yet" />;
 
-    const radialData = data.map((s, i) => ({
-        name: s.subjectName,
-        value: s.attendancePercentage,
-        fill: SUBJECT_PALETTE[i % SUBJECT_PALETTE.length],
-    }));
-
     return (
-        <ResponsiveContainer width="100%" height={260}>
-            <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="90%"
-                data={radialData} startAngle={180} endAngle={-180}>
-                <RadialBar minAngle={5} background={{ fill: 'rgba(0,0,0,0.04)' }}
-                    clockWise dataKey="value"
-                    label={{ position: 'insideStart', fill: '#ffffff', fontSize: 10 }} />
-                <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right"
-                    formatter={(v) => <span style={{ color: '#555555', fontSize: '0.72rem' }}>{v}</span>} />
-                <Tooltip content={<ChartTooltip />} />
-            </RadialBarChart>
-        </ResponsiveContainer>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.8, py: 1 }}>
+            {data.map((s, i) => {
+                const pct = Math.round(s.attendancePercentage || 0);
+                const color = SUBJECT_PALETTE[i % SUBJECT_PALETTE.length];
+                return (
+                    <Box key={s.subjectName || i}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: '#ccc' }}>
+                                {s.subjectName}
+                            </Typography>
+                            <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color }}>
+                                {pct}%
+                            </Typography>
+                        </Box>
+                        <Box sx={{
+                            width: '100%', height: 10, borderRadius: 5,
+                            bgcolor: 'rgba(255,255,255,0.08)', overflow: 'hidden',
+                        }}>
+                            <Box sx={{
+                                width: `${pct}%`, height: '100%', borderRadius: 5,
+                                bgcolor: color,
+                                transition: 'width 0.8s ease-in-out',
+                            }} />
+                        </Box>
+                    </Box>
+                );
+            })}
+        </Box>
     );
 };
 
