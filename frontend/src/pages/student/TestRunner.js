@@ -63,22 +63,36 @@ const TestRunner = () => {
             remapped[originalIdx] = answers[shuffledIdx] !== undefined ? answers[shuffledIdx] : -1;
         });
 
+        // Build the submissions array expected by /api/history/submit
+        // Each entry: { studentAnswer, responseTimeMs, confidence, attemptCount }
+        const submissions = remapped.map((ans) => ({
+            studentAnswer:  ans === -1 ? null : ans,
+            responseTimeMs: 0,
+            confidence:     null,
+            attemptCount:   1,
+        }));
+
+        const totalDurationMs = test
+            ? (test.durationMinutes || 1) * 60 * 1000 - timeLeft * 1000
+            : 0;
+
         setSubmitting(true);
         try {
-            await axiosInstance.post(`/SubmitAttempt`, {
-                studentId: currentUser._id,
+            await axiosInstance.post(`/api/history/submit`, {
+                studentId:      currentUser._id,
                 testId,
-                answers: remapped,
+                submissions,
                 submissionType: type,
                 startedAt,
+                totalDurationMs,
             });
             navigate(`/Student/test/${testId}/result`);
         } catch (err) {
-            setError(err.response?.data?.message || 'Submission failed. Please try again.');
+            setError(err.response?.data?.message || err.response?.data?.error?.message || 'Submission failed. Please try again.');
             submittedRef.current = false;
             setSubmitting(false);
         }
-    }, [answers, permutation, currentUser._id, testId, startedAt, navigate]);
+    }, [answers, permutation, currentUser._id, testId, startedAt, navigate, test, timeLeft]);
 
     // Fetch test on mount
     useEffect(() => {
