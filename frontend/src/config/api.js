@@ -1,21 +1,13 @@
-// Safely read VITE_API_URL injected by Vite at build time.
-// Set VITE_API_URL in Vercel environment variables to your GCP backend URL.
-let API_URL;
-
-try {
-    API_URL =
-        (typeof import.meta !== "undefined" &&
-            import.meta.env &&
-            import.meta.env.VITE_API_URL) ||
-        null;
-} catch (_) {
-    API_URL = null;
-}
+// CRA (react-scripts) exposes env vars prefixed with REACT_APP_ via process.env.
+// Set REACT_APP_BASE_URL in your .env file or deployment environment variables.
+// e.g. for local dev:  REACT_APP_BASE_URL=http://localhost:5001
+// e.g. for production: REACT_APP_BASE_URL=https://edcheck.onrender.com
+let API_URL = process.env.REACT_APP_BASE_URL || null;
 
 if (!API_URL) {
-    // Fallback: update this to your GCP backend URL
+    // Fallback for production deployments where env var is not set
     API_URL = "https://edcheck.onrender.com";
-    console.warn("VITE_API_URL not set — using fallback:", API_URL);
+    console.warn("REACT_APP_BASE_URL not set — using fallback:", API_URL);
 }
 
 console.log("Using API URL:", API_URL);

@@ -95,6 +95,7 @@ const StudentSideBar = () => {
             <NavItem to="/Student/assignments" icon={<AssignmentIcon />} label="Assignments" active={is('/Student/assignments')} />
             <NavItem to="/Student/attendance" icon={<BarChartIcon />} label="Attendance" active={is('/Student/attendance')} />
             <NavItem to="/Student/tests" icon={<QuizIcon />} label="Tests" active={is('/Student/tests')} />
+            <NavItem to="/Student/test-history" icon={<AssessmentIcon />} label="Test History" active={is('/Student/test-history')} />
             <NavItem to="/Student/progress" icon={<TrendingUpIcon />} label="Progress" active={is('/Student/progress')} />
             <NavItem to="/Student/performance" icon={<TrendingUpIcon />} label="Performance" active={is('/Student/performance')} />
             <NavItem to="/Student/report" icon={<AssessmentIcon />} label="Report Card" active={is('/Student/report')} />

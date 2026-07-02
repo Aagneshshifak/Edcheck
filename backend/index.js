@@ -15,7 +15,8 @@ app.set("trust proxy", 1);
 
 const Routes = require("./routes/route.js");
 const aiRoutes = require("./routes/aiRoutes.js");
-const adaptiveLearningRoutes = require("./routes/adaptiveLearningRoutes.js");
+const adaptiveLearningRoutes    = require("./routes/adaptiveLearningRoutes.js");
+const testAttemptHistoryRoutes  = require("./routes/testAttemptHistoryRoutes.js");
 const { startAllAISchedulers } = require("./services/aiScheduler");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
@@ -126,6 +127,7 @@ mongoose
 app.use("/", Routes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/adaptive", adaptiveLearningRoutes);
+app.use("/api/history", testAttemptHistoryRoutes);
 
 // ── Error handling (must be last) ─────────────────────────────────────────────
 app.use(notFoundHandler);

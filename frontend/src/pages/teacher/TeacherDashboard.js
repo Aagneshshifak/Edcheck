@@ -38,6 +38,7 @@ import MarksEntry from './MarksEntry';
 import GenerateReport from './GenerateReport';
 import TeacherNotices from './TeacherNotices';
 import AIDashboard from './AIDashboard';
+import TestAttemptHistoryDashboard from './TestAttemptHistoryDashboard';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -107,6 +108,7 @@ const TeacherDashboard = () => {
                         <Route path="/Teacher/tests/create" element={<CreateTest />} />
                         <Route path="/Teacher/tests/:testId/questions" element={<AddQuestions />} />
                         <Route path="/Teacher/tests/:testId/results" element={<TestResults />} />
+                        <Route path="/Teacher/tests/:testId/history" element={<TestAttemptHistoryDashboard />} />
 
                         <Route path="/Teacher/class/student/:id/progress" element={<LearningProgressChart viewerRole="Teacher" />} />
                         <Route path="/Teacher/assignments" element={<TeacherAssignments />} />
