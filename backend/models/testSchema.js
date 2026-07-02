@@ -16,7 +16,14 @@ const questionSchema = new mongoose.Schema({
             validator: (v) => v > 0,
             message: "marks must be greater than 0"
         }
-    }
+    },
+    // ── Adaptive learning fields (optional, added for pipeline support) ───
+    // topic: e.g. "Algebra", "Photosynthesis". Used by the mastery engine.
+    topic:         { type: String, default: null },
+    // questionType: used by the evaluation engine for type-specific grading.
+    questionType:  { type: String, enum: ['mcq', 'true_false', 'numerical', 'short_answer'], default: 'mcq' },
+    // difficulty: determines mastery difficulty weighting.
+    difficulty:    { type: String, enum: ['easy', 'medium', 'hard', 'challenge'], default: 'medium' },
 }, { _id: false });
 
 const testSchema = new mongoose.Schema({
