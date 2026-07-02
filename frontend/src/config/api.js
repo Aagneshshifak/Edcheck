@@ -1,13 +1,16 @@
-// CRA (react-scripts) exposes env vars prefixed with REACT_APP_ via process.env.
-// Set REACT_APP_BASE_URL in your .env file or deployment environment variables.
-// e.g. for local dev:  REACT_APP_BASE_URL=http://localhost:5001
-// e.g. for production: REACT_APP_BASE_URL=https://edcheck.onrender.com
-let API_URL = process.env.REACT_APP_BASE_URL || null;
+let API_URL;
 
-if (!API_URL) {
-    // Fallback for production deployments where env var is not set
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    // When running the frontend locally, connect to the local backend
+    API_URL = "http://localhost:5001";
+} else {
+    // When running the frontend in production (Vercel), connect to the Render backend
     API_URL = "https://edcheck.onrender.com";
-    console.warn("REACT_APP_BASE_URL not set — using fallback:", API_URL);
+}
+
+// Optional: allow explicit override via environment variable if needed
+if (process.env.REACT_APP_BASE_URL && process.env.REACT_APP_BASE_URL !== "http://localhost:5001") {
+    API_URL = process.env.REACT_APP_BASE_URL;
 }
 
 console.log("Using API URL:", API_URL);
