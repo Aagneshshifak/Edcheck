@@ -321,28 +321,16 @@ const RoutinePanel = ({ studentId }) => {
 
 // ── 4. Test Prep Panel ────────────────────────────────────────────────────────
 const TestPrepPanel = ({ studentId }) => {
-    const [testId, setTestId]     = useState('');
-    const [tests, setTests]       = useState([]);
-    const [testsLoading, setTestsLoading] = useState(false);
-    const [loading, setLoading]   = useState(false);
-    const [error, setError]       = useState('');
-    const [prep, setPrep]         = useState(null);
-
-    // Load available tests for this student
-    useEffect(() => {
-        if (!studentId) return;
-        setTestsLoading(true);
-        axiosInstance.get(`/TestsForStudent/${studentId}`)
-            .then(({ data }) => setTests(Array.isArray(data) ? data : []))
-            .catch(() => {})
-            .finally(() => setTestsLoading(false));
-    }, [studentId]);
+    const [testId, setTestId]   = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError]     = useState('');
+    const [prep, setPrep]       = useState(null);
 
     const handleGenerate = async () => {
-        if (!testId) return;
+        if (!testId.trim()) return;
         setLoading(true); setError(''); setPrep(null);
         try {
-            const { data } = await axiosInstance.post('/api/ai/student/prepare-next-test', { studentId, testId });
+            const { data } = await axiosInstance.post('/api/ai/student/prepare-next-test', { studentId, testId: testId.trim() });
             setPrep(data.revisionPlan);
         } catch (e) { setError(e.response?.data?.message || 'Failed'); }
         finally { setLoading(false); }
@@ -353,21 +341,9 @@ const TestPrepPanel = ({ studentId }) => {
     return (
         <Box>
             <Typography variant="h6" gutterBottom sx={{ color: theme.accent }}>Next Test Preparation</Typography>
-            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                <FormControl size="small" sx={{ minWidth: 260 }} disabled={testsLoading}>
-                    <InputLabel>Select Test</InputLabel>
-                    <Select value={testId} label="Select Test" onChange={e => { setTestId(e.target.value); setPrep(null); }}>
-                        {tests.length === 0
-                            ? <MenuItem value="" disabled>No tests available</MenuItem>
-                            : tests.map(t => (
-                                <MenuItem key={t._id} value={t._id}>
-                                    {t.title || '(Untitled)'}{t.subject?.subName ? ` — ${t.subject.subName}` : ''}
-                                </MenuItem>
-                            ))
-                        }
-                    </Select>
-                </FormControl>
-                <Button variant="contained" onClick={handleGenerate} disabled={loading || !testId}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+                <TextField size="small" label="Test ID" value={testId} onChange={e => setTestId(e.target.value)} sx={{ minWidth: 260 }} placeholder="Paste test _id" />
+                <Button variant="contained" onClick={handleGenerate} disabled={loading || !testId.trim()}>
                     {loading ? <CircularProgress size={18} color="inherit" /> : 'Prepare for Test'}
                 </Button>
             </Box>
