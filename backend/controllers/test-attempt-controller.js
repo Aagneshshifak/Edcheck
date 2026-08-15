@@ -13,6 +13,11 @@ const { invalidateByTestId } = require('../services/ai-cache-service');
 const calculateScore = (questions, answers) => {
     let score = 0;
     for (let i = 0; i < questions.length; i++) {
+        // Skip auto-grading for subjective questions
+        if (questions[i].questionType === 'short_answer' || questions[i].questionType === 'file_upload') {
+            continue; // Needs manual grading, gives 0 auto score for now
+        }
+        // Auto-grade MCQs
         if (answers[i] === questions[i].correctAnswer) {
             score += questions[i].marks;
         }

@@ -11,7 +11,7 @@ const testAttemptSchema = new mongoose.Schema({
         ref: "test",
         required: true
     },
-    answers:        { type: [Number], default: [] },
+    answers:        { type: [mongoose.Schema.Types.Mixed], default: [] },
     score:          { type: Number },
     totalMarks:     { type: Number },
     submittedAt:    { type: Date },

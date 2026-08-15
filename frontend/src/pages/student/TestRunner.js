@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
     Box, Typography, Radio, RadioGroup, FormControlLabel,
-    Button, CircularProgress, Alert, LinearProgress, Chip,
+    Button, CircularProgress, Alert, LinearProgress, Chip, TextField
 } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axiosInstance from '../../utils/axiosInstance';
@@ -50,6 +52,41 @@ const TestRunner = () => {
     const [tabWarnings, setTabWarnings] = useState(0);       // tab-switch count
     const [tabAlert,    setTabAlert]    = useState(false);   // show warning banner
     const MAX_TAB_WARNINGS = 3;
+
+    const handleFileUpload = async (idx, file) => {
+        if (!file) return;
+        
+        const updated = [...answers];
+        updated[idx] = { status: 'uploading', filename: file.name };
+        setAnswers(updated);
+        
+        const formData = new FormData();
+        formData.append('files', file);
+        
+        try {
+            const res = await axiosInstance.post('/api/upload/files', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            if (res.data.success && res.data.files.length > 0) {
+                const uploadedFile = res.data.files[0];
+                const finalUpdated = [...answers];
+                finalUpdated[idx] = { 
+                    fileUrl: uploadedFile.fileUrl, 
+                    publicId: uploadedFile.publicId,
+                    filename: file.name 
+                };
+                setAnswers(finalUpdated);
+            } else {
+                throw new Error("Upload failed");
+            }
+        } catch (err) {
+            console.error(err);
+            const revert = [...answers];
+            revert[idx] = -1;
+            setAnswers(revert);
+        }
+    };
 
     // handleSubmit defined with useCallback so it can be referenced in timer effect
     const handleSubmit = useCallback(async (type) => {
@@ -351,24 +388,92 @@ const TestRunner = () => {
                         {idx + 1}. {q.questionText}
                         <Typography component="span" sx={{ color: theme.accent, fontSize: '0.75rem', ml: 1 }}>({q.marks} mark{q.marks !== 1 ? 's' : ''})</Typography>
                     </Typography>
-                    <RadioGroup
-                        value={answers[idx] !== undefined && answers[idx] !== -1 ? String(answers[idx]) : ''}
-                        onChange={(e) => {
-                            const updated = [...answers];
-                            updated[idx] = Number(e.target.value);
-                            setAnswers(updated);
-                        }}
-                    >
-                        {(q.options || []).map((opt, oIdx) => (
-                            <FormControlLabel
-                                key={oIdx}
-                                value={String(oIdx)}
-                                control={<Radio sx={{ color: theme.textMuted, '&.Mui-checked': { color: theme.accent } }} />}
-                                label={<Typography sx={{ color: theme.text, fontSize: '0.9rem', userSelect: 'none' }}>{opt}</Typography>}
-                                sx={{ mb: 0.5 }}
-                            />
-                        ))}
-                    </RadioGroup>
+                    {(!q.questionType || q.questionType === 'mcq' || q.questionType === 'true_false') && (
+                        <RadioGroup
+                            value={answers[idx] !== undefined && answers[idx] !== -1 ? String(answers[idx]) : ''}
+                            onChange={(e) => {
+                                const updated = [...answers];
+                                updated[idx] = Number(e.target.value);
+                                setAnswers(updated);
+                            }}
+                        >
+                            {(q.options || []).map((opt, oIdx) => (
+                                <FormControlLabel
+                                    key={oIdx}
+                                    value={String(oIdx)}
+                                    control={<Radio sx={{ color: theme.textMuted, '&.Mui-checked': { color: theme.accent } }} />}
+                                    label={<Typography sx={{ color: theme.text, fontSize: '0.9rem', userSelect: 'none' }}>{opt}</Typography>}
+                                    sx={{ mb: 0.5 }}
+                                />
+                            ))}
+                        </RadioGroup>
+                    )}
+
+                    {q.questionType === 'short_answer' && (
+                        <TextField
+                            fullWidth
+                            multiline
+                            rows={4}
+                            variant="outlined"
+                            placeholder="Type your answer here..."
+                            value={answers[idx] && answers[idx] !== -1 ? answers[idx] : ''}
+                            onChange={(e) => {
+                                const updated = [...answers];
+                                updated[idx] = e.target.value;
+                                setAnswers(updated);
+                            }}
+                            sx={{
+                                mt: 1,
+                                '& .MuiOutlinedInput-root': {
+                                    color: theme.text,
+                                    bgcolor: 'rgba(255,255,255,0.03)',
+                                    '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                                    '&.Mui-focused fieldset': { borderColor: theme.accent },
+                                }
+                            }}
+                        />
+                    )}
+
+                    {q.questionType === 'file_upload' && (
+                        <Box sx={{ mt: 1 }}>
+                            {answers[idx] && answers[idx] !== -1 && answers[idx].status === 'uploading' ? (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <CircularProgress size={24} sx={{ color: theme.accent }} />
+                                    <Typography sx={{ color: theme.textMuted }}>Uploading {answers[idx].filename}...</Typography>
+                                </Box>
+                            ) : answers[idx] && answers[idx] !== -1 && answers[idx].fileUrl ? (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1.5, bgcolor: 'rgba(0,230,118,0.1)', border: '1px solid rgba(0,230,118,0.3)', borderRadius: 2 }}>
+                                    <AttachFileIcon sx={{ color: '#00e676' }} />
+                                    <Typography sx={{ color: '#00e676', flexGrow: 1, fontSize: '0.9rem' }}>{answers[idx].filename}</Typography>
+                                    <Button size="small" sx={{ color: '#ff5252' }} onClick={() => {
+                                        const updated = [...answers];
+                                        updated[idx] = -1;
+                                        setAnswers(updated);
+                                    }}>Remove</Button>
+                                </Box>
+                            ) : (
+                                <Button
+                                    variant="outlined"
+                                    component="label"
+                                    startIcon={<CloudUploadIcon />}
+                                    sx={{
+                                        color: theme.text,
+                                        borderColor: 'rgba(255,255,255,0.2)',
+                                        '&:hover': { borderColor: theme.accent, bgcolor: 'rgba(255,255,255,0.05)' }
+                                    }}
+                                >
+                                    Upload Document
+                                    <input
+                                        type="file"
+                                        hidden
+                                        onChange={(e) => handleFileUpload(idx, e.target.files[0])}
+                                        accept="image/*,.pdf,.doc,.docx"
+                                    />
+                                </Button>
+                            )}
+                        </Box>
+                    )}
                 </Box>
             ))}
 

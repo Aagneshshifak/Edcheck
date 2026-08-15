@@ -2,11 +2,16 @@ const mongoose = require("mongoose");
 
 const questionSchema = new mongoose.Schema({
     questionText:  { type: String, required: true },
-    options:       {
+    options: {
         type: [String],
         validate: {
-            validator: (arr) => arr.length >= 2 && arr.length <= 6,
-            message: "options must have between 2 and 6 items"
+            validator: function(arr) {
+                if (this.questionType === 'short_answer' || this.questionType === 'file_upload' || this.questionType === 'numerical') {
+                    return true;
+                }
+                return arr.length >= 2 && arr.length <= 6;
+            },
+            message: "MCQ options must have between 2 and 6 items"
         }
     },
     correctAnswer: { type: Number },
@@ -21,7 +26,7 @@ const questionSchema = new mongoose.Schema({
     // topic: e.g. "Algebra", "Photosynthesis". Used by the mastery engine.
     topic:         { type: String, default: null },
     // questionType: used by the evaluation engine for type-specific grading.
-    questionType:  { type: String, enum: ['mcq', 'true_false', 'numerical', 'short_answer'], default: 'mcq' },
+    questionType:  { type: String, enum: ['mcq', 'true_false', 'numerical', 'short_answer', 'file_upload'], default: 'mcq' },
     // difficulty: determines mastery difficulty weighting.
     difficulty:    { type: String, enum: ['easy', 'medium', 'hard', 'challenge'], default: 'medium' },
 }, { _id: false });
