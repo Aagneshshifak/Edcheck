@@ -56,7 +56,7 @@ async function run() {
                         `Incorrect option B`,
                         `Incorrect option C`
                     ],
-                    correctAnswer: 1, 
+                    correctAnswer: 0, 
                     marks: 10,
                     topic: topicName,
                     questionType: 'mcq',
