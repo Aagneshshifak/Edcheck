@@ -44,6 +44,11 @@ const testSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "teacher"
     },
+    // Optional: if set, only this specific student sees the test (used for personalized adaptive tests)
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "student"
+    },
     durationMinutes: {
         type: Number,
         validate: {
@@ -60,6 +65,7 @@ testSchema.index({ classId: 1 });
 testSchema.index({ school: 1 });
 // Dashboard: active tests for a class (student test list query)
 testSchema.index({ classId: 1, isActive: 1 });
+testSchema.index({ studentId: 1 });
 // Subject-scoped test lookup
 testSchema.index({ subject: 1 });
 // Teacher: tests created by a specific teacher

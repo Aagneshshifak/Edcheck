@@ -152,6 +152,11 @@ const getTestsForStudent = async (req, res) => {
         const tests = await Test.find({
             classId,
             isActive: true,
+            $or: [
+                { studentId: { $exists: false } },
+                { studentId: null },
+                { studentId: student._id }
+            ],
             _id: { $nin: attemptedTestIds }
         }).populate("subject", "subName subjectName subCode");
 

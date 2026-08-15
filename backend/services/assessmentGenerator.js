@@ -208,6 +208,7 @@ async function generateAssessment({
         subject: subjectId,
         classId,
         school: schoolId,
+        studentId,
         durationMinutes,
         questions: finalQuestions,
         isActive: true
