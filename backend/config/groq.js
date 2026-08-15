@@ -15,13 +15,13 @@ const GROQ_MODELS = {
     FAST:      process.env.GROQ_MODEL_FAST || 'llama-3.1-8b-instant',
 
     // Balanced model — same as primary for consistency
-    BALANCED:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
+    BALANCED:  process.env.GROQ_MODEL      || 'llama-3.3-70b-versatile',
 
     // Powerful model — same as primary
-    POWERFUL:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
+    POWERFUL:  process.env.GROQ_MODEL      || 'llama-3.3-70b-versatile',
 
     // Dedicated analysis model for student performance, study plans, staff reports
-    ANALYSIS:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
+    ANALYSIS:  process.env.GROQ_MODEL      || 'llama-3.3-70b-versatile',
 };
 
 // Lazy singleton — created on first use so dotenv has already run by then

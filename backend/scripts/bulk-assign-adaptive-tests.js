@@ -7,6 +7,9 @@ const pipeline = require('../services/adaptiveLearning/adaptivePipeline');
 
 const MONGODB_URI = process.env.MONGO_URL || 'mongodb://localhost:27017/edcheck'; // fallback
 
+// Helper to delay execution (rate limiter)
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function run() {
     try {
         console.log('Connecting to database...');
@@ -82,8 +85,13 @@ async function run() {
                     });
                     console.log(` - Generated test for subject: ${subjectsArr[0].name}`);
                     count++;
+                    await delay(4000); // 4 second delay to avoid rate limits (15 RPM)
                 } catch (err) {
                     console.error(` - Error generating test for subject ${subjectsArr[0].name}:`, err.message);
+                    if (err.message.includes('429') || err.message.includes('temporarily unavailable')) {
+                        console.log('   ⚠️ Rate limit hit. Backing off for 30 seconds...');
+                        await delay(30000);
+                    }
                 }
             }
         }
