@@ -456,6 +456,266 @@ const explainDifficultyRec = async (req, res) => {
     }
 };
 
+// ── POST /api/adaptive/study-plan-feedback/:studentId ─────────────────────────
+/**
+ * Submit feedback on a study plan recommendation.
+ *
+ * Request body:
+ * {
+ *   "studyPlanId": "ObjectId",
+ *   "feedback": [
+ *     { "topic": "Algebra", "status": "completed", "usefulness": "useful", "difficulty_feedback": "appropriate", "comment": "" }
+ *   ]
+ * }
+ */
+const submitStudyPlanFeedback = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        if (!isValidObjectId(studentId)) return sendError(res, 400, 'Invalid studentId');
+
+        const { studyPlanId, feedback } = req.body || {};
+        if (!studyPlanId || !isValidObjectId(studyPlanId)) {
+            return sendError(res, 400, 'studyPlanId must be a valid ObjectId');
+        }
+        if (!Array.isArray(feedback) || feedback.length === 0) {
+            return sendError(res, 400, 'feedback must be a non-empty array');
+        }
+
+        const StudyPlanFeedback = require('../models/adaptiveLearning/studyPlanFeedbackSchema');
+
+        const savedFeedback = [];
+        for (const item of feedback) {
+            const saved = await StudyPlanFeedback.create({
+                studentId,
+                studyPlanId,
+                topic: item.topic,
+                status: item.status || 'not_started',
+                usefulness: item.usefulness || null,
+                difficulty_feedback: item.difficulty_feedback || null,
+                comment: (item.comment || '').slice(0, 500),
+            });
+            savedFeedback.push(saved);
+        }
+
+        // Invalidate cached study plans so next generation uses this feedback
+        const { groqService } = require('../services/groqService');
+        await groqService.invalidateByUserId(studentId);
+
+        return res.status(201).json({
+            success: true,
+            message: `Saved ${savedFeedback.length} feedback entries`,
+            feedback: savedFeedback,
+        });
+
+    } catch (err) {
+        logger.error('submitStudyPlanFeedback: error', { error: err.message });
+        return sendError(res, 500, err.message);
+    }
+};
+
+// ── GET /api/adaptive/study-plan-feedback/:studentId ──────────────────────────
+const getStudyPlanFeedback = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        if (!isValidObjectId(studentId)) return sendError(res, 400, 'Invalid studentId');
+
+        const StudyPlanFeedback = require('../models/adaptiveLearning/studyPlanFeedbackSchema');
+
+        const { studyPlanId } = req.query;
+        const filter = { studentId };
+        if (studyPlanId && isValidObjectId(studyPlanId)) filter.studyPlanId = studyPlanId;
+
+        const feedback = await StudyPlanFeedback.find(filter)
+            .sort({ submittedAt: -1 })
+            .limit(50)
+            .lean();
+
+        return res.json({ success: true, count: feedback.length, feedback });
+    } catch (err) {
+        return sendError(res, 500, err.message);
+    }
+};
+
+// ── POST /api/adaptive/post-assessment-analysis ──────────────────────────────
+/**
+ * Trigger comprehensive post-assessment analysis.
+ * Steps:
+ *   1. Run deterministic evaluation (pipeline stages 1-5) — if not already run
+ *   2. Generate student analysis via LLM
+ *   3. Generate/update personalized study plan
+ *   4. Generate staff report
+ *
+ * This is designed to run asynchronously — the student has already received
+ * their assessment result from the pipeline.
+ *
+ * Request body:
+ * {
+ *   "studentId": "ObjectId",
+ *   "testId": "ObjectId",
+ *   "staffId": "ObjectId" (optional — if provided, generates staff report)
+ * }
+ */
+const runPostAssessmentAnalysis = async (req, res) => {
+    try {
+        const { studentId, testId, staffId } = req.body;
+
+        if (!studentId || !isValidObjectId(studentId)) {
+            return sendError(res, 400, 'studentId must be a valid ObjectId');
+        }
+        if (!testId || !isValidObjectId(testId)) {
+            return sendError(res, 400, 'testId must be a valid ObjectId');
+        }
+
+        // Respond immediately — analysis runs in background
+        res.status(202).json({
+            success: true,
+            message: 'Post-assessment analysis started. Results will be available shortly.',
+        });
+
+        // ── Background processing ────────────────────────────────────────
+        setImmediate(async () => {
+            try {
+                const { profile, masteryRecords, trendRecords, latestDiffRecs } =
+                    await pipeline.getStudentAnalytics(studentId);
+
+                if (!masteryRecords || masteryRecords.length === 0) {
+                    logger.warn('postAssessmentAnalysis: no mastery data', { studentId });
+                    return;
+                }
+
+                // Get latest attempt detail for metrics
+                const latestAttempt = await QuizAttemptDetail.findOne({ studentId, testId })
+                    .sort({ attemptedAt: -1 })
+                    .lean();
+
+                if (!latestAttempt) {
+                    logger.warn('postAssessmentAnalysis: no attempt detail found', { studentId, testId });
+                    return;
+                }
+
+                const test = await Test.findById(testId).lean();
+
+                // ── Step 1: Generate study plan ──────────────────────────
+                try {
+                    // Fetch any previous feedback
+                    const StudyPlanFeedback = require('../models/adaptiveLearning/studyPlanFeedbackSchema');
+                    const prevFeedback = await StudyPlanFeedback.find({ studentId })
+                        .sort({ submittedAt: -1 })
+                        .limit(20)
+                        .lean();
+
+                    const analyticsContext = studyPlanService.buildAnalyticsContext({
+                        profile: profile || { studentId, scores: {} },
+                        masteryRecords,
+                        trendRecords,
+                        diffRecs: latestDiffRecs,
+                        previousFeedback: prevFeedback.map(f => ({
+                            topic: f.topic,
+                            status: f.status,
+                            comment: f.comment,
+                        })),
+                    });
+
+                    const { plan, promptUsed, rawLLMResponse, llmMeta } =
+                        await studyPlanService.generateStudyPlan(analyticsContext);
+
+                    // Save study plan
+                    await AdaptiveStudyPlan.updateMany({ studentId, isActive: true }, { $set: { isActive: false } });
+                    await AdaptiveStudyPlan.create({
+                        studentId,
+                        subjectId: latestAttempt.subjectId,
+                        schoolId: profile?.schoolId,
+                        analyticsSnapshot: {
+                            overallMastery: analyticsContext.overallMastery,
+                            readinessScore: analyticsContext.readinessScore,
+                            consistencyScore: analyticsContext.consistencyScore,
+                            learningPace: studyPlanService.paceLabelFromScore(analyticsContext.learningPaceScore),
+                            weakTopics: analyticsContext.weakTopics,
+                            strongTopics: analyticsContext.strongTopics,
+                            difficultyRecommendations: analyticsContext.difficultyRecommendations,
+                        },
+                        promptUsed,
+                        plan,
+                        llmMeta,
+                        rawLLMResponse,
+                        generatedAt: new Date(),
+                        isActive: true,
+                    });
+
+                    logger.info('postAssessmentAnalysis: study plan generated', { studentId });
+                } catch (planErr) {
+                    logger.error('postAssessmentAnalysis: study plan failed', { studentId, error: planErr.message });
+                }
+
+                // ── Step 2: Generate staff report ────────────────────────
+                if (staffId && isValidObjectId(staffId)) {
+                    try {
+                        const staffReportService = require('../services/staffReportingService');
+                        await staffReportService.generateStaffReport({
+                            studentId,
+                            staffId,
+                            assessmentId: testId,
+                            assessmentTitle: test?.title || 'Assessment',
+                            assessmentDate: latestAttempt.attemptedAt,
+                            subjectId: latestAttempt.subjectId,
+                            schoolId: profile?.schoolId,
+                            attemptDetailId: latestAttempt._id,
+                            assessmentMetrics: latestAttempt.metrics,
+                            profile: profile || { studentId, scores: {} },
+                            masteryRecords,
+                            trendRecords,
+                            diffRecs: latestDiffRecs,
+                        });
+                        logger.info('postAssessmentAnalysis: staff report generated', { studentId, staffId });
+                    } catch (reportErr) {
+                        logger.error('postAssessmentAnalysis: staff report failed', { studentId, error: reportErr.message });
+                    }
+                }
+
+            } catch (err) {
+                logger.error('postAssessmentAnalysis: background error', { studentId, error: err.message });
+            }
+        });
+
+    } catch (err) {
+        logger.error('runPostAssessmentAnalysis: error', { error: err.message });
+        return sendError(res, 500, err.message);
+    }
+};
+
+// ── GET /api/adaptive/staff-reports/:studentId ────────────────────────────────
+/**
+ * Get staff reports for a student. Staff can only see their own reports.
+ * Admin can see all reports.
+ */
+const getStaffReports = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        if (!isValidObjectId(studentId)) return sendError(res, 400, 'Invalid studentId');
+
+        const staffReportService = require('../services/staffReportingService');
+        const staffId = req.user.role === 'Admin' ? undefined : req.user.id;
+
+        if (staffId) {
+            const reports = await staffReportService.getStudentReports(staffId, studentId, {
+                limit: parseInt(req.query.limit) || 20,
+                subjectId: req.query.subjectId,
+            });
+            return res.json({ success: true, count: reports.length, reports });
+        } else {
+            // Admin: get all reports for this student
+            const StaffStudentReport = require('../models/staffStudentReportSchema');
+            const reports = await StaffStudentReport.find({ studentId })
+                .sort({ generatedAt: -1 })
+                .limit(parseInt(req.query.limit) || 20)
+                .lean();
+            return res.json({ success: true, count: reports.length, reports });
+        }
+    } catch (err) {
+        return sendError(res, 500, err.message);
+    }
+};
+
 module.exports = {
     submitAdaptiveAttempt,
     getStudentProfile,
@@ -467,4 +727,8 @@ module.exports = {
     getAttemptDetail,
     getFullAnalytics,
     explainDifficultyRec,
+    submitStudyPlanFeedback,
+    getStudyPlanFeedback,
+    runPostAssessmentAnalysis,
+    getStaffReports,
 };

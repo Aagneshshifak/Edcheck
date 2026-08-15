@@ -1,9 +1,27 @@
 const Groq = require('groq-sdk');
 
+// ── Centralized Model Configuration ──────────────────────────────────────────
+// All model names are configured here via environment variables.
+// No other file in the codebase should hardcode a Groq model string.
+//
+// GROQ_MODEL        — primary model for analysis, study plans, staff reports
+// GROQ_MODEL_FAST   — lighter model for quick operations (notes, routines)
+//
+// Default: openai/gpt-oss-120b (primary), llama-3.1-8b-instant (fast)
+// ─────────────────────────────────────────────────────────────────────────────
+
 const GROQ_MODELS = {
-    FAST: 'llama-3.1-8b-instant',
-    BALANCED: 'llama-3.3-70b-versatile',
-    POWERFUL: 'llama-3.3-70b-versatile',
+    // Fast model for lightweight tasks (class notes, daily routines)
+    FAST:      process.env.GROQ_MODEL_FAST || 'llama-3.1-8b-instant',
+
+    // Balanced model — same as primary for consistency
+    BALANCED:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
+
+    // Powerful model — same as primary
+    POWERFUL:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
+
+    // Dedicated analysis model for student performance, study plans, staff reports
+    ANALYSIS:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
 };
 
 // Lazy singleton — created on first use so dotenv has already run by then
@@ -28,4 +46,3 @@ const groq = new Proxy({}, {
 });
 
 module.exports = { groq, GROQ_MODELS };
-

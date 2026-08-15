@@ -218,7 +218,7 @@ const aiValidateAnswers = async (req, res) => {
             return res.status(400).json({ message: 'questions array is required' });
         }
 
-        const { groq } = require('../config/groq');
+        const { groq, GROQ_MODELS } = require('../config/groq');
 
         const systemPrompt = `You are an expert teacher and question validator.
 Given a list of multiple-choice questions with their options, identify the correct answer index (0-based) for each question.
@@ -235,7 +235,7 @@ Rules:
         }`;
 
         const response = await groq.chat.completions.create({
-            model: 'llama-3.3-70b-versatile',
+            model: GROQ_MODELS.BALANCED,
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user',   content: userPrompt },

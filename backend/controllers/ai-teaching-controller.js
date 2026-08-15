@@ -11,6 +11,7 @@ const {
     generatePracticeQuestions,
 } = require('../services/ai-teaching-service');
 const AILog = require('../models/aiLogSchema');
+const { GROQ_MODELS } = require('../config/groq');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -81,7 +82,7 @@ const getNoteSuggestions = async (req, res) => {
         } finally {
             AILog.create({
                 userId: req.user.id, userRole: 'teacher', endpointName: 'generate-notes',
-                model: 'llama-3.1-8b-instant', promptSummary: `Subject: ${subjectName}, Topic: ${topic}`,
+                model: GROQ_MODELS.FAST, promptSummary: `Subject: ${subjectName}, Topic: ${topic}`,
                 responseSummary: result ? JSON.stringify(result).slice(0, 500) : '',
                 responseTimeMs: Date.now() - start1, success: !!result, fromCache: false,
             }).catch(() => {});
@@ -156,7 +157,7 @@ const detectWeakTopics = async (req, res) => {
         } finally {
             AILog.create({
                 userId: req.user.id, userRole: 'teacher', endpointName: 'detect-weak-topics',
-                model: 'llama-3.3-70b-versatile', promptSummary: `Subject: ${subjectName}, Class: ${classId}`,
+                model: GROQ_MODELS.BALANCED, promptSummary: `Subject: ${subjectName}, Class: ${classId}`,
                 responseSummary: result ? JSON.stringify(result.weakTopics || []).slice(0, 500) : '',
                 responseTimeMs: Date.now() - start2, success: !!result, fromCache: false,
             }).catch(() => {});
@@ -238,7 +239,7 @@ const generateQuestions = async (req, res) => {
         } finally {
             AILog.create({
                 userId: req.user.id, userRole: 'teacher', endpointName: 'generate-questions',
-                model: 'llama-3.3-70b-versatile', promptSummary: `Topic: ${topic}, Subject: ${subjectName}, Difficulty: ${difficulty}, Count: ${count}`,
+                model: GROQ_MODELS.BALANCED, promptSummary: `Topic: ${topic}, Subject: ${subjectName}, Difficulty: ${difficulty}, Count: ${count}`,
                 responseSummary: questions ? `${questions.length} questions generated` : '',
                 responseTimeMs: Date.now() - start3, success: !!questions, fromCache: false,
             }).catch(() => {});

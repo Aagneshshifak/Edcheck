@@ -58,6 +58,10 @@ const {
     getAttemptDetail,
     getFullAnalytics,
     explainDifficultyRec,
+    submitStudyPlanFeedback,
+    getStudyPlanFeedback,
+    runPostAssessmentAnalysis,
+    getStaffReports,
 } = require('../controllers/adaptiveLearningController');
 
 // ── Pipeline entry point ──────────────────────────────────────────────────────
@@ -80,6 +84,16 @@ router.get('/difficulty/:studentId/topic/:topic/explain', auth, explainDifficult
 router.post('/study-plan/:studentId', auth, generateStudyPlan);
 router.get('/study-plan/:studentId',  auth, getStudyPlan);
 
+// ── Study plan feedback loop ──────────────────────────────────────────────────
+router.post('/study-plan-feedback/:studentId', auth, submitStudyPlanFeedback);
+router.get('/study-plan-feedback/:studentId',  auth, getStudyPlanFeedback);
+
+// ── Post-assessment analysis (async — student analysis + study plan + staff report)
+router.post('/post-assessment-analysis', auth, runPostAssessmentAnalysis);
+
+// ── Staff reports ─────────────────────────────────────────────────────────────
+router.get('/staff-reports/:studentId', auth, getStaffReports);
+
 // ── Attempt detail ────────────────────────────────────────────────────────────
 router.get('/attempt/:id', auth, getAttemptDetail);
 
@@ -87,3 +101,4 @@ router.get('/attempt/:id', auth, getAttemptDetail);
 router.get('/analytics/:studentId', auth, getFullAnalytics);
 
 module.exports = router;
+

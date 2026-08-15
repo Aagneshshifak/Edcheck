@@ -2,8 +2,8 @@
  * Student AI Service
  * Uses Groq llama-3.3-70b-versatile for all student AI features.
  */
-const { groq } = require('../config/groq');
-const MODEL = 'llama-3.3-70b-versatile';
+const { groq, GROQ_MODELS } = require('../config/groq');
+const MODEL = GROQ_MODELS.BALANCED;
 
 async function callGroq(systemPrompt, userPrompt) {
     const response = await groq.chat.completions.create({
