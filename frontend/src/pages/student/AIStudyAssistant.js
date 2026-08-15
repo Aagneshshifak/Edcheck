@@ -354,13 +354,6 @@ const StudyPlanPanel = ({ studentId }) => {
             </Dialog>
         </Box>
     );
-};                </Box>
-            )}
-            {!plan && !loading && (
-                <Alert severity="info">Click "Generate Plan" to create your personalized study plan based on your test scores and learning progress.</Alert>
-            )}
-        </Box>
-    );
 };
 
 // ── 3. Daily Routine Panel ────────────────────────────────────────────────────
