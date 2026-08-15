@@ -5,6 +5,7 @@ import {
     CircularProgress, Alert, Chip, Card, CardContent,
     Divider, List, ListItem, ListItemText, Select, MenuItem,
     FormControl, InputLabel,
+    Dialog, DialogTitle, DialogContent, DialogActions, FormLabel, Radio, RadioGroup, FormControlLabel
 } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -141,6 +142,45 @@ const StudyPlanPanel = ({ studentId }) => {
         finally { setLoading(false); }
     };
 
+    const [fbOpen, setFbOpen] = useState(false);
+    const [fbTopic, setFbTopic] = useState('');
+    const [fbStatus, setFbStatus] = useState('completed');
+    const [fbUsefulness, setFbUsefulness] = useState('useful');
+    const [fbDifficulty, setFbDifficulty] = useState('appropriate');
+    const [fbComment, setFbComment] = useState('');
+    const [fbSubmitting, setFbSubmitting] = useState(false);
+
+    const handleOpenFeedback = (topic) => {
+        setFbTopic(topic);
+        setFbStatus('completed');
+        setFbUsefulness('useful');
+        setFbDifficulty('appropriate');
+        setFbComment('');
+        setFbOpen(true);
+    };
+
+    const handleSubmitFeedback = async () => {
+        if (!fbTopic || !plan?._id) return;
+        setFbSubmitting(true);
+        try {
+            await axiosInstance.post(`/api/adaptive/study-plan-feedback/${studentId}`, {
+                studyPlanId: plan._id,
+                feedback: [{
+                    topic: fbTopic,
+                    status: fbStatus,
+                    usefulness: fbUsefulness,
+                    difficulty_feedback: fbDifficulty,
+                    comment: fbComment
+                }]
+            });
+            setFbOpen(false);
+        } catch (e) {
+            setError(e.response?.data?.message || 'Failed to submit feedback');
+        } finally {
+            setFbSubmitting(false);
+        }
+    };
+
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -162,19 +202,75 @@ const StudyPlanPanel = ({ studentId }) => {
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             {plan && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Card variant="outlined"><CardContent>
-                        <Typography fontWeight={700} gutterBottom>📚 Weak Subject Focus</Typography>
-                        {plan.weakSubjectFocus?.map((s, i) => (
-                            <Box key={i} sx={{ mb: 1 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="body2" fontWeight={600}>{s.subject}</Typography>
-                                    <Chip label={`${s.hoursPerDay}h/day · ${s.priority}`} size="small"
-                                        color={s.priority === 'high' ? 'error' : s.priority === 'medium' ? 'warning' : 'success'} />
+                    {/* New Adaptive Study Plan Fields */}
+                    {plan.summary && (
+                        <Card variant="outlined"><CardContent>
+                            <Typography fontWeight={700} gutterBottom>📝 Overview Summary</Typography>
+                            <Typography variant="body2">{plan.summary}</Typography>
+                        </CardContent></Card>
+                    )}
+
+                    {plan.prerequisite_warnings?.length > 0 && (
+                        <Card variant="outlined" sx={{ borderColor: '#f59e0b' }}><CardContent>
+                            <Typography fontWeight={700} color="#f59e0b" gutterBottom>⚠️ Prerequisite Warnings</Typography>
+                            {plan.prerequisite_warnings.map((w, i) => (
+                                <Box key={i} sx={{ mb: 1 }}>
+                                    <Typography variant="body2" fontWeight={600}>{w.topic} requires {w.prerequisite}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{w.action}</Typography>
                                 </Box>
-                                {s.reason && <Typography variant="caption" color="text.secondary">{s.reason}</Typography>}
-                            </Box>
-                        ))}
-                    </CardContent></Card>
+                            ))}
+                        </CardContent></Card>
+                    )}
+
+                    {(plan.immediate_priorities?.length > 0 || plan.topicPriority?.length > 0) && (
+                        <Card variant="outlined"><CardContent>
+                            <Typography fontWeight={700} gutterBottom>🎯 Immediate Priorities & Feedback</Typography>
+                            {(plan.immediate_priorities || plan.topicPriority).map((s, i) => (
+                                <Box key={i} sx={{ mb: 2, p: 1.5, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.02)' }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                        <Typography variant="body2" fontWeight={700}>{s.topic}</Typography>
+                                        <Chip label={s.priority || 'medium'} size="small"
+                                            color={s.priority === 'critical' || s.priority === 'high' ? 'error' : s.priority === 'medium' ? 'warning' : 'success'} />
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary" display="block" mb={1}>{s.reason}</Typography>
+                                    {s.recommended_activity && <Typography variant="body2" sx={{ mb: 1 }}><strong>Activity:</strong> {s.recommended_activity}</Typography>}
+                                    <Button variant="outlined" size="mini" sx={{ fontSize: '0.7rem', py: 0.5 }} onClick={() => handleOpenFeedback(s.topic)}>
+                                        Submit Feedback
+                                    </Button>
+                                </Box>
+                            ))}
+                        </CardContent></Card>
+                    )}
+
+                    {plan.dailySchedule?.length > 0 && (
+                        <Card variant="outlined"><CardContent>
+                            <Typography fontWeight={700} gutterBottom>📅 Daily Study Schedule</Typography>
+                            {plan.dailySchedule.map((d, i) => (
+                                <Box key={i} sx={{ mb: 1.5 }}>
+                                    <Typography variant="body2" fontWeight={700} color="primary">{d.day} ({d.duration} min)</Typography>
+                                    <Typography variant="caption" display="block" color="text.secondary">Goal: {d.goal}</Typography>
+                                    <Typography variant="body2" sx={{ mt: 0.5 }}>Activities: {d.activities?.join(', ')}</Typography>
+                                </Box>
+                            ))}
+                        </CardContent></Card>
+                    )}
+
+                    {/* Fallback Legacy Study Plan Fields */}
+                    {plan.weakSubjectFocus?.length > 0 && (
+                        <Card variant="outlined"><CardContent>
+                            <Typography fontWeight={700} gutterBottom>📚 Weak Subject Focus</Typography>
+                            {plan.weakSubjectFocus?.map((s, i) => (
+                                <Box key={i} sx={{ mb: 1 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="body2" fontWeight={600}>{s.subject}</Typography>
+                                        <Chip label={`${s.hoursPerDay}h/day · ${s.priority}`} size="small"
+                                            color={s.priority === 'high' ? 'error' : s.priority === 'medium' ? 'warning' : 'success'} />
+                                    </Box>
+                                    {s.reason && <Typography variant="caption" color="text.secondary">{s.reason}</Typography>}
+                                </Box>
+                            ))}
+                        </CardContent></Card>
+                    )}
 
                     {plan.subjectImprovementPlan?.length > 0 && (
                         <Card variant="outlined"><CardContent>
@@ -195,16 +291,70 @@ const StudyPlanPanel = ({ studentId }) => {
                         </CardContent></Card>
                     )}
 
-                    <Card variant="outlined"><CardContent>
-                        <Typography fontWeight={700} gutterBottom>📅 Weekly Schedule</Typography>
-                        {plan.weeklySchedule && Object.entries(plan.weeklySchedule).map(([day, task]) => (
-                            <Box key={day} sx={{ display: 'flex', gap: 2, mb: 0.5 }}>
-                                <Typography variant="body2" fontWeight={600} sx={{ minWidth: 90, textTransform: 'capitalize' }}>{day}</Typography>
-                                <Typography variant="body2" color="text.secondary">{task}</Typography>
-                            </Box>
-                        ))}
-                    </CardContent></Card>
+                    {plan.weeklySchedule && !plan.dailySchedule && (
+                        <Card variant="outlined"><CardContent>
+                            <Typography fontWeight={700} gutterBottom>📅 Weekly Schedule</Typography>
+                            {Object.entries(plan.weeklySchedule).map(([day, task]) => (
+                                <Box key={day} sx={{ display: 'flex', gap: 2, mb: 0.5 }}>
+                                    <Typography variant="body2" fontWeight={600} sx={{ minWidth: 90, textTransform: 'capitalize' }}>{day}</Typography>
+                                    <Typography variant="body2" color="text.secondary">{task}</Typography>
+                                </Box>
+                            ))}
+                        </CardContent></Card>
+                    )}
                 </Box>
+            )}
+            {!plan && !loading && (
+                <Alert severity="info">Click "Generate Plan" to create your personalized study plan based on your test scores and learning progress.</Alert>
+            )}
+
+            {/* Study Plan Item Feedback Dialog */}
+            <Dialog open={fbOpen} onClose={() => setFbOpen(false)} PaperProps={{ sx: { bgcolor: '#1a1a1a', color: '#fff' } }}>
+                <DialogTitle>Submit Feedback for {fbTopic}</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
+                        <FormControl>
+                            <FormLabel sx={{ color: '#aaa', fontSize: '0.85rem', mb: 1 }}>Status</FormLabel>
+                            <RadioGroup row value={fbStatus} onChange={e => setFbStatus(e.target.value)}>
+                                <FormControlLabel value="completed" control={<Radio />} label="Completed" />
+                                <FormControlLabel value="partially_completed" control={<Radio />} label="Partial" />
+                                <FormControlLabel value="skipped" control={<Radio />} label="Skipped" />
+                            </RadioGroup>
+                        </FormControl>
+
+                        <FormControl>
+                            <FormLabel sx={{ color: '#aaa', fontSize: '0.85rem', mb: 1 }}>Usefulness</FormLabel>
+                            <RadioGroup row value={fbUsefulness} onChange={e => setFbUsefulness(e.target.value)}>
+                                <FormControlLabel value="very_useful" control={<Radio />} label="Very Useful" />
+                                <FormControlLabel value="useful" control={<Radio />} label="Useful" />
+                                <FormControlLabel value="neutral" control={<Radio />} label="Neutral" />
+                                <FormControlLabel value="not_useful" control={<Radio />} label="Not Useful" />
+                            </RadioGroup>
+                        </FormControl>
+
+                        <FormControl>
+                            <FormLabel sx={{ color: '#aaa', fontSize: '0.85rem', mb: 1 }}>Difficulty Feedback</FormLabel>
+                            <RadioGroup row value={fbDifficulty} onChange={e => setFbDifficulty(e.target.value)}>
+                                <FormControlLabel value="too_easy" control={<Radio />} label="Too Easy" />
+                                <FormControlLabel value="appropriate" control={<Radio />} label="Appropriate" />
+                                <FormControlLabel value="too_difficult" control={<Radio />} label="Too Hard" />
+                            </RadioGroup>
+                        </FormControl>
+
+                        <TextField label="Comments / Notes" fullWidth multiline rows={3} value={fbComment} onChange={e => setFbComment(e.target.value)}
+                            InputLabelProps={{ style: { color: '#888' } }} InputProps={{ style: { color: '#fff' } }} />
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setFbOpen(false)} color="inherit">Cancel</Button>
+                    <Button onClick={handleSubmitFeedback} variant="contained" disabled={fbSubmitting}>
+                        {fbSubmitting ? 'Submitting...' : 'Submit'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
+    );
+};                </Box>
             )}
             {!plan && !loading && (
                 <Alert severity="info">Click "Generate Plan" to create your personalized study plan based on your test scores and learning progress.</Alert>

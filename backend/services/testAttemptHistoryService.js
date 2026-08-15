@@ -471,6 +471,48 @@ async function triggerAdaptivePipeline({ historyRecord, test, submissions, attem
             }
         }
 
+        // ── Staff Report Generation & Notification Delivery ───────────────────
+        if (test.createdBy) {
+            try {
+                const staffReportService = require('./adaptiveLearning/staffReportingService');
+                const { getStudentAnalytics } = require('./adaptiveLearning/adaptivePipeline');
+                const analytics = await getStudentAnalytics(studentId);
+
+                const report = await staffReportService.generateStaffReport({
+                    studentId,
+                    staffId: String(test.createdBy),
+                    assessmentId: testId,
+                    assessmentTitle: test.title || 'Assessment',
+                    assessmentDate: historyRecord.submittedAt,
+                    subjectId: test.subject,
+                    schoolId: test.school,
+                    attemptDetailId: result.attemptDetail?._id,
+                    assessmentMetrics: result.attemptDetail?.metrics || {
+                        scorePercentage: historyRecord.percentage,
+                        totalCorrect: historyRecord.correctAnswers,
+                        totalQuestions: historyRecord.totalQuestions,
+                        completionRate: historyRecord.completionRate,
+                    },
+                    profile: analytics.profile || result.profile,
+                    masteryRecords: analytics.masteryRecords || [],
+                    trendRecords: analytics.trendRecords || [],
+                    diffRecs: analytics.latestDiffRecs || [],
+                });
+
+                // Create in-app notification for the teacher
+                const { createNotifications } = require('../controllers/notification-controller');
+                await createNotifications(
+                    [test.createdBy],
+                    `New performance report generated for student ${historyRecord.studentName || student.name} on assessment "${test.title}"`,
+                    'report', // using new 'report' type
+                    { reportId: report._id }
+                );
+                logger.info('TestAttemptHistoryService: Staff report and notification created', { studentId, staffId: test.createdBy });
+            } catch (reportErr) {
+                logger.error('TestAttemptHistoryService: Staff report generation failed', { error: reportErr.message });
+            }
+        }
+
     } catch (err) {
         logger.error('TestAttemptHistoryService: pipeline trigger failed', {
             error: err.message,

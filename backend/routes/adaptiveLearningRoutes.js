@@ -62,6 +62,7 @@ const {
     getStudyPlanFeedback,
     runPostAssessmentAnalysis,
     getStaffReports,
+    generateAdaptiveAssessment,
 } = require('../controllers/adaptiveLearningController');
 
 // ── Pipeline entry point ──────────────────────────────────────────────────────
@@ -90,6 +91,9 @@ router.get('/study-plan-feedback/:studentId',  auth, getStudyPlanFeedback);
 
 // ── Post-assessment analysis (async — student analysis + study plan + staff report)
 router.post('/post-assessment-analysis', auth, runPostAssessmentAnalysis);
+
+// ── Assessment generation (blueprint-based) ───────────────────────────────
+router.post('/generate-test', auth, generateAdaptiveAssessment);
 
 // ── Staff reports ─────────────────────────────────────────────────────────────
 router.get('/staff-reports/:studentId', auth, getStaffReports);

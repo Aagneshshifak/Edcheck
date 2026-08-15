@@ -11,7 +11,7 @@ const notificationSchema = new mongoose.Schema({
     recipientType: { type: String },
     type: {
         type: String,
-        enum: ["assignment", "test", "marks", "feedback", "announcement", "reminder", "substitute"],
+        enum: ["assignment", "test", "marks", "feedback", "announcement", "reminder", "substitute", "report"],
         required: true,
     },
     readStatus: { type: Boolean, default: false },

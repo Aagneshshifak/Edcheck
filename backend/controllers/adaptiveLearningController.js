@@ -33,6 +33,7 @@ const AdaptiveStudyPlan        = require('../models/adaptiveLearning/adaptiveStu
 
 const pipeline         = require('../services/adaptiveLearning/adaptivePipeline');
 const studyPlanService = require('../services/adaptiveLearning/studyPlanLLMService');
+const assessmentGenerator = require('../services/assessmentGenerator');
 const { logger }       = require('../utils/serverLogger');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -697,6 +698,30 @@ const getStaffReports = async (req, res) => {
         const staffId = req.user.role === 'Admin' ? undefined : req.user.id;
 
         if (staffId) {
+            // Strict RBAC: Check if teacher is assigned to the student's class
+            const Teacher = require('../models/teacherSchema');
+            const Student = require('../models/studentSchema');
+            const [teacher, student] = await Promise.all([
+                Teacher.findById(staffId).lean(),
+                Student.findById(studentId).lean()
+            ]);
+
+            if (!teacher || !student) {
+                return sendError(res, 403, 'Access denied: student or teacher not found');
+            }
+
+            const classIds = [
+                ...(teacher.teachClasses || []).map(id => id.toString()),
+                teacher.teachSclass ? teacher.teachSclass.toString() : null
+            ].filter(Boolean);
+
+            const studentClassId = student.classId || student.sclassName;
+            const isAuthorized = studentClassId && classIds.includes(studentClassId.toString());
+
+            if (!isAuthorized) {
+                return sendError(res, 403, 'Access denied: student is not assigned to your classes');
+            }
+
             const reports = await staffReportService.getStudentReports(staffId, studentId, {
                 limit: parseInt(req.query.limit) || 20,
                 subjectId: req.query.subjectId,
@@ -716,6 +741,88 @@ const getStaffReports = async (req, res) => {
     }
 };
 
+// ── POST /api/adaptive/generate-test ──────────────────────────────────────────
+const generateAdaptiveAssessment = async (req, res) => {
+    try {
+        const { studentId, subjectId, totalQuestions = 10, durationMinutes = 30 } = req.body;
+
+        if (!studentId || !isValidObjectId(studentId)) {
+            return sendError(res, 400, 'studentId must be a valid MongoDB ObjectId');
+        }
+        if (!subjectId || !isValidObjectId(subjectId)) {
+            return sendError(res, 400, 'subjectId must be a valid MongoDB ObjectId');
+        }
+
+        const Student = require('../models/studentSchema');
+        const student = await Student.findById(studentId).lean();
+        if (!student) {
+            return sendError(res, 404, 'Student not found');
+        }
+
+        const classId = student.classId || student.sclassName;
+        const schoolId = student.schoolId || student.school;
+
+        const Subject = require('../models/subjectSchema');
+        const subjectDoc = await Subject.findById(subjectId).lean();
+        if (!subjectDoc) {
+            return sendError(res, 404, 'Subject not found');
+        }
+
+        const subjects = [{
+            name: subjectDoc.subjectName || subjectDoc.subName || 'Subject',
+            topics: subjectDoc.topics || []
+        }];
+
+        const analytics = await pipeline.getStudentAnalytics(studentId);
+
+        const test = await assessmentGenerator.generateAssessment({
+            studentId,
+            subjectId,
+            classId,
+            schoolId,
+            totalQuestions,
+            durationMinutes,
+            dskp: analytics.profile ? {
+                overallMastery: analytics.profile.scores?.overallMastery || 0,
+                readinessScore: analytics.profile.scores?.readinessScore || 0,
+                consistencyScore: analytics.profile.scores?.consistencyScore || 0,
+                engagementScore: analytics.profile.scores?.engagementScore || 0,
+                confidenceScore: analytics.profile.scores?.confidenceScore || 0,
+                learningPace: analytics.profile.scores?.learningPace || 0,
+                retentionEstimate: analytics.profile.scores?.retentionEstimate || 0,
+                weakTopics: analytics.profile.weakTopics || [],
+                strongTopics: analytics.profile.strongTopics || [],
+                topicDetails: analytics.masteryRecords || [],
+                difficultyRecommendations: analytics.latestDiffRecs || []
+            } : {
+                overallMastery: 0,
+                readinessScore: 0,
+                consistencyScore: 0,
+                engagementScore: 0,
+                confidenceScore: 0,
+                learningPace: 0,
+                retentionEstimate: 0,
+                weakTopics: [],
+                strongTopics: [],
+                topicDetails: [],
+                difficultyRecommendations: []
+            },
+            subjects
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Adaptive assessment generated successfully',
+            testId: test._id,
+            test
+        });
+
+    } catch (err) {
+        logger.error('generateAdaptiveAssessment: error', { error: err.message });
+        return sendError(res, 500, err.message);
+    }
+};
+
 module.exports = {
     submitAdaptiveAttempt,
     getStudentProfile,
@@ -731,4 +838,5 @@ module.exports = {
     getStudyPlanFeedback,
     runPostAssessmentAnalysis,
     getStaffReports,
+    generateAdaptiveAssessment,
 };
