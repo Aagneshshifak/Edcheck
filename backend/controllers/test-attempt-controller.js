@@ -30,7 +30,7 @@ const calculateScore = (questions, answers) => {
 // Submit a test attempt (student)
 const submitAttempt = async (req, res) => {
     try {
-        const { studentId, testId, answers, submissionType, startedAt } = req.body;
+        const { studentId, testId, answers, submissionType, startedAt, proctoring } = req.body;
 
         // Check for duplicate attempt
         const existing = await TestAttempt.findOne({ studentId, testId });
@@ -56,6 +56,7 @@ const submitAttempt = async (req, res) => {
             submittedAt: new Date(),
             submissionType,
             startedAt,
+            proctoring,
         });
 
         const saved = await attempt.save();
@@ -94,7 +95,9 @@ const getAttemptsByStudent = async (req, res) => {
 // Get a single attempt by ID (full detail)
 const getAttemptById = async (req, res) => {
     try {
-        const attempt = await TestAttempt.findById(req.params.id);
+        const attempt = await TestAttempt.findById(req.params.id)
+            .populate('studentId', 'name rollNum')
+            .populate('testId');
         if (!attempt) {
             return res.status(404).json({ message: "Attempt not found." });
         }

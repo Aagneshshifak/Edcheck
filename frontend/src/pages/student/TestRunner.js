@@ -122,6 +122,10 @@ const TestRunner = () => {
                 submissionType: type,
                 startedAt,
                 totalDurationMs,
+                proctoring: {
+                    tabSwitches: tabWarnings,
+                    cameraReady: camReady
+                }
             });
             navigate(`/Student/test/${testId}/result`);
         } catch (err) {

@@ -17,6 +17,10 @@ const testAttemptSchema = new mongoose.Schema({
     submittedAt:    { type: Date },
     submissionType: { type: String, enum: ["manual", "auto"] },
     startedAt:      { type: Date },
+    proctoring: {
+        tabSwitches: { type: Number, default: 0 },
+        cameraReady: { type: Boolean, default: true }
+    }
 }, { timestamps: true });
 
 testAttemptSchema.index({ studentId: 1, testId: 1 }, { unique: true });

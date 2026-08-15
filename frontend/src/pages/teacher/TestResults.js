@@ -12,12 +12,13 @@ import {
     CircularProgress,
     Chip,
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import API_URL from '../../config/api';
 
 const TestResults = () => {
     const { testId } = useParams();
+    const navigate = useNavigate();
     const [attempts, setAttempts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -70,10 +71,22 @@ const TestResults = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {attempts.map((attempt) => (
-                                <TableRow key={attempt._id} hover>
+                            {attempts.map((attempt) => {
+                                const hasCheatingWarning = attempt.proctoring && (attempt.proctoring.tabSwitches > 0 || attempt.proctoring.cameraReady === false);
+                                return (
+                                <TableRow 
+                                    key={attempt._id} 
+                                    hover
+                                    onClick={() => navigate(`/Teacher/tests/${testId}/attempt/${attempt._id}`)}
+                                    sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                                >
                                     <TableCell>
-                                        {attempt.studentId?.name || '—'}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {attempt.studentId?.name || '—'}
+                                            {hasCheatingWarning && (
+                                                <Chip label="Warning" color="error" size="small" sx={{ height: 20, fontSize: '0.65rem' }} />
+                                            )}
+                                        </Box>
                                     </TableCell>
                                     <TableCell>
                                         {attempt.studentId?.rollNum || '—'}
@@ -90,7 +103,7 @@ const TestResults = () => {
                                     </TableCell>
                                     <TableCell>{formatDate(attempt.submittedAt)}</TableCell>
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                 </TableContainer>
