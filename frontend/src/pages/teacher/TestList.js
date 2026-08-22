@@ -115,21 +115,38 @@ const TestList = () => {
                                                 : qCount}
                                         </TableCell>
                                         <TableCell>
-                                            <Chip
-                                                label={test.isActive ? 'Active' : 'Inactive'}
-                                                size="small"
-                                                color={test.isActive ? 'success' : 'default'}
-                                            />
+                                            {test.status === 'REQUIRES_REVIEW' ? (
+                                                <Chip label="Requires Review" size="small" color="warning" />
+                                            ) : test.status === 'PUBLISHED' ? (
+                                                <Chip label="Published" size="small" color="success" />
+                                            ) : (
+                                                <Chip label={test.status || (test.isActive ? 'Active' : 'Inactive')} size="small" color="default" />
+                                            )}
                                         </TableCell>
                                         <TableCell align="center">
-                                            <Tooltip title={needsQuestions ? 'Add Questions' : 'Edit Questions'}>
-                                                <IconButton
-                                                    color={needsQuestions ? 'warning' : 'primary'}
-                                                    onClick={() => navigate(`/Teacher/tests/${test._id}/questions`)}
-                                                >
-                                                    {needsQuestions ? <AddIcon /> : <EditIcon />}
-                                                </IconButton>
-                                            </Tooltip>
+                                            {test.status === 'REQUIRES_REVIEW' && (
+                                                <Tooltip title="Review Generated Assessment">
+                                                    <Button 
+                                                        size="small" 
+                                                        variant="contained" 
+                                                        color="warning" 
+                                                        sx={{ mr: 1, textTransform: 'none' }}
+                                                        onClick={() => navigate(`/Teacher/tests/${test._id}/review`)}
+                                                    >
+                                                        Review AI
+                                                    </Button>
+                                                </Tooltip>
+                                            )}
+                                            {test.status !== 'REQUIRES_REVIEW' && (
+                                                <Tooltip title={needsQuestions ? 'Add Questions' : 'Edit Questions'}>
+                                                    <IconButton
+                                                        color={needsQuestions ? 'warning' : 'primary'}
+                                                        onClick={() => navigate(`/Teacher/tests/${test._id}/questions`)}
+                                                    >
+                                                        {needsQuestions ? <AddIcon /> : <EditIcon />}
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
                                             <Tooltip title="View Results">
                                                 <IconButton color="primary" onClick={() => navigate(`/Teacher/tests/${test._id}/results`)}>
                                                     <BarChartIcon />

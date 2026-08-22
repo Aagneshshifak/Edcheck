@@ -106,6 +106,7 @@ function evaluateQuestion(questionDef, submission, questionIndex) {
         difficulty   = 'medium',
         marks        = 1,
         correctAnswer,
+        curriculumMeta = {},
     } = questionDef;
 
     const {
@@ -160,6 +161,17 @@ function evaluateQuestion(questionDef, submission, questionIndex) {
                 break;
             }
 
+            case 'sentence_answer': {
+                // sentence_answer is NOT deterministically graded.
+                // It is sent to the AI evaluator and then teacher-validated.
+                // Pipeline uses score=0 / partialCredit=0 as a placeholder until
+                // teacher validates. DSKP is updated only after validation.
+                isCorrect       = false;
+                partialCredit   = 0;
+                evaluationNotes = 'Sentence/descriptive answer — pending AI evaluation and teacher validation. Score deferred.';
+                break;
+            }
+
             default:
                 evaluationNotes = `Unknown question type: ${questionType}`;
         }
@@ -170,7 +182,11 @@ function evaluateQuestion(questionDef, submission, questionIndex) {
     return {
         questionIndex,
         questionType,
-        topic,
+        topic, // Legacy/fallback
+        domain:         curriculumMeta.domain || null,
+        chapter:        curriculumMeta.chapter || topic,
+        subtopic:       curriculumMeta.subtopic || questionDef.subtopic || null,
+        concept:        curriculumMeta.concept || null,
         difficulty,
         maxMarks:       marks,
         studentAnswer,
@@ -178,6 +194,8 @@ function evaluateQuestion(questionDef, submission, questionIndex) {
         isCorrect,
         isSkipped,
         partialCredit,
+        // Flag: true for sentence_answer — needs AI eval + teacher validation before DSKP
+        requiresAIEval: questionType === 'sentence_answer',
         responseTimeMs: Math.max(0, Number(responseTimeMs) || 0),
         confidence:     confidence !== null ? Math.min(5, Math.max(1, Number(confidence))) : null,
         attemptCount:   Math.max(1, Number(attemptCount) || 1),
@@ -210,7 +228,14 @@ function computeAggregateMetrics(questionDetails) {
     for (const qd of questionDetails) {
         maxScore += qd.maxMarks;
 
-        const tb = topicBreakdown[qd.topic] = topicBreakdown[qd.topic] || {
+        // Group by subtopic if available, else chapter, else topic
+        const breakdownKey = qd.subtopic || qd.chapter || qd.topic;
+
+        const tb = topicBreakdown[breakdownKey] = topicBreakdown[breakdownKey] || {
+            domain: qd.domain,
+            chapter: qd.chapter,
+            subtopic: qd.subtopic,
+            concept: qd.concept,
             correct: 0, total: 0, skipped: 0, totalTime: 0,
         };
         tb.total++;

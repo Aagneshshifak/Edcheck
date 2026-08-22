@@ -16,6 +16,7 @@
  *   B. StudyPlanSchema
  *   C. StaffReportSchema
  *   D. AssessmentBlueprintSchema
+ *   E. QuestionValidationBatchSchema
  */
 
 'use strict';
@@ -87,6 +88,10 @@ const ASSESSMENT_BLUEPRINT_FIELDS = [
     { field: 'duration_minutes',       type: 'number',  required: false, default: 30 },
     { field: 'subject_distribution',   type: 'array',   required: true,  default: [] },
     { field: 'adaptive_rationale',     type: 'object',  required: false, default: {} },
+];
+
+const QUESTION_VALIDATION_BATCH_FIELDS = [
+    { field: 'results',              type: 'array',   required: true,  default: [] },
 ];
 
 // ── Core validation logic ─────────────────────────────────────────────────────
@@ -260,6 +265,22 @@ function validateAssessmentBlueprint(raw) {
 }
 
 /**
+ * Validate a question validation batch response.
+ *
+ * @param {string} raw — raw LLM output string
+ * @returns {{ valid: boolean, data: Object|null, errors: string[] }}
+ */
+function validateQuestionValidationBatch(raw) {
+    try {
+        const parsed = parseRawJSON(raw);
+        const result = validateAndRepair(parsed, QUESTION_VALIDATION_BATCH_FIELDS);
+        return { valid: result.valid, data: result.repaired, errors: result.errors };
+    } catch (err) {
+        return { valid: false, data: null, errors: [`Parse error: ${err.message}`] };
+    }
+}
+
+/**
  * Wrapper that attempts validation, repair, and signals whether retry is needed.
  *
  * @param {string} raw — raw LLM output
@@ -268,10 +289,11 @@ function validateAssessmentBlueprint(raw) {
  */
 function validateLLMOutput(raw, schemaType) {
     const validators = {
-        student_analysis:      validateStudentAnalysis,
-        study_plan:            validateStudyPlan,
-        staff_report:          validateStaffReport,
-        assessment_blueprint:  validateAssessmentBlueprint,
+        student_analysis:          validateStudentAnalysis,
+        study_plan:                validateStudyPlan,
+        staff_report:              validateStaffReport,
+        assessment_blueprint:      validateAssessmentBlueprint,
+        question_validation_batch: validateQuestionValidationBatch,
     };
 
     const validator = validators[schemaType];
@@ -306,5 +328,6 @@ module.exports = {
     validateStudyPlan,
     validateStaffReport,
     validateAssessmentBlueprint,
+    validateQuestionValidationBatch,
     validateLLMOutput,
 };

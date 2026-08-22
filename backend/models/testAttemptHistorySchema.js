@@ -25,8 +25,9 @@ const questionResponseSchema = new mongoose.Schema({
     questionId:      { type: mongoose.Schema.Types.ObjectId },  // optional ref to question
     questionIndex:   { type: Number, required: true },          // 0-based position
     questionText:    { type: String },                          // snapshot (immutable copy)
-    questionType:    { type: String, enum: ['mcq', 'true_false', 'numerical', 'short_answer'], default: 'mcq' },
+    questionType:    { type: String, enum: ['mcq', 'true_false', 'numerical', 'short_answer', 'sentence_answer'], default: 'mcq' },
     topic:           { type: String, default: 'General' },
+    subtopic:        { type: String, default: null },
     difficulty:      { type: String, enum: ['easy', 'medium', 'hard', 'challenge'], default: 'medium' },
 
     studentAnswer:   { type: mongoose.Schema.Types.Mixed, default: null },
@@ -36,6 +37,11 @@ const questionResponseSchema = new mongoose.Schema({
     marksObtained:   { type: Number, default: 0 },
     maxMarks:        { type: Number, default: 1 },
     partialCredit:   { type: Number, min: 0, max: 1, default: null },
+
+    // For sentence_answer questions: link to the SentenceAnswerEval document
+    aiEvalId:        { type: mongoose.Schema.Types.ObjectId, ref: 'sentenceAnswerEval', default: null },
+    // Whether this question requires teacher validation before DSKP update
+    requiresValidation: { type: Boolean, default: false },
 
     responseTimeMs:  { type: Number, default: 0 },
     numberOfAttempts: { type: Number, default: 1 },   // answer changes before final submit
@@ -151,6 +157,22 @@ const testAttemptHistorySchema = new mongoose.Schema({
     // ── Link to adaptive pipeline outputs ─────────────────────────────────
     adaptiveDetailId: { type: mongoose.Schema.Types.ObjectId, ref: 'quizAttemptDetail' },
     profileVersion:   { type: Number, default: null },  // StudentLearningProfile.version after update
+
+    // ── Assessment completion state ────────────────────────────────────────
+    // COMPLETED           = all objective questions graded, no sentence answers
+    // AI_REVIEW_PENDING   = sentence answers submitted, AI evaluation in progress
+    // TEACHER_REVIEW_PENDING = AI eval complete, awaiting teacher validation
+    // FULLY_VALIDATED     = all sentence answers teacher-validated, DSKP fully updated
+    assessmentCompletionStatus: {
+        type:    String,
+        enum:    ['COMPLETED', 'AI_REVIEW_PENDING', 'TEACHER_REVIEW_PENDING', 'FULLY_VALIDATED'],
+        default: 'COMPLETED',
+    },
+
+    // Links to SentenceAnswerEval documents for this attempt (one per sentence question)
+    sentenceEvalIds:      { type: [mongoose.Schema.Types.ObjectId], ref: 'sentenceAnswerEval', default: [] },
+    // Count of sentence evals still awaiting teacher validation
+    pendingSentenceEvals: { type: Number, default: 0 },
 
 }, {
     timestamps: true,

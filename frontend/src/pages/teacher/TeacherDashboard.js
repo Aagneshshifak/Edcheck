@@ -40,6 +40,8 @@ import TeacherNotices from './TeacherNotices';
 import AIDashboard from './AIDashboard';
 import TestAttemptHistoryDashboard from './TestAttemptHistoryDashboard';
 import TeacherStudentAttempt from './TeacherStudentAttempt';
+import SentenceReviewDashboard from './SentenceReviewDashboard';
+import TeacherTestValidation from './TeacherTestValidation';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -108,12 +110,13 @@ const TeacherDashboard = () => {
                         <Route path="/Teacher/tests" element={<TestList />} />
                         <Route path="/Teacher/tests/create" element={<CreateTest />} />
                         <Route path="/Teacher/tests/:testId/questions" element={<AddQuestions />} />
-                        <Route path="/Teacher/tests/:testId/results" element={<TestResults />} />
                         <Route path="/Teacher/tests/:testId/attempt/:attemptId" element={<TeacherStudentAttempt />} />
                         <Route path="/Teacher/tests/:testId/history" element={<TestAttemptHistoryDashboard />} />
+                        <Route path="/Teacher/sentence-review" element={<SentenceReviewDashboard />} />
 
                         <Route path="/Teacher/class/student/:id/progress" element={<LearningProgressChart viewerRole="Teacher" />} />
-                        <Route path="/Teacher/assignments" element={<TeacherAssignments />} />
+                        <Route path="/Teacher/tests/:testId/results" element={<TestResults />} />
+                        <Route path="/Teacher/tests/:testId/review" element={<TeacherTestValidation />} />
                         <Route path="/Teacher/attendance" element={<TakeAttendance />} />
                         <Route path="/Teacher/weak-students" element={<WeakStudentsPanel />} />
                         <Route path="/Teacher/analytics" element={<TeacherAnalytics />} />

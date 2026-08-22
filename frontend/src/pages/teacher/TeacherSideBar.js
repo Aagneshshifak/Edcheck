@@ -20,7 +20,8 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import GradeIcon from '@mui/icons-material/Grade';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import AutoAwesomeIcon    from '@mui/icons-material/AutoAwesome';
+import PsychologyIcon     from '@mui/icons-material/Psychology';
 
 const ACCENT       = '#ffffff';
 const ACCENT_DIM   = 'rgba(255,255,255,0.1)';
@@ -165,6 +166,7 @@ const TeacherSideBar = () => {
             <Section label="Analytics" />
             <NavItem icon={<BarChartIcon fontSize="small" />} label="Performance" path="/Teacher/analytics" />
             <NavItem icon={<WarningAmberIcon fontSize="small" />} label="Weak Students" path="/Teacher/weak-students" />
+            <NavItem icon={<PsychologyIcon fontSize="small" />} label="Descriptive Review" path="/Teacher/sentence-review" />
             <NavItem icon={<AutoAwesomeIcon fontSize="small" />} label="AI Assistant" path="/Teacher/ai-dashboard" />
 
             <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />

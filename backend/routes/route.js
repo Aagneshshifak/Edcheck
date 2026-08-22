@@ -49,6 +49,7 @@ const { getAnalyticsOverview, getLeaderboard, getSubjectDifficulty, getTeacherPe
 const { getStudentPerformance, getClassAttendanceReport, getTeacherActivity, getAssignmentCompletion } = require('../controllers/admin-report-controller.js');
 const { createTest, getTestsByClass, getTestsByTeacher, getTestById, getTestsForStudent, updateTest, updateTestQuestions, publishTest, aiValidateAnswers, deleteTest } = require('../controllers/test-controller.js');
 const { submitAttempt, getAttemptsByTest, getAttemptsByStudent, getAttemptById } = require('../controllers/test-attempt-controller.js');
+const { getPendingEvals, getEvalById, acceptEval, modifyEval, rejectEval, getEvalSummary } = require('../controllers/sentence-eval-controller.js');
 
 const { addTeacher, updateTeacher, removeTeacher, getTeacherPerformance: getTeacherIndividualPerformance, bulkDeleteTeachers, updateTeacherStatus, resetTeacherPassword } = require('../controllers/admin-teacher-controller.js');
 const { addClass, updateClass, removeClass, getClassDetail, toggleClassStatus } = require('../controllers/admin-class-controller.js');
@@ -422,5 +423,17 @@ router.get('/api/ai/admin/cache-stats', auth, async (req, res) => {
 const { getAILogs, getAILogStats } = require('../controllers/ai-log-controller');
 router.get('/api/ai/logs',       auth, getAILogs);
 router.get('/api/ai/logs/stats', auth, getAILogStats);
+
+// ── Teacher: Sentence Answer Validation ───────────────────────────────────────
+// GET all pending evals (teacher's subjects)
+router.get('/api/teacher/sentence-evals/pending',             auth, getPendingEvals);
+// GET summary counts
+router.get('/api/teacher/sentence-evals/summary',             auth, getEvalSummary);
+// GET specific eval detail
+router.get('/api/teacher/sentence-evals/:evalId',             auth, getEvalById);
+// Teacher actions
+router.put('/api/teacher/sentence-evals/:evalId/accept',      auth, acceptEval);
+router.put('/api/teacher/sentence-evals/:evalId/modify',      auth, modifyEval);
+router.put('/api/teacher/sentence-evals/:evalId/reject',      auth, rejectEval);
 
 module.exports = router;

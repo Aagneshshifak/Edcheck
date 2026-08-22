@@ -47,7 +47,12 @@ const topicMasterySchema = new mongoose.Schema({
     subjectId:  { type: mongoose.Schema.Types.ObjectId, ref: 'subject' },
     schoolId:   { type: mongoose.Schema.Types.ObjectId, ref: 'admin' },
 
-    topic:      { type: String, required: true },
+    // ── Curriculum Hierarchy (Subtopic-aware DSKP) ──────────────────────────
+    domain:     { type: String },
+    chapter:    { type: String },
+    topic:      { type: String, required: true }, // For legacy, or mapped to chapter/subtopic
+    subtopic:   { type: String },
+    concept:    { type: String },
 
     // ── Current mastery state ─────────────────────────────────────────────
     masteryScore:  { type: Number, default: 0, min: 0, max: 1 },
@@ -96,7 +101,8 @@ const topicMasterySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // ── Indexes ───────────────────────────────────────────────────────────────────
-topicMasterySchema.index({ studentId: 1, topic: 1 }, { unique: true });
+topicMasterySchema.index({ studentId: 1, chapter: 1, subtopic: 1 });
+topicMasterySchema.index({ studentId: 1, topic: 1 }); // Legacy fallback
 topicMasterySchema.index({ studentId: 1, masteryScore: 1 });
 topicMasterySchema.index({ studentId: 1, subjectId: 1 });
 topicMasterySchema.index({ schoolId: 1 });

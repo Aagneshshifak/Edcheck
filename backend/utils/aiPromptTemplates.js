@@ -463,15 +463,59 @@ ${(dskp.difficultyRecommendations || []).map(d => `  - ${d.topic}: ${d.difficult
 Generate a balanced blueprint following the JSON schema exactly. Ensure all subjects and important topics have coverage.`;
 }
 
+// ── E. QUESTION BATCH VALIDATOR ──────────────────────────────────────────────────
+
+const QUESTION_VALIDATION_SYSTEM_PROMPT = `You are an expert strict academic evaluator responsible for validating generated assessment questions.
+You will receive a batch of generated questions (JSON array) and their intended curriculum metadata.
+
+CRITICAL RULES:
+1. Validate every single question independently.
+2. For MCQs: Ensure exactly ONE option is correct. The correct answer index must correspond to the only correct option. All other options must be unambiguously incorrect. Ensure options are semantically distinct.
+3. For Numerical: Ensure sufficient information exists and the correct answer is mathematically sound.
+4. For True/False: Ensure the statement is academically sound and non-ambiguous.
+5. For Sentence/Descriptive: Ensure 'expectedAnswer' and 'keyConcepts' are present and accurately address the prompt.
+6. Check for curriculum alignment. The question must strictly belong to the specified Class, Subject, Domain, Chapter, and Subtopic.
+7. Output strict JSON only.
+
+RESPONSE FORMAT (Strict JSON):
+{
+  "results": [
+    {
+      "id": "question_id_provided_in_prompt",
+      "valid": true/false,
+      "questionQuality": 0.0 to 1.0,
+      "subjectMatch": true/false,
+      "topicMatch": true/false,
+      "subtopicMatch": true/false,
+      "difficultyMatch": true/false,
+      "answerCorrect": true/false,
+      "optionsValid": true/false,
+      "duplicate": false,
+      "issues": ["string issue 1", "string issue 2"],
+      "reason": "Brief explanation of validity or issues"
+    }
+  ]
+}`;
+
+function buildQuestionValidationPrompt(questionsBatch) {
+    return \`Please validate the following batch of \${questionsBatch.length} questions.
+Return a JSON array named 'results' with exactly \${questionsBatch.length} objects corresponding to these IDs.
+
+QUESTIONS TO VALIDATE:
+\${JSON.stringify(questionsBatch, null, 2)}\`;
+}
+
 module.exports = {
     // System prompts
     STUDENT_ANALYSIS_SYSTEM_PROMPT,
     STUDY_PLAN_SYSTEM_PROMPT,
     STAFF_REPORT_SYSTEM_PROMPT,
     ASSESSMENT_BLUEPRINT_SYSTEM_PROMPT,
+    QUESTION_VALIDATION_SYSTEM_PROMPT,
 
     // Prompt builders
     buildStudentAnalysisPrompt,
     buildStaffReportPrompt,
     buildAssessmentBlueprintPrompt,
+    buildQuestionValidationPrompt,
 };

@@ -47,6 +47,9 @@ function buildDSKPContext({ profile, masteryRecords, trendRecords, diffRecs }) {
         .sort((a, b) => a.masteryScore - b.masteryScore)
         .slice(0, 10)
         .map(m => ({
+            domain: m.domain,
+            chapter: m.chapter,
+            subtopic: m.subtopic,
             topic: m.topic,
             masteryScore: m.masteryScore,
             trendType: trendByTopic[m.topic]?.trendType || 'insufficient_data',
@@ -56,7 +59,13 @@ function buildDSKPContext({ profile, masteryRecords, trendRecords, diffRecs }) {
         .filter(m => m.masteryScore >= 0.65)
         .sort((a, b) => b.masteryScore - a.masteryScore)
         .slice(0, 5)
-        .map(m => ({ topic: m.topic, masteryScore: m.masteryScore }));
+        .map(m => ({ 
+            domain: m.domain,
+            chapter: m.chapter,
+            subtopic: m.subtopic,
+            topic: m.topic, 
+            masteryScore: m.masteryScore 
+        }));
 
     const alerts = (profile?.alerts || [])
         .filter(a => !a.isResolved)

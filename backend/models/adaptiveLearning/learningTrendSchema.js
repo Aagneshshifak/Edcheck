@@ -33,7 +33,13 @@ const learningTrendSchema = new mongoose.Schema({
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'student',  required: true },
     subjectId: { type: mongoose.Schema.Types.ObjectId, ref: 'subject' },
     schoolId:  { type: mongoose.Schema.Types.ObjectId, ref: 'admin' },
+    
+    // ── Curriculum Hierarchy ─────────────────────────────────────────────
+    domain:    { type: String },
+    chapter:   { type: String },
     topic:     { type: String, required: true },
+    subtopic:  { type: String },
+    concept:   { type: String },
 
     // ── Trend classification ──────────────────────────────────────────────
     trendType: {
@@ -80,7 +86,8 @@ const learningTrendSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // ── Indexes ───────────────────────────────────────────────────────────────────
-learningTrendSchema.index({ studentId: 1, topic: 1 }, { unique: true });
+learningTrendSchema.index({ studentId: 1, chapter: 1, subtopic: 1 });
+learningTrendSchema.index({ studentId: 1, topic: 1 });
 learningTrendSchema.index({ studentId: 1, trendType: 1 });
 learningTrendSchema.index({ studentId: 1, subjectId: 1 });
 

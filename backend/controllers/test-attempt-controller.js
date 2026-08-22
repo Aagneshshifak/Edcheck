@@ -1,23 +1,28 @@
-const Test        = require("../models/testSchema");
-const TestAttempt = require("../models/testAttemptSchema");
-const { invalidateByTestId } = require('../services/ai-cache-service');
+const Test                              = require("../models/testSchema");
+const TestAttempt                       = require("../models/testAttemptSchema");
+const Notification                      = require("../models/notificationSchema");
+const { invalidateByTestId }            = require('../services/ai-cache-service');
+const { evaluateAllSentenceAnswers }    = require('../services/sentenceAnswerEvaluator');
+const { logger }                        = require('../utils/serverLogger');
 
-// ── Score Calculator ─────────────────────────────────────────────────────────
+// ── Score Calculator ──────────────────────────────────────────────────────────
 
 /**
- * Calculate score from questions and submitted answers.
- * @param {Array} questions - array of question objects with correctAnswer and marks
- * @param {Array} answers   - array of submitted answer indices
- * @returns {number} total score
+ * Deterministic score calculator.
+ * Handles MCQ, true_false, numerical.
+ * Skips short_answer, file_upload, and sentence_answer (needs AI/teacher eval).
+ *
+ * @param {Array} questions
+ * @param {Array} answers
+ * @returns {number} total auto-graded score
  */
 const calculateScore = (questions, answers) => {
     let score = 0;
     for (let i = 0; i < questions.length; i++) {
-        // Skip auto-grading for subjective questions
-        if (questions[i].questionType === 'short_answer' || questions[i].questionType === 'file_upload') {
-            continue; // Needs manual grading, gives 0 auto score for now
-        }
-        // Auto-grade MCQs
+        const qt = questions[i].questionType;
+        // Skip all subjective types
+        if (['short_answer', 'file_upload', 'sentence_answer'].includes(qt)) continue;
+        // Auto-grade objective types
         if (answers[i] === questions[i].correctAnswer) {
             score += questions[i].marks;
         }
@@ -25,12 +30,12 @@ const calculateScore = (questions, answers) => {
     return score;
 };
 
-// ── Attempt Controllers ──────────────────────────────────────────────────────
+// ── Attempt Controllers ───────────────────────────────────────────────────────
 
 // Submit a test attempt (student)
 const submitAttempt = async (req, res) => {
     try {
-        const { studentId, testId, answers, submissionType, startedAt, proctoring } = req.body;
+        const { studentId, testId, answers, submissions, submissionType, startedAt, proctoring } = req.body;
 
         // Check for duplicate attempt
         const existing = await TestAttempt.findOne({ studentId, testId });
@@ -39,18 +44,23 @@ const submitAttempt = async (req, res) => {
         }
 
         // Fetch test to get questions and compute totalMarks
-        const test = await Test.findById(testId);
+        const test = await Test.findById(testId).populate('subject');
         if (!test) {
             return res.status(404).json({ message: "Test not found." });
         }
 
         const totalMarks = test.questions.reduce((sum, q) => sum + q.marks, 0);
-        const score      = calculateScore(test.questions, answers);
+
+        // Use submissions array if provided (preferred), fall back to answers
+        const submissionArray = Array.isArray(submissions) ? submissions : (Array.isArray(answers) ? answers.map(a => ({ studentAnswer: a })) : []);
+        const answersForScore = submissionArray.map(s => (s && typeof s === 'object' ? s.studentAnswer : s));
+
+        const score = calculateScore(test.questions, answersForScore);
 
         const attempt = new TestAttempt({
             studentId,
             testId,
-            answers,
+            answers: answersForScore,
             score,
             totalMarks,
             submittedAt: new Date(),
@@ -64,11 +74,48 @@ const submitAttempt = async (req, res) => {
         // Invalidate AI cache entries linked to this test (non-blocking)
         invalidateByTestId(String(testId)).catch(() => {});
 
+        // Respond immediately to the student
         res.send(saved);
+
+        // ── Post-submission: trigger sentence_answer evaluation (async) ───────
+        const hasSentenceQuestions = test.questions.some(q => q.questionType === 'sentence_answer');
+        if (hasSentenceQuestions) {
+            // We need an attemptHistoryId — for now use the TestAttempt._id
+            // The testAttemptHistoryService will create the full history record
+            setImmediate(async () => {
+                try {
+                    await evaluateAllSentenceAnswers({
+                        attemptHistoryId: saved._id,
+                        studentId:        String(studentId),
+                        testId:           String(testId),
+                        subjectId:        test.subject?._id ? String(test.subject._id) : null,
+                        schoolId:         test.school ? String(test.school) : null,
+                        questions:        test.questions,
+                        submissions:      submissionArray,
+                    });
+
+                    // Notify teacher about pending sentence review
+                    if (test.createdBy) {
+                        await Notification.create({
+                            userId:        test.createdBy,
+                            recipientType: 'teacher',
+                            title:         'Descriptive Answer Pending Review',
+                            message:       `A student has submitted descriptive answers that require your validation for test: "${test.title}".`,
+                            type:          'report',
+                            readStatus:    false,
+                        });
+                    }
+                } catch (err) {
+                    logger.error('submitAttempt: sentence evaluation failed', { error: err.message, testId, studentId });
+                }
+            });
+        }
+
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 // Get all attempts for a test (teacher view)
 const getAttemptsByTest = async (req, res) => {

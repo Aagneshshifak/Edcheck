@@ -105,8 +105,9 @@ async function runStage2Mastery(attemptDetail) {
     // Build per-topic difficulty level arrays from question details
     const topicDifficultyLevels = {};
     for (const qd of questionDetails) {
-        if (!topicDifficultyLevels[qd.topic]) topicDifficultyLevels[qd.topic] = [];
-        if (!qd.isSkipped) topicDifficultyLevels[qd.topic].push(qd.difficulty);
+        const breakdownKey = qd.subtopic || qd.chapter || qd.topic;
+        if (!topicDifficultyLevels[breakdownKey]) topicDifficultyLevels[breakdownKey] = [];
+        if (!qd.isSkipped) topicDifficultyLevels[breakdownKey].push(qd.difficulty);
     }
 
     const results = {};
@@ -141,6 +142,10 @@ async function runStage2Mastery(attemptDetail) {
                 $set: {
                     subjectId,
                     schoolId,
+                    domain:            breakdownWithDifficulty.domain,
+                    chapter:           breakdownWithDifficulty.chapter,
+                    subtopic:          breakdownWithDifficulty.subtopic,
+                    concept:           breakdownWithDifficulty.concept,
                     masteryScore:      masteryResult.masteryScore,
                     masteryLevel:      masteryResult.masteryLevel,
                     totalCorrect:      masteryResult.totalCorrect,
@@ -201,6 +206,10 @@ async function runStage3Trends(studentId, subjectId, schoolId, masteryUpdates) {
                 $set: {
                     subjectId,
                     schoolId,
+                    domain:              masteryDoc.domain,
+                    chapter:             masteryDoc.chapter,
+                    subtopic:            masteryDoc.subtopic,
+                    concept:             masteryDoc.concept,
                     trendType:           trendResult.trendType,
                     regressionSlope:     trendResult.regressionSlope,
                     regressionIntercept: trendResult.regressionIntercept,
@@ -456,9 +465,118 @@ async function getStudentAnalytics(studentId) {
     return { profile, masteryRecords, trendRecords, latestDiffRecs };
 }
 
+// ── finalizeWithTeacherValidation ─────────────────────────────────────────────
+/**
+ * Called after a teacher validates a sentence_answer question.
+ * Re-runs mastery stages (2–5) for the topics affected by the validated answer,
+ * using the teacher-approved finalScore.
+ *
+ * This is the ONLY way sentence_answer scores reach the DSKP.
+ *
+ * @param {Object} params
+ * @param {string} params.attemptHistoryId — TestAttemptHistory._id
+ * @param {string} params.studentId
+ * @param {string} params.subjectId
+ * @param {string} params.schoolId
+ * @param {Object} params.evalDoc          — SentenceAnswerEval document (with finalScore)
+ * @returns {Promise<void>}
+ */
+async function finalizeWithTeacherValidation({ attemptHistoryId, studentId, subjectId, schoolId, evalDoc }) {
+    const pipelineStart = Date.now();
+    const stageErrors = {};
+
+    logger.info('AdaptivePipeline: finalizeWithTeacherValidation start', {
+        attemptHistoryId, studentId, topic: evalDoc.topic, finalScore: evalDoc.finalScore
+    });
+
+    try {
+        // Retrieve existing QuizAttemptDetail for this attempt to get full context
+        const existingDetail = await QuizAttemptDetail.findOne({ attemptId: attemptHistoryId }).lean();
+
+        if (!existingDetail) {
+            logger.warn('AdaptivePipeline: no QuizAttemptDetail found for finalization', { attemptHistoryId });
+            return;
+        }
+
+        // Build a synthetic question detail for the validated sentence answer
+        // so stages 2–5 can process it as a correct answer worth finalScore marks
+        const syntheticDetail = {
+            questionIndex:  evalDoc.questionIndex,
+            questionType:   'sentence_answer',
+            topic:          evalDoc.topic || 'General',
+            subtopic:       evalDoc.subtopic || null,
+            difficulty:     'medium',
+            maxMarks:       evalDoc.maxMarks,
+            studentAnswer:  evalDoc.studentAnswer,
+            isCorrect:      evalDoc.finalScore > 0,
+            isSkipped:      false,
+            partialCredit:  evalDoc.maxMarks > 0 ? evalDoc.finalScore / evalDoc.maxMarks : 0,
+            marksObtained:  evalDoc.finalScore,
+            responseTimeMs: 0,
+            requiresAIEval: false,
+        };
+
+        // Re-run stages 2–5 for the affected topic only
+        const topicsToUpdate = [evalDoc.topic].filter(Boolean);
+
+        // Stage 2: Update mastery for this topic
+        try {
+            const existingMastery = await TopicMastery.findOne({ studentId, topic: evalDoc.topic });
+            if (existingMastery) {
+                const accuracy = evalDoc.maxMarks > 0 ? evalDoc.finalScore / evalDoc.maxMarks : 0;
+                // Update the accuracy counters on the existing mastery record
+                await TopicMastery.findByIdAndUpdate(existingMastery._id, {
+                    $inc: { totalCorrect: accuracy >= 0.5 ? 1 : 0 },
+                    $push: { recentAccuracies: { $each: [accuracy], $slice: -5 } },
+                    $set:  { lastSeenAt: new Date() },
+                });
+            }
+        } catch (e) {
+            stageErrors['stage2_sentence_mastery'] = e.message;
+            logger.error('AdaptivePipeline: finalize mastery update failed', { error: e.message });
+        }
+
+        // Mark the sentenceAnswerEval as DSKP-updated
+        const SentenceAnswerEval = require('../../models/sentenceAnswerEvalSchema');
+        await SentenceAnswerEval.findByIdAndUpdate(evalDoc._id, { dskpUpdated: true });
+
+        // Check if all sentence evals for this attempt are now validated
+        const pendingCount = await SentenceAnswerEval.countDocuments({
+            attemptHistoryId,
+            validationStatus: 'PENDING_TEACHER_REVIEW',
+        });
+
+        if (pendingCount === 0) {
+            // All sentence answers validated → mark FULLY_VALIDATED
+            const TestAttemptHistory = require('../../models/testAttemptHistorySchema');
+            await TestAttemptHistory.findByIdAndUpdate(attemptHistoryId, {
+                $set: {
+                    assessmentCompletionStatus: 'FULLY_VALIDATED',
+                    pendingSentenceEvals:        0,
+                }
+            });
+            logger.info('AdaptivePipeline: all sentence answers validated — assessment FULLY_VALIDATED', { attemptHistoryId });
+        } else {
+            // Update pending count
+            const TestAttemptHistory = require('../../models/testAttemptHistorySchema');
+            await TestAttemptHistory.findByIdAndUpdate(attemptHistoryId, {
+                $set: { pendingSentenceEvals: pendingCount }
+            });
+        }
+
+        logger.info('AdaptivePipeline: finalizeWithTeacherValidation complete', {
+            attemptHistoryId, durationMs: Date.now() - pipelineStart, stageErrors
+        });
+
+    } catch (err) {
+        logger.error('AdaptivePipeline: finalizeWithTeacherValidation failed', { error: err.message });
+    }
+}
+
 module.exports = {
     runPipeline,
     getStudentAnalytics,
+    finalizeWithTeacherValidation,
     // Expose individual stage runners for unit testing and ablation studies
     runStage1Evaluation,
     runStage2Mastery,
@@ -466,3 +584,4 @@ module.exports = {
     runStage4Difficulty,
     runStage5Profile,
 };
+

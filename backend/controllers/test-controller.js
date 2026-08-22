@@ -152,6 +152,7 @@ const getTestsForStudent = async (req, res) => {
         const tests = await Test.find({
             classId,
             isActive: true,
+            status: 'PUBLISHED', // CRITICAL: NEVER serve unpublished tests
             $or: [
                 { studentId: { $exists: false } },
                 { studentId: null },

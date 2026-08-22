@@ -38,6 +38,16 @@ const subjectSchema = new mongoose.Schema({
 
     topics: [{ type: String }],
 
+    // Structured subtopic hierarchy: Subject → Topic → Subtopics
+    // Each topic can have an array of subtopics with name and optional description.
+    // e.g. topicSubtopics: [{ topic: "Algebra", subtopics: ["Linear Equations", "Quadratic Equations"] }]
+    topicSubtopics: [{
+        topic:     { type: String, required: true },
+        subtopics: [{ type: String }],
+        _id:       false,
+    }],
+
+
 }, { timestamps: true });
 
 subjectSchema.pre("save", function (next) {
