@@ -498,11 +498,11 @@ RESPONSE FORMAT (Strict JSON):
 }`;
 
 function buildQuestionValidationPrompt(questionsBatch) {
-    return \`Please validate the following batch of \${questionsBatch.length} questions.
-Return a JSON array named 'results' with exactly \${questionsBatch.length} objects corresponding to these IDs.
+    return `Please validate the following batch of ${questionsBatch.length} questions.
+Return a JSON array named 'results' with exactly ${questionsBatch.length} objects corresponding to these IDs.
 
 QUESTIONS TO VALIDATE:
-\${JSON.stringify(questionsBatch, null, 2)}\`;
+${JSON.stringify(questionsBatch, null, 2)}`;
 }
 
 module.exports = {
