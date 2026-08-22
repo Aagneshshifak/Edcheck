@@ -18,8 +18,12 @@ import * as XLSX from 'xlsx';
 
 const emptyQuestion = () => ({
     questionText: '',
+    questionType: 'mcq',
     options: ['', ''],
     correctAnswer: 0,
+    expectedAnswer: '',
+    keyConcepts: '',
+    scoringRubric: '',
     marks: 1,
 });
 
@@ -109,6 +113,7 @@ const AddQuestions = () => {
                     const options = Array.from(optNodes).map(o => o.textContent.trim());
 
                     let correctAnswer = 0;
+                    let correctAnswerText = '';
 
                     // Method 1: correct="true" attribute on an <option>
                     let foundByAttr = false;
@@ -124,6 +129,7 @@ const AddQuestions = () => {
                         const caNode = q.querySelector('correctAnswer') || q.querySelector('answer');
                         if (caNode) {
                             const ca = caNode.textContent.trim().toUpperCase();
+                            correctAnswerText = ca;
                             if (['A','B','C','D','E','F'].includes(ca)) {
                                 correctAnswer = ['A','B','C','D','E','F'].indexOf(ca);
                             } else {
@@ -133,12 +139,18 @@ const AddQuestions = () => {
                         }
                     }
 
-                    correctAnswer = Math.max(0, Math.min(correctAnswer, options.length - 1));
+                    // If correctAnswer is DESCRIPTIVE, treat as sentence
+                    const isDescriptive = String(correctAnswerText).toUpperCase() === 'DESCRIPTIVE';
+                    const qType = isDescriptive ? 'sentence_answer' : 'mcq';
 
                     return {
                         questionText: text,
-                        options: options.length >= 2 ? options : ['', ''],
-                        correctAnswer,
+                        questionType: qType,
+                        options: isDescriptive ? [] : (options.length >= 2 ? options : ['', '']),
+                        correctAnswer: isDescriptive ? 0 : Math.max(0, Math.min(correctAnswer, options.length - 1)),
+                        expectedAnswer: q.querySelector('expectedAnswer')?.textContent?.trim() || '',
+                        keyConcepts: q.querySelector('keyConcepts')?.textContent?.trim() || '',
+                        scoringRubric: q.querySelector('rubric')?.textContent?.trim() || '',
                         marks: Number(q.getAttribute('marks') || q.querySelector('marks')?.textContent || 1),
                     };
                 }).filter(q => q.questionText);
@@ -277,10 +289,26 @@ const AddQuestions = () => {
     const handleSave = async () => {
         setSubmitting(true);
         try {
-            await axiosInstance.put(`/Test/${testId}/questions`, {
-                questions: questions.map(q => ({ questionText: q.questionText, options: q.options, correctAnswer: Number(q.correctAnswer), marks: Number(q.marks) })),
+            const payload = {
+                questions: questions.map(q => {
+                    const baseQ = {
+                        questionText: q.questionText,
+                        questionType: q.questionType || 'mcq',
+                        marks: Number(q.marks),
+                    };
+                    if (baseQ.questionType === 'sentence_answer') {
+                        baseQ.expectedAnswer = q.expectedAnswer;
+                        baseQ.keyConcepts = q.keyConcepts;
+                        baseQ.scoringRubric = q.scoringRubric;
+                    } else {
+                        baseQ.options = q.options;
+                        baseQ.correctAnswer = Number(q.correctAnswer);
+                    }
+                    return baseQ;
+                }),
                 teacherId: currentUser._id,
-            });
+            };
+            await axiosInstance.put(`/Test/${testId}/questions`, payload);
             setSnackbar({ open: true, message: 'Questions saved!', severity: 'success' });
         } catch (err) {
             setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to save', severity: 'error' });
@@ -434,33 +462,75 @@ const AddQuestions = () => {
                             )}
                         </Box>
 
+                        <FormControl fullWidth sx={{ mb: 2 }}>
+                            <InputLabel>Question Type</InputLabel>
+                            <Select
+                                value={q.questionType || 'mcq'}
+                                label="Question Type"
+                                onChange={(e) => handleQuestionChange(qi, 'questionType', e.target.value)}
+                            >
+                                <MenuItem value="mcq">Multiple Choice (MCQ)</MenuItem>
+                                <MenuItem value="sentence_answer">Descriptive / Sentence Answer</MenuItem>
+                            </Select>
+                        </FormControl>
+
                         <TextField label="Question Text" value={q.questionText}
                             onChange={e => handleQuestionChange(qi, 'questionText', e.target.value)}
                             required fullWidth multiline minRows={2} sx={{ mb: 2 }} />
 
-                        <FormControl component="fieldset" sx={{ width: '100%', mb: 2 }}>
-                            <FormLabel component="legend" sx={{ mb: 1, fontSize: '0.85rem' }}>Options — select correct answer</FormLabel>
-                            <RadioGroup value={String(q.correctAnswer)} onChange={e => handleQuestionChange(qi, 'correctAnswer', Number(e.target.value))}>
-                                {q.options.map((opt, oi) => (
-                                    <Box key={oi} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                        <Radio value={String(oi)} size="small" />
-                                        <TextField label={`Option ${oi + 1}`} value={opt}
-                                            onChange={e => handleOptionChange(qi, oi, e.target.value)}
-                                            required size="small" sx={{ flex: 1 }} />
-                                        {q.options.length > 2 && (
-                                            <IconButton size="small" onClick={() => handleRemoveOption(qi, oi)}>
-                                                <DeleteOutlineIcon fontSize="small" />
-                                            </IconButton>
-                                        )}
-                                    </Box>
-                                ))}
-                            </RadioGroup>
-                            {q.options.length < 6 && (
-                                <Button size="small" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAddOption(qi)} sx={{ alignSelf: 'flex-start', mt: 0.5 }}>
-                                    Add Option
-                                </Button>
-                            )}
-                        </FormControl>
+                        {(q.questionType === 'mcq' || !q.questionType) ? (
+                            <FormControl component="fieldset" sx={{ width: '100%', mb: 2 }}>
+                                <FormLabel component="legend" sx={{ mb: 1, fontSize: '0.85rem' }}>Options — select correct answer</FormLabel>
+                                <RadioGroup value={String(q.correctAnswer)} onChange={e => handleQuestionChange(qi, 'correctAnswer', Number(e.target.value))}>
+                                    {q.options.map((opt, oi) => (
+                                        <Box key={oi} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                            <Radio value={String(oi)} size="small" />
+                                            <TextField label={`Option ${oi + 1}`} value={opt}
+                                                onChange={e => handleOptionChange(qi, oi, e.target.value)}
+                                                required size="small" sx={{ flex: 1 }} />
+                                            {q.options.length > 2 && (
+                                                <IconButton size="small" onClick={() => handleRemoveOption(qi, oi)}>
+                                                    <DeleteOutlineIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
+                                        </Box>
+                                    ))}
+                                </RadioGroup>
+                                {q.options.length < 6 && (
+                                    <Button size="small" startIcon={<AddCircleOutlineIcon />} onClick={() => handleAddOption(qi)} sx={{ alignSelf: 'flex-start', mt: 0.5 }}>
+                                        Add Option
+                                    </Button>
+                                )}
+                            </FormControl>
+                        ) : (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
+                                <TextField
+                                    label="Expected Answer (Optional)"
+                                    value={q.expectedAnswer || ''}
+                                    onChange={(e) => handleQuestionChange(qi, 'expectedAnswer', e.target.value)}
+                                    fullWidth
+                                    multiline
+                                    minRows={2}
+                                    placeholder="Detailed answer expected from the student"
+                                />
+                                <TextField
+                                    label="Key Concepts (Optional)"
+                                    value={q.keyConcepts || ''}
+                                    onChange={(e) => handleQuestionChange(qi, 'keyConcepts', e.target.value)}
+                                    fullWidth
+                                    placeholder="Comma-separated concepts (e.g. Newton's Third Law, Action-Reaction)"
+                                />
+                                <TextField
+                                    label="Scoring Rubric (Optional)"
+                                    value={q.scoringRubric || ''}
+                                    onChange={(e) => handleQuestionChange(qi, 'scoringRubric', e.target.value)}
+                                    fullWidth
+                                    multiline
+                                    minRows={2}
+                                    placeholder="1 mark for definition, 1 mark for example"
+                                />
+                            </Box>
+                        )}
 
                         <TextField label="Marks" type="number" value={q.marks}
                             onChange={e => handleQuestionChange(qi, 'marks', e.target.value)}
