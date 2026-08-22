@@ -480,7 +480,7 @@ const CreateTest = () => {
                                 required
                                 fullWidth
                                 multiline
-                                minRows={2}
+                                rows={2}
                                 sx={{ mb: 2 }}
                             />
 
@@ -543,7 +543,7 @@ const CreateTest = () => {
                                         onChange={(e) => handleQuestionChange(qIndex, 'expectedAnswer', e.target.value)}
                                         fullWidth
                                         multiline
-                                        minRows={2}
+                                        rows={2}
                                         placeholder="Detailed answer expected from the student"
                                     />
                                     <TextField
@@ -559,7 +559,7 @@ const CreateTest = () => {
                                         onChange={(e) => handleQuestionChange(qIndex, 'scoringRubric', e.target.value)}
                                         fullWidth
                                         multiline
-                                        minRows={2}
+                                        rows={2}
                                         placeholder="1 mark for definition, 1 mark for example"
                                     />
                                 </Box>

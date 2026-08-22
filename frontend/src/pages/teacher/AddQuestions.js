@@ -477,7 +477,7 @@ const AddQuestions = () => {
 
                         <TextField label="Question Text" value={q.questionText}
                             onChange={e => handleQuestionChange(qi, 'questionText', e.target.value)}
-                            required fullWidth multiline minRows={2} sx={{ mb: 2 }} />
+                            required fullWidth multiline rows={2} sx={{ mb: 2 }} />
 
                         {(q.questionType === 'mcq' || !q.questionType) ? (
                             <FormControl component="fieldset" sx={{ width: '100%', mb: 2 }}>
@@ -511,7 +511,7 @@ const AddQuestions = () => {
                                     onChange={(e) => handleQuestionChange(qi, 'expectedAnswer', e.target.value)}
                                     fullWidth
                                     multiline
-                                    minRows={2}
+                                    rows={2}
                                     placeholder="Detailed answer expected from the student"
                                 />
                                 <TextField
@@ -527,7 +527,7 @@ const AddQuestions = () => {
                                     onChange={(e) => handleQuestionChange(qi, 'scoringRubric', e.target.value)}
                                     fullWidth
                                     multiline
-                                    minRows={2}
+                                    rows={2}
                                     placeholder="1 mark for definition, 1 mark for example"
                                 />
                             </Box>
