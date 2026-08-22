@@ -59,6 +59,7 @@ const { addStudent: adminAddStudent, updateStudent: adminUpdateStudent, removeSt
 const { exportStudents, exportTeachers, exportClasses, exportTestResults, getImportHistory, getOrphans, deleteOrphans } = require('../controllers/admin-data-controller.js');
 const { getActivityLogs } = require('../controllers/activity-log-controller.js');
 const { bulkUploadStudents } = require('../controllers/bulk-upload-controller.js');
+const { uploadQuestions } = require('../controllers/question-import-controller.js');
 const { getAlerts } = require('../controllers/alerts-controller.js');
 const requireFeature = require('../middleware/requireFeature');
 
@@ -95,6 +96,7 @@ router.delete('/Admin/subjects/:id/assign-class', auth, unassignSubjectFromClass
 // ── Admin — Test Management ───────────────────────────────────────────────────
 router.post('/Admin/tests/create', auth, adminCreateTest);
 router.put('/Admin/tests/:id/toggle', auth, toggleTestStatus);
+router.post('/Admin/questions/import', auth, upload.single('file'), uploadQuestions);
 
 // ── Admin — Teacher Management ────────────────────────────────────────────────
 router.post('/Admin/teacher/add', auth, addTeacher);

@@ -1,0 +1,54 @@
+<questions>
+    <!-- 1. Valid MCQ -->
+    <question>
+        <class>10</class>
+        <subject>Science</subject>
+        <domain>Physics</domain>
+        <chapter>Electricity</chapter>
+        <subtopic>Ohm's Law</subtopic>
+        <concept>Resistance</concept>
+        <type>MCQ</type>
+        <text>What is the relationship between voltage, current and resistance?</text>
+        <options>
+            <option>V = IR</option>
+            <option>V = I/R</option>
+            <option>V = R/I</option>
+            <option>V = I + R</option>
+        </options>
+        <correctAnswer>A</correctAnswer>
+        <difficulty>MEDIUM</difficulty>
+        <marks>1</marks>
+    </question>
+
+    <!-- 2. Invalid MCQ (missing options) -->
+    <question>
+        <class>10</class>
+        <subject>Science</subject>
+        <chapter>Electricity</chapter>
+        <subtopic>Ohm's Law</subtopic>
+        <type>MCQ</type>
+        <text>This question has no options?</text>
+        <correctAnswer>A</correctAnswer>
+    </question>
+
+    <!-- 3. Valid Sentence Question -->
+    <question>
+        <class>10</class>
+        <subject>Science</subject>
+        <chapter>Life Processes</chapter>
+        <subtopic>Nutrition</subtopic>
+        <type>SENTENCE</type>
+        <text>Explain the process of photosynthesis.</text>
+        <expectedAnswer>Photosynthesis is the process by which green plants make their food using sunlight, water, and carbon dioxide.</expectedAnswer>
+        <keyConcepts>
+            <concept>sunlight</concept>
+            <concept>chlorophyll</concept>
+            <concept>carbon dioxide</concept>
+        </keyConcepts>
+        <rubric>
+            <criterion>Mentions sunlight</criterion>
+            <criterion>Mentions chlorophyll</criterion>
+        </rubric>
+        <marks>2</marks>
+    </question>
+</questions>
