@@ -6,7 +6,7 @@ const questionSchema = new mongoose.Schema({
         type: [String],
         validate: {
             validator: function(arr) {
-                if (this.questionType === 'short_answer' || this.questionType === 'file_upload' || this.questionType === 'numerical') {
+                if (this.questionType === 'short_answer' || this.questionType === 'file_upload' || this.questionType === 'numerical' || this.questionType === 'sentence_answer') {
                     return true;
                 }
                 return arr.length >= 2 && arr.length <= 6;
