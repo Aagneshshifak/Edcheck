@@ -18,12 +18,17 @@ function validateTest(body) {
 
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
-        if (!q.options || q.options.length < 2 || q.options.length > 6) {
-            return `question ${i + 1}: options must have between 2 and 6 items`;
+        const isSentence = q.questionType === 'sentence_answer';
+        
+        if (!isSentence) {
+            if (!q.options || q.options.length < 2 || q.options.length > 6) {
+                return `question ${i + 1}: options must have between 2 and 6 items`;
+            }
+            if (q.correctAnswer == null || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
+                return `question ${i + 1}: correctAnswer must be a valid index into options`;
+            }
         }
-        if (q.correctAnswer == null || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
-            return `question ${i + 1}: correctAnswer must be a valid index into options`;
-        }
+        
         if (!q.marks || q.marks <= 0) {
             return `question ${i + 1}: marks must be greater than 0`;
         }
