@@ -143,6 +143,13 @@ async function call({
         });
 
         if (isGroqApiError(err)) {
+            if (err.status === 401) {
+                logger.error(`groqService: Invalid API Key or Unauthorized`, { message: err.message });
+                const e = new Error('AI service configuration error: Invalid API Key');
+                e.isGroqError = true;
+                e.statusCode = 503;
+                throw e;
+            }
             const e = new Error('AI service temporarily unavailable. Please try again.');
             e.isGroqError = true;
             e.statusCode  = 503;
