@@ -141,6 +141,8 @@ async function call({
             promptTokens, completionTokens, totalTokens,
             responseTimeMs, success, errorMessage, fromCache: false,
         });
+        
+        logger.error("Groq Error Details: ", { name: err.name, message: err.message, status: err.status, code: err.code });
 
         if (isGroqApiError(err)) {
             if (err.status === 401) {
