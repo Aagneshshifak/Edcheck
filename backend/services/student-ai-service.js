@@ -5,6 +5,24 @@
 const { groq, GROQ_MODELS } = require('../config/groq');
 const MODEL = GROQ_MODELS.BALANCED;
 
+function sanitizeJSONString(str) {
+    let inString = false;
+    let escapeNext = false;
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        if (escapeNext) { result += char; escapeNext = false; continue; }
+        if (char === '\\') { escapeNext = true; result += char; continue; }
+        if (char === '"') { inString = !inString; result += char; continue; }
+        if (inString && (char === '\n' || char === '\r')) {
+            result += (char === '\n' ? '\\n' : '');
+            continue;
+        }
+        result += char;
+    }
+    return result;
+}
+
 async function callGroq(systemPrompt, userPrompt) {
     const response = await groq.chat.completions.create({
         model: MODEL,
@@ -16,9 +34,14 @@ async function callGroq(systemPrompt, userPrompt) {
     const content = response.choices?.[0]?.message?.content ?? '';
     // Strip markdown code fences if present
     const clean = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    const sanitized = sanitizeJSONString(clean);
     try {
-        return JSON.parse(clean);
-    } catch {
+        return JSON.parse(sanitized);
+    } catch (err) {
+        console.error('--- GROQ JSON PARSE ERROR ---');
+        console.error('Raw content:', content);
+        console.error('Sanitized content:', sanitized);
+        console.error('Error:', err.message);
         throw new Error('AI returned an unexpected response format');
     }
 }
