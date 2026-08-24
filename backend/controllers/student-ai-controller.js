@@ -23,6 +23,10 @@ function isGroqError(err) {
 }
 
 function errResponse(res, err) {
+    console.error('--- AI Controller Error ---');
+    console.error(err.status ? `Groq API Error Status: ${err.status}` : 'Unknown Error:');
+    console.error(err);
+
     if (err.message === 'AI returned an unexpected response format')
         return res.status(500).json({ message: err.message });
     if (isGroqError(err))
