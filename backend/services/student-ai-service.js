@@ -70,7 +70,7 @@ Respond ONLY with valid JSON matching:
 
 // ── 2. Study Plan ─────────────────────────────────────────────────────────────
 async function generateStudyPlan(studentData) {
-    const system = `You are a friendly, encouraging, and highly supportive older peer or mentor creating detailed study plans for your friend (the student). Do NOT be too formal; use a warm, conversational tone.
+    const system = `You are an expert academic advisor creating highly detailed, personalized study plans for school students.
 You MUST use ONLY the exact subject names provided in the student data. NEVER invent subject names like "Subject 1" or "Subject 2".
 If no exam data exists for a subject, treat it as needing balanced attention.
 
@@ -89,11 +89,10 @@ Respond ONLY with a JSON object matching this exact schema:
 }
 
 Rules:
-- Write in a friendly, empathetic, and encouraging tone as if talking to a friend! Do not sound like a strict academic advisor.
 - Base the study plan primarily on their "Recent Test Results".
 - Use ONLY the exact subject names from allSubjects list.
 - Assign more hours to weak subjects (score < 60%).
-- The 'reason' and 'strategy' fields MUST be highly detailed, extensive paragraphs providing a comprehensive, in-depth analysis of the improvement areas and actionable strategies (write a minimum of 20 lines of text for these descriptions).
+- The 'reason' and 'strategy' fields MUST be highly detailed paragraphs providing a comprehensive analysis of the improvement areas and actionable strategies.
 - CRITICAL: Do NOT use literal newlines inside JSON string values. Use escaped \\n instead.
 - Each weekday entry should name specific subjects to study that day.
 - dailyActions should be concrete (e.g. "Solve 10 algebra problems", "Read chapter 3").`;
