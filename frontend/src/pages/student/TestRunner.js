@@ -413,11 +413,12 @@ const TestRunner = () => {
                         </RadioGroup>
                     )}
 
-                    {q.questionType === 'short_answer' && (
+                    {(q.questionType === 'short_answer' || q.questionType === 'sentence_answer') && (
                         <TextField
                             fullWidth
                             multiline
-                            rows={4}
+                            minRows={4}
+                            maxRows={10}
                             variant="outlined"
                             placeholder="Type your answer here..."
                             value={answers[idx] && answers[idx] !== -1 ? answers[idx] : ''}

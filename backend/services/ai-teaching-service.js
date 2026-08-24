@@ -139,11 +139,11 @@ async function suggestNotes(subjectName, topic) {
     const safeTopic = String(topic).trim().slice(0, 200);
 
     const systemPrompt = `You are an expert curriculum designer helping school teachers prepare lessons.
-Respond ONLY with valid JSON matching this schema:
+Respond ONLY with a valid JSON object matching this exact schema, without any markdown formatting, code blocks, or explanatory text:
 {
-  "suggestions": string[],
-  "keyPoints": string[],
-  "resources": string[]
+  "suggestions": ["string", "string"],
+  "keyPoints": ["string", "string"],
+  "resources": ["string", "string"]
 }`;
 
     const userPrompt = `Subject: ${safeSubject}
@@ -288,10 +288,10 @@ async function generatePracticeQuestions(topic, subjectName, difficulty, count) 
     const safeSubject = String(subjectName).trim().slice(0, 200);
 
     const systemPrompt = `You are an expert question paper setter for school-level education.
-Generate exactly ${count} multiple-choice questions.
-Respond ONLY with valid JSON:
-{ "questions": [{ "questionText": string, "options": string[4], "correctAnswer": number, "explanation": string }] }
-correctAnswer is the 0-based index of the correct option.`;
+Generate exactly ${count} multiple-choice questions. Do not generate more or fewer than ${count}.
+Respond ONLY with a valid JSON object matching this exact schema, without any markdown formatting, code blocks, or explanatory text:
+{ "questions": [{ "questionText": "string", "options": ["string1", "string2", "string3", "string4"], "correctAnswer": number, "explanation": "string" }] }
+correctAnswer is the 0-based index of the correct option (0, 1, 2, or 3).`;
 
     const userPrompt = `Subject: ${safeSubject}
 Topic: ${safeTopic}

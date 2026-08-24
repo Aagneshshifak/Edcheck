@@ -12,16 +12,16 @@ const Groq = require('groq-sdk');
 
 const GROQ_MODELS = {
     // Fast model for lightweight tasks (class notes, daily routines)
-    FAST:      process.env.GROQ_MODEL_FAST || 'llama-3.1-8b-instant',
+    FAST:      process.env.GROQ_MODEL_FAST || 'openai/gpt-oss-20b',
 
     // Balanced model — same as primary for consistency
-    BALANCED:  process.env.GROQ_MODEL      || 'llama-3.3-70b-versatile',
+    BALANCED:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
 
     // Powerful model — same as primary
-    POWERFUL:  process.env.GROQ_MODEL      || 'llama-3.3-70b-versatile',
+    POWERFUL:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
 
     // Dedicated analysis model for student performance, study plans, staff reports
-    ANALYSIS:  process.env.GROQ_MODEL      || 'llama-3.3-70b-versatile',
+    ANALYSIS:  process.env.GROQ_MODEL      || 'openai/gpt-oss-120b',
 };
 
 // Lazy singleton — created on first use so dotenv has already run by then

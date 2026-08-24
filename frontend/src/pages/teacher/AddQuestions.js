@@ -551,8 +551,7 @@ const AddQuestions = () => {
                     {submitting ? 'Saving…' : 'Save Questions'}
                 </Button>
                 <Button variant="contained" color="success" startIcon={<PublishIcon />} onClick={handlePublish}
-                    disabled={publishing || !questions.length} size="large"
-                    sx={{ background: '#111111', '&:hover': { background: '#333333' } }}>
+                    disabled={publishing || !questions.length} size="large">
                     {publishing ? 'Publishing…' : 'Publish Test'}
                 </Button>
             </Box>

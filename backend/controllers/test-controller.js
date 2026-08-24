@@ -274,7 +274,7 @@ const publishTest = async (req, res) => {
         const { teacherId } = req.body;
         const test = await Test.findByIdAndUpdate(
             req.params.id,
-            { $set: { isActive: true, ...(teacherId ? { createdBy: teacherId } : {}) } },
+            { $set: { isActive: true, status: 'PUBLISHED', ...(teacherId ? { createdBy: teacherId } : {}) } },
             { new: true }
         );
         if (!test) return res.status(404).json({ message: 'Test not found' });

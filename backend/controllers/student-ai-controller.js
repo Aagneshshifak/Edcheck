@@ -127,7 +127,7 @@ const generateStudyPlanHandler = async (req, res) => {
             subject:      a.testId?.subject?.subjectName || a.testId?.subject?.subName || 'Unknown',
             scorePercent: a.totalMarks > 0 ? Math.round((a.score / a.totalMarks) * 100) : 0,
             date:         a.submittedAt ? new Date(a.submittedAt).toLocaleDateString() : 'N/A',
-        }));
+        })).filter(t => t.subject !== 'Unknown');
 
         const avgTestScore = testResults.length
             ? Math.round(testResults.reduce((s, t) => s + t.scorePercent, 0) / testResults.length)
