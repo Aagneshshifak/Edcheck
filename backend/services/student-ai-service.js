@@ -26,6 +26,7 @@ function sanitizeJSONString(str) {
 async function callGroq(systemPrompt, userPrompt) {
     const response = await groq.chat.completions.create({
         model: MODEL,
+        response_format: { type: 'json_object' },
         messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user',   content: userPrompt },
