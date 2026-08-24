@@ -32,8 +32,14 @@ async function callGroq(systemPrompt, userPrompt) {
         ],
     });
     const content = response.choices?.[0]?.message?.content ?? '';
-    // Strip markdown code fences if present
-    const clean = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    // Extract JSON block to ignore any conversational text before or after
+    let jsonBlock = content;
+    const startIndex = jsonBlock.indexOf('{');
+    const endIndex = jsonBlock.lastIndexOf('}');
+    if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+        jsonBlock = jsonBlock.substring(startIndex, endIndex + 1);
+    }
+    const clean = jsonBlock.trim();
     const sanitized = sanitizeJSONString(clean);
     try {
         return JSON.parse(sanitized);
