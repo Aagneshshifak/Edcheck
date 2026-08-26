@@ -111,25 +111,47 @@ async function call({
     let promptTokens = 0, completionTokens = 0, totalTokens = 0;
     let success = true;
     let errorMessage = '';
+    
+    const MAX_RETRIES = 3;
+    let lastErr = null;
 
-    try {
-        const response = await groq.chat.completions.create({
-            model,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user',   content: userPrompt },
-            ],
-        });
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const response = await groq.chat.completions.create({
+                model,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userPrompt },
+                ],
+            });
 
-        rawContent = response.choices?.[0]?.message?.content ?? '';
-        const usage = response.usage;
-        if (usage) {
-            promptTokens     = usage.prompt_tokens     || 0;
-            completionTokens = usage.completion_tokens || 0;
-            totalTokens      = usage.total_tokens      || 0;
+            rawContent = response.choices?.[0]?.message?.content ?? '';
+            const usage = response.usage;
+            if (usage) {
+                promptTokens     = usage.prompt_tokens     || 0;
+                completionTokens = usage.completion_tokens || 0;
+                totalTokens      = usage.total_tokens      || 0;
+            }
+            lastErr = null; // Success!
+            break; // Exit retry loop
+        } catch (err) {
+            lastErr = err;
+            if (attempt < MAX_RETRIES && isGroqApiError(err)) {
+                // Do not retry on Bad Request (400) or Unauthorized (401)
+                if (err.status !== 400 && err.status !== 401) {
+                    // Exponential backoff with jitter
+                    const waitMs = Math.pow(2, attempt - 1) * 1500 + Math.random() * 500;
+                    logger.warn(`groqService: API error (status ${err.status || err.code}), retrying in ${Math.round(waitMs)}ms (attempt ${attempt}/${MAX_RETRIES})`);
+                    await new Promise(r => setTimeout(r, waitMs));
+                    continue;
+                }
+            }
+            break; // If we shouldn't retry, exit loop immediately
         }
+    }
 
-    } catch (err) {
+    if (lastErr) {
+        const err = lastErr;
         success = false;
         errorMessage = err.message || 'Unknown Groq error';
         const responseTimeMs = Date.now() - start;

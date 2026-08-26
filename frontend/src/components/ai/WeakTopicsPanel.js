@@ -23,7 +23,7 @@ const WeakTopicsPanel = ({ teachSubjects = [], classId = '' }) => {
     useEffect(() => {
         if (!subjectId || !classId) { setStored([]); return; }
         setLoadingStored(true);
-        axiosInstance.get('/AI/topic-performance', { params: { subjectId, classId } })
+        axiosInstance.get('/api/ai/topic-performance', { params: { subjectId, classId } })
             .then(({ data }) => setStored(data.topicPerformance || []))
             .catch(() => setStored([]))
             .finally(() => setLoadingStored(false));
@@ -35,10 +35,10 @@ const WeakTopicsPanel = ({ teachSubjects = [], classId = '' }) => {
         setError('');
         setResult(null);
         try {
-            const { data } = await axiosInstance.post('/AI/weak-topics', { subjectId, classId });
+            const { data } = await axiosInstance.post('/api/ai/detect-weak-topics', { subjectId, classId });
             setResult(data);
             // Refresh stored records after new analysis
-            const { data: perf } = await axiosInstance.get('/AI/topic-performance', { params: { subjectId, classId } });
+            const { data: perf } = await axiosInstance.get('/api/ai/topic-performance', { params: { subjectId, classId } });
             setStored(perf.topicPerformance || []);
         } catch (err) {
             if (err.response?.status === 404) {

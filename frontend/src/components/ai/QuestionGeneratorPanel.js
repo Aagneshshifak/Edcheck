@@ -104,7 +104,7 @@ const QuestionGeneratorPanel = ({ teachSubjects = [] }) => {
         setBankId(null);
         setSelected(new Set());
         try {
-            const { data } = await axiosInstance.post('/AI/generate-questions', {
+            const { data } = await axiosInstance.post('/api/ai/generate-questions', {
                 topic: topic.trim(),
                 subjectName,
                 difficulty,
@@ -114,7 +114,7 @@ const QuestionGeneratorPanel = ({ teachSubjects = [] }) => {
             setQuestions(data.questions || []);
             // Fetch the saved bank id
             if (subjectId) {
-                const { data: bankData } = await axiosInstance.get('/AI/question-bank', {
+                const { data: bankData } = await axiosInstance.get('/api/ai/question-bank', {
                     params: { subjectId, topic: topic.trim(), difficulty },
                 });
                 if (bankData.banks?.[0]) setBankId(bankData.banks[0]._id);
@@ -142,7 +142,7 @@ const QuestionGeneratorPanel = ({ teachSubjects = [] }) => {
         if (!testId.trim() || !bankId || selected.size === 0) return;
         setAddingToTest(true);
         try {
-            const { data } = await axiosInstance.post(`/AI/question-bank/${bankId}/add-to-test`, {
+            const { data } = await axiosInstance.post(`/api/ai/question-bank/${bankId}/add-to-test`, {
                 testId: testId.trim(),
                 questionIds: [...selected].map(String),
             });

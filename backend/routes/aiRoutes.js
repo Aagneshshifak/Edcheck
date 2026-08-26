@@ -17,21 +17,21 @@
  */
 
 const router = require('express').Router();
-const { auth } = require('../middleware/auth');
+const { auth, requireAdmin } = require('../middleware/auth');
 const { studentAIRateLimit, requireStudent } = require('../middleware/studentAIRateLimit');
 
 // ── AI Core (health, ping, cache) ─────────────────────────────────────────────
 const { getAIHealth, pingGroq, invalidateCache, invalidateUserCache } = require('../controllers/aiController');
 
 router.get('/health',                    auth, getAIHealth);
-router.post('/ping',                     auth, pingGroq);
-router.delete('/cache/:testId',          auth, invalidateCache);
-router.delete('/cache/user/:userId',     auth, invalidateUserCache);
+router.post('/ping',                     auth, requireAdmin, pingGroq);
+router.delete('/cache/:testId',          auth, requireAdmin, invalidateCache);
+router.delete('/cache/user/:userId',     auth, requireAdmin, invalidateUserCache);
 
 // ── AI Logs ───────────────────────────────────────────────────────────────────
 const { getAILogs, getAILogStats } = require('../controllers/ai-log-controller');
-router.get('/logs',       auth, getAILogs);
-router.get('/logs/stats', auth, getAILogStats);
+router.get('/logs',       auth, requireAdmin, getAILogs);
+router.get('/logs/stats', auth, requireAdmin, getAILogStats);
 
 // ── Teacher AI ────────────────────────────────────────────────────────────────
 const {
@@ -69,8 +69,9 @@ router.get('/student/test-prep/:studentId/:testId', auth, getStudentTestPrep);
 router.get('/student/assignment-help/:studentId',   auth, getAssignmentHelp);
 
 // ── Admin AI Intelligence ─────────────────────────────────────────────────────
-// These controllers handle their own Admin role validation internally
+// These controllers handle their own Admin role validation internally,
+// but we enforce requireAdmin here for complete security.
 const adminAIRoutes = require('./adminAiRoutes');
-router.use('/admin', adminAIRoutes);
+router.use('/admin', requireAdmin, adminAIRoutes);
 
 module.exports = router;

@@ -16,7 +16,7 @@ const NoteSuggestionsPanel = ({ teachSubjects = [] }) => {
     // Load cached suggestion when subject changes
     useEffect(() => {
         if (!subjectId) { setCached(null); return; }
-        axiosInstance.get('/AI/note-suggestions/saved', { params: { subjectId } })
+        axiosInstance.get('/api/ai/generate-notes/saved', { params: { subjectId } })
             .then(({ data }) => setCached(data.suggestions?.[0] || null))
             .catch(() => setCached(null));
     }, [subjectId]);
@@ -27,7 +27,7 @@ const NoteSuggestionsPanel = ({ teachSubjects = [] }) => {
         setError('');
         setResult(null);
         try {
-            const { data } = await axiosInstance.post('/AI/note-suggestions', { subjectId, topic: topic.trim() });
+            const { data } = await axiosInstance.post('/api/ai/generate-notes', { subjectId, topic: topic.trim() });
             setResult(data);
             setCached(null); // fresh result takes priority
         } catch (err) {

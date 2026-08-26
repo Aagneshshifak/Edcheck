@@ -55,9 +55,6 @@ router.post('/run-nightly-analysis', auth, async (req, res) => {
 // Cache stats
 router.get('/cache-stats', auth, async (req, res) => {
     try {
-        if (!req.user || req.user.role !== 'Admin') {
-            return res.status(403).json({ message: 'Access denied: Admin role required' });
-        }
         const stats = await groqService.getStats();
         return res.json(stats);
     } catch (err) {

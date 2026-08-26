@@ -67,7 +67,7 @@ const AIAssistantWidget = ({ teachSubjects = [], classId = '' }) => {
         if (!subjectId || !topic.trim()) return;
         setNotesLoading(true); setNotesError(''); setNotes(null);
         try {
-            const { data } = await axiosInstance.post('/AI/note-suggestions', { subjectId, topic: topic.trim() });
+            const { data } = await axiosInstance.post('/api/ai/generate-notes', { subjectId, topic: topic.trim() });
             setNotes(data);
         } catch (e) {
             setNotesError(e.response?.data?.message || 'Failed to get suggestions');
@@ -81,7 +81,7 @@ const AIAssistantWidget = ({ teachSubjects = [], classId = '' }) => {
     useEffect(() => {
         if (!subjectId || !classId) return;
         setWeakLoading(true);
-        axiosInstance.get('/AI/topic-performance', { params: { subjectId, classId } })
+        axiosInstance.get('/api/ai/topic-performance', { params: { subjectId, classId } })
             .then(({ data }) => setWeakTopics((data.topicPerformance || []).slice(0, 4)))
             .catch(() => setWeakTopics([]))
             .finally(() => setWeakLoading(false));
@@ -100,11 +100,11 @@ const AIAssistantWidget = ({ teachSubjects = [], classId = '' }) => {
         if (!subjectId || !topic.trim()) return;
         setQLoading(true); setQError(''); setQuestions([]); setBankId(null);
         try {
-            const { data } = await axiosInstance.post('/AI/generate-questions', {
+            const { data } = await axiosInstance.post('/api/ai/generate-questions', {
                 topic: topic.trim(), subjectName, difficulty: 'medium', count: 3, subjectId,
             });
             setQuestions(data.questions || []);
-            const { data: bd } = await axiosInstance.get('/AI/question-bank', {
+            const { data: bd } = await axiosInstance.get('/api/ai/question-bank', {
                 params: { subjectId, topic: topic.trim(), difficulty: 'medium' },
             });
             if (bd.banks?.[0]) setBankId(bd.banks[0]._id);
@@ -118,7 +118,7 @@ const AIAssistantWidget = ({ teachSubjects = [], classId = '' }) => {
         setAddingToTest(true);
         try {
             const ids = questions.map((q, i) => q._id || String(i));
-            const { data } = await axiosInstance.post(`/AI/question-bank/${bankId}/add-to-test`, {
+            const { data } = await axiosInstance.post(`/api/ai/question-bank/${bankId}/add-to-test`, {
                 testId: testId.trim(), questionIds: ids,
             });
             setSnack({ open: true, msg: data.message, severity: 'success' });
