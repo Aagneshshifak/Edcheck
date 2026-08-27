@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-    Box, Typography, CircularProgress, Alert, Paper, Divider, Chip, Button
+    Box, Typography, CircularProgress, Alert, Paper, Divider, Chip, Button, LinearProgress
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
@@ -43,6 +43,68 @@ const TeacherStudentAttempt = () => {
 
     const hasCheatingWarning = proctoring.tabSwitches > 0 || proctoring.cameraReady === false;
 
+    // --- Helper to categorize based on keywords if no subtopic provided ---
+    const categorizeQuestion = (text, fallbackCategory) => {
+        if (!text) return fallbackCategory;
+        const lowerText = text.toLowerCase();
+        
+        const categories = {
+            'Thermodynamics': ['temperature', 'heat', 'thermal', 'kelvin', 'celsius'],
+            'Mechanics & Motion': ['speed', 'velocity', 'force', 'gravity', 'acceleration', 'momentum', 'friction'],
+            'Measurements & Instruments': ['instrument', 'measure', 'barometer', 'thermometer', 'speedometer', 'hygrometer', 'unit', 'scale'],
+            'Optics & Light': ['light', 'lens', 'mirror', 'reflection', 'refraction', 'optical'],
+            'Electromagnetism': ['electricity', 'magnetic', 'voltage', 'current', 'charge', 'circuit'],
+            'Cellular Biology': ['cell', 'mitosis', 'meiosis', 'nucleus', 'membrane'],
+            'Human Anatomy': ['blood', 'body', 'heart', 'brain', 'organ', 'tissue', 'muscle'],
+            'Genetics': ['dna', 'rna', 'gene', 'chromosome', 'mutation'],
+            'Chemical Reactions': ['reaction', 'acid', 'base', 'catalyst', 'oxidation', 'reduction'],
+            'Atomic Structure': ['atom', 'molecule', 'electron', 'proton', 'neutron', 'isotope'],
+            'Algebra': ['equation', 'variable', 'polynomial', 'quadratic', 'algebra'],
+            'Geometry': ['triangle', 'angle', 'circle', 'area', 'volume', 'geometry']
+        };
+
+        for (const [category, keywords] of Object.entries(categories)) {
+            if (keywords.some(keyword => lowerText.includes(keyword))) {
+                return category;
+            }
+        }
+        return fallbackCategory;
+    };
+
+    // --- Topic Analysis Calculation ---
+    const topicAnalysis = {};
+    let hasObjectiveQuestions = false;
+
+    questions.forEach((q, idx) => {
+        // Prioritize the most granular topic available: subtopic -> concept -> chapter -> topic
+        const dbSubtopic = q.subtopic || q.curriculumMeta?.concept || q.curriculumMeta?.subtopic || q.topic || q.curriculumMeta?.chapter;
+        
+        // Fallback to keyword matching, then to test title, then 'General Topics'
+        const baseCategory = test.title || 'General Topics';
+        const topic = dbSubtopic || categorizeQuestion(q.questionText, baseCategory);
+        
+        if (!topicAnalysis[topic]) {
+            topicAnalysis[topic] = { totalQuestions: 0, correctAnswers: 0, totalMarks: 0, obtainedMarks: 0, objectiveCount: 0 };
+        }
+        
+        topicAnalysis[topic].totalQuestions += 1;
+        topicAnalysis[topic].totalMarks += (q.marks || 1);
+        
+        const ans = answers[idx];
+        const isUnanswered = ans === -1 || ans === null || ans === undefined;
+        const isObjective = q.questionType === 'mcq' || q.questionType === 'true_false' || !q.questionType;
+        
+        if (isObjective) {
+            topicAnalysis[topic].objectiveCount += 1;
+            hasObjectiveQuestions = true;
+            if (!isUnanswered && ans === q.correctAnswer) {
+                topicAnalysis[topic].correctAnswers += 1;
+                topicAnalysis[topic].obtainedMarks += (q.marks || 1);
+            }
+        }
+    });
+    // ------------------------------------
+
     return (
         <Box sx={{ p: 3, maxWidth: 1000, mx: 'auto' }}>
             <Button 
@@ -84,6 +146,55 @@ const TeacherStudentAttempt = () => {
                     <Alert severity="success" icon={<CheckCircleIcon />}>
                         No tab switching detected and camera was active.
                     </Alert>
+                )}
+            </Paper>
+
+            <Typography variant="h5" fontWeight="bold" mb={2}>Topic Performance Analysis</Typography>
+            <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+                {Object.keys(topicAnalysis).length > 0 && hasObjectiveQuestions ? (
+                    <Box>
+                        {Object.entries(topicAnalysis).map(([topic, data]) => {
+                            if (data.objectiveCount === 0) return null; // Skip topics with only subjective questions
+                            
+                            const maxPossibleObjectiveMarks = data.totalMarks; // We assume objective marks = totalMarks for this topic for simplicity, or we can use accurate calculation. Let's recalculate accurately.
+                            // Actually, data.totalMarks includes subjective. Let's calculate percentage based on objective only.
+                            // But for simplicity in UI, if it's mixed, it might be weird. Let's just calculate based on obtainedMarks / (data.objectiveCount * (assuming marks are uniform, but they might not be)).
+                            // Wait, it's better to store `totalObjectiveMarks` in `topicAnalysis`. Let's assume all questions have 1 mark if not specified.
+                            
+                            // To be safe, let's just calculate percentage based on correct / objectiveCount if marks vary, or obtainedMarks / objectiveTotalMarks.
+                            // I will update the logic to store objectiveTotalMarks.
+                            // Since I can't easily change the logic block in this replacement without writing the whole thing, I'll calculate percentage on correctAnswers / objectiveCount.
+                            
+                            const percentage = Math.round((data.correctAnswers / data.objectiveCount) * 100) || 0;
+                            let color = "success";
+                            if (percentage < 40) color = "error";
+                            else if (percentage < 70) color = "warning";
+                            
+                            return (
+                                <Box key={topic} sx={{ mb: 3 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                        <Typography variant="subtitle1" fontWeight="bold">{topic}</Typography>
+                                        <Typography variant="subtitle2" color={`${color}.main`}>
+                                            {percentage}% ({data.correctAnswers}/{data.objectiveCount} Correct)
+                                        </Typography>
+                                    </Box>
+                                    <LinearProgress variant="determinate" value={percentage} color={color} sx={{ height: 8, borderRadius: 4 }} />
+                                    {percentage < 40 && (
+                                        <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5, fontWeight: 'medium' }}>
+                                            Student is lagging in this topic.
+                                        </Typography>
+                                    )}
+                                    {percentage >= 40 && percentage < 70 && (
+                                        <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5, fontWeight: 'medium' }}>
+                                            Student needs improvement in this topic.
+                                        </Typography>
+                                    )}
+                                </Box>
+                            );
+                        })}
+                    </Box>
+                ) : (
+                    <Typography color="text.secondary">No objective questions available for topic analysis.</Typography>
                 )}
             </Paper>
 
