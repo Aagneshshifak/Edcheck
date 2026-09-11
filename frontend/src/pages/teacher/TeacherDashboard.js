@@ -42,6 +42,7 @@ import TestAttemptHistoryDashboard from './TestAttemptHistoryDashboard';
 import TeacherStudentAttempt from './TeacherStudentAttempt';
 import SentenceReviewDashboard from './SentenceReviewDashboard';
 import TeacherTestValidation from './TeacherTestValidation';
+import StudentReportsDashboard from './StudentReportsDashboard';
 
 const TeacherDashboard = () => {
     const [open, setOpen] = useState(true);
@@ -126,6 +127,8 @@ const TeacherDashboard = () => {
                         <Route path="/Teacher/reports" element={<GenerateReport />} />
                         <Route path="/Teacher/notices" element={<TeacherNotices />} />
                         <Route path="/Teacher/ai-dashboard" element={<AIDashboard />} />
+                        <Route path="/Teacher/student-reports" element={<StudentReportsDashboard />} />
+                        <Route path="/Teacher/student-reports/:studentId/:reportId" element={<StudentReportsDashboard />} />
 
                         <Route path="/logout" element={<Logout />} />
                     </Routes>

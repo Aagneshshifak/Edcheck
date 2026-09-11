@@ -5,41 +5,6 @@
  *
  * All routes require authentication (JWT Bearer token).
  * Admin-only routes have additional role checks in controllers.
- *
- * POST /api/adaptive/attempt
- *   Submit a quiz attempt through the full adaptive pipeline.
- *   Accessible by: Student (self), Teacher, Admin
- *
- * GET /api/adaptive/profile/:studentId
- *   Get the student's current learning profile.
- *   Accessible by: Student (self), Teacher, Admin
- *
- * GET /api/adaptive/mastery/:studentId
- *   Get all topic mastery records.
- *   Query: ?subjectId=&topic=
- *
- * GET /api/adaptive/trends/:studentId
- *   Get learning trend analysis.
- *   Query: ?trendType=&subjectId=
- *
- * GET /api/adaptive/difficulty/:studentId
- *   Get latest difficulty recommendations (one per topic).
- *
- * GET /api/adaptive/difficulty/:studentId/topic/:topic/explain
- *   Get explainability trace for a specific topic recommendation.
- *
- * POST /api/adaptive/study-plan/:studentId
- *   Generate a new LLM-based personalized study plan.
- *   Body: { upcomingExams?, studyHoursPerWeek?, learningObjectives? }
- *
- * GET /api/adaptive/study-plan/:studentId
- *   Get the latest active study plan.
- *
- * GET /api/adaptive/attempt/:id
- *   Get a QuizAttemptDetail document by ID.
- *
- * GET /api/adaptive/analytics/:studentId
- *   Full analytics dump (Admin or self only).
  */
 
 'use strict';
@@ -65,6 +30,15 @@ const {
     generateAdaptiveAssessment,
 } = require('../controllers/adaptiveLearningController');
 
+const {
+    getLatestStudentReport,
+    getStudentReportHistory,
+    getStudentWeakAreas,
+    getClassAnalytics,
+    getAssessmentReports,
+    getReportById,
+} = require('../controllers/teacherReportController');
+
 // ── Pipeline entry point ──────────────────────────────────────────────────────
 router.post('/attempt', auth, submitAdaptiveAttempt);
 
@@ -89,14 +63,22 @@ router.get('/study-plan/:studentId',  auth, getStudyPlan);
 router.post('/study-plan-feedback/:studentId', auth, submitStudyPlanFeedback);
 router.get('/study-plan-feedback/:studentId',  auth, getStudyPlanFeedback);
 
-// ── Post-assessment analysis (async — student analysis + study plan + staff report)
+// ── Post-assessment analysis (async) ─────────────────────────────────────────
 router.post('/post-assessment-analysis', auth, runPostAssessmentAnalysis);
 
-// ── Assessment generation (blueprint-based) ───────────────────────────────
+// ── Assessment generation (blueprint-based) ───────────────────────────────────
 router.post('/generate-test', auth, generateAdaptiveAssessment);
 
-// ── Staff reports ─────────────────────────────────────────────────────────────
+// ── Legacy staff reports ──────────────────────────────────────────────────────
 router.get('/staff-reports/:studentId', auth, getStaffReports);
+
+// ── Teacher report routes (RBAC-protected) ────────────────────────────────────
+router.get('/teacher-reports/student/:studentId/latest',    auth, getLatestStudentReport);
+router.get('/teacher-reports/student/:studentId/weak-areas', auth, getStudentWeakAreas);
+router.get('/teacher-reports/student/:studentId',           auth, getStudentReportHistory);
+router.get('/teacher-reports/class/:classId/analytics',     auth, getClassAnalytics);
+router.get('/teacher-reports/assessment/:assessmentId',     auth, getAssessmentReports);
+router.get('/teacher-reports/report/:reportId',             auth, getReportById);
 
 // ── Attempt detail ────────────────────────────────────────────────────────────
 router.get('/attempt/:id', auth, getAttemptDetail);
@@ -105,4 +87,3 @@ router.get('/attempt/:id', auth, getAttemptDetail);
 router.get('/analytics/:studentId', auth, getFullAnalytics);
 
 module.exports = router;
-

@@ -164,78 +164,67 @@ RESPONSE FORMAT (strict JSON schema):
 
 // ── C. STAFF REPORT SYSTEM PROMPT ─────────────────────────────────────────────
 
-const STAFF_REPORT_SYSTEM_PROMPT = `You are an expert educational analyst generating structured assessment reports for teachers and staff members.
+const STAFF_REPORT_SYSTEM_PROMPT = `You are an expert educational analyst generating structured post-assessment reports for teachers.
 
-Your report must answer: "What does the teacher need to know about this student after this assessment?"
+Your report must answer: "What does the teacher need to know about this student and what should they do next?"
 
-CRITICAL RULES:
-1. All numbers and scores MUST come from the provided analytics data — never invent statistics.
-2. Prioritize actionable information over generic observations.
-3. Clearly separate FACTS (from the analytics pipeline) from RECOMMENDATIONS (AI-generated).
-4. Be specific — instead of "the student performed poorly in DBMS", say "DBMS transaction management shows declining mastery across the last three assessments. Accuracy decreased from X% to Y%."
-5. Identify topics needing immediate teacher intervention.
-6. Suggest concrete teacher actions (e.g., "Review prerequisite concepts before next assessment").
-7. Recommend what the student should do next.
-8. Recommend next assessment configuration (difficulty, topic focus).
-9. Return strictly structured JSON — no markdown, no free-form text.
+CRITICAL RULES — YOU MUST FOLLOW THESE WITHOUT EXCEPTION:
+1. ALL numeric values (mastery, accuracy, confidence, retention, priorityScore) MUST come from the analytics data provided. NEVER invent or modify scores.
+2. NEVER fabricate chapter names, subtopic names, or concept names. Use only names provided in the analytics.
+3. The deterministic analytics engine is the sole source of truth for all performance data.
+4. Your role is ONLY to interpret and recommend — you MUST NOT recalculate or contradict any provided metric.
+5. criticalWeakAreas must reference ONLY topics from the provided criticalWeakAreas list.
+6. confidenceInsights must reference ONLY topics from the provided confidenceMismatches list.
+7. retentionRisks must reference ONLY topics from the provided retentionRisks list.
+8. teacherRecommendations must be CONCRETE and ACTIONABLE — never generic.
+   BAD: "Student should study more."
+   GOOD: "Schedule a 20-minute revision on Conduction, followed by 5 Easy-level questions before progressing to Medium-level Heat Transfer problems."
+9. Return ONLY strict JSON matching the exact schema below — no markdown, no preamble, no explanation outside JSON.
 10. Never expose raw student answers or personally identifiable information.
 
-RESPONSE FORMAT (strict JSON):
+RESPONSE FORMAT (strict JSON — match exactly):
 {
-  "report_type": "post_assessment",
-  "overall_performance": {
-    "score_percentage": 0.0,
-    "mastery_level": "novice|developing|proficient|advanced|expert",
-    "comparison_to_previous": "improved|stable|declined",
-    "summary": "..."
-  },
-  "subject_performance": [
-    { "subject": "...", "score": 0.0, "mastery": 0.0, "trend": "...", "key_finding": "..." }
+  "summary": "2-3 sentence evidence-based overview using specific chapter/subtopic names and mastery percentages from the analytics data.",
+  "criticalWeakAreas": [
+    {
+      "chapter": "...",
+      "subtopic": "...",
+      "concept": "...",
+      "mastery": 0.0,
+      "accuracy": 0.0,
+      "trend": "declining|forgetting|volatile|stable|improving|accelerating",
+      "severity": "CRITICAL|WEAK|DEVELOPING",
+      "explanation": "Evidence-based explanation referencing the specific mastery/accuracy values.",
+      "teacherAction": "Concrete action the teacher should take within the next class session."
+    }
   ],
-  "topic_analysis": {
-    "strong_areas": [
-      { "topic": "...", "mastery": 0.0, "evidence": "..." }
-    ],
-    "weak_areas": [
-      { "topic": "...", "mastery": 0.0, "weakness_type": "...", "severity": "critical|high|medium|low", "evidence": "..." }
-    ],
-    "declining_areas": [
-      { "topic": "...", "previous_mastery": 0.0, "current_mastery": 0.0, "evidence": "..." }
-    ],
-    "retention_risks": [
-      { "topic": "...", "forgetting_indicator": 0.0, "evidence": "..." }
-    ]
-  },
-  "confidence_analysis": {
-    "overall_calibration": "well_calibrated|overconfident|underconfident",
-    "specific_issues": [
-      { "topic": "...", "confidence": 0.0, "performance": 0.0, "issue": "..." }
-    ]
-  },
-  "learning_trend": {
-    "direction": "improving|stable|declining|volatile",
-    "velocity": "fast|moderate|slow|stagnant",
-    "summary": "..."
-  },
-  "difficulty_recommendation": {
-    "current_level": "...",
-    "recommended_level": "...",
-    "reason": "..."
-  },
-  "immediate_intervention_required": true|false,
-  "intervention_details": "...",
-  "recommended_teacher_actions": [
-    { "action": "...", "priority": "critical|high|medium|low", "reason": "..." }
+  "confidenceInsights": [
+    {
+      "type": "OVERCONFIDENCE_RISK|UNDERCONFIDENCE",
+      "chapter": "...",
+      "subtopic": "...",
+      "confidence": 0.0,
+      "mastery": 0.0,
+      "explanation": "...",
+      "teacherAction": "..."
+    }
   ],
-  "recommended_student_actions": [
-    { "action": "...", "priority": "critical|high|medium|low", "reason": "..." }
+  "retentionRisks": [
+    {
+      "chapter": "...",
+      "subtopic": "...",
+      "forgettingFactor": 0.0,
+      "recommendation": "Specific spaced-repetition schedule recommendation."
+    }
   ],
-  "next_assessment_recommendation": {
-    "focus_topics": ["..."],
-    "suggested_difficulty": "...",
-    "suggested_question_count": 0,
-    "reason": "..."
-  }
+  "teacherRecommendations": [
+    {
+      "priority": "CRITICAL|HIGH|MEDIUM|LOW",
+      "action": "Specific concrete action (minimum 20 words, maximum 60 words).",
+      "reason": "Evidence from analytics (mastery %, trend, forgetting factor).",
+      "topic": "chapter or subtopic name this applies to"
+    }
+  ]
 }`;
 
 // ── D. ASSESSMENT BLUEPRINT SYSTEM PROMPT ─────────────────────────────────────
@@ -367,50 +356,68 @@ Produce a comprehensive analysis following the JSON schema exactly. Distinguish 
 function buildStaffReportPrompt({ dskp, assessmentMetrics, assessmentTitle, assessmentDate }) {
     const pct = (v) => ((v || 0) * 100).toFixed(1) + '%';
 
-    const topicBreakdown = Object.entries(assessmentMetrics?.topicBreakdown || {}).map(([topic, data]) =>
-        `  - ${topic}: correct=${data.correct}/${data.total}, accuracy=${pct(data.accuracy)}`
-    ).join('\n') || '  No topic breakdown available';
+    // Granular weak areas (from postAssessmentAnalyticsEngine)
+    const criticalWeakAreasText = (assessmentMetrics?.criticalWeakAreas || []).map(wa =>
+        `  - Chapter: ${wa.chapter || 'N/A'}, Subtopic: ${wa.subtopic || 'N/A'}, Concept: ${wa.concept || 'N/A'}\n` +
+        `    Mastery: ${pct(wa.mastery)}, Accuracy: ${pct(wa.accuracy)}, Trend: ${wa.trend}, PriorityScore: ${wa.priorityScore}`
+    ).join('\n') || '  None identified';
 
-    const difficultyBreakdown = Object.entries(assessmentMetrics?.difficultyBreakdown || {}).map(([diff, data]) =>
-        `  - ${diff}: correct=${data.correct}/${data.total}, accuracy=${pct(data.accuracy)}`
+    const confMismatchText = (assessmentMetrics?.confidenceMismatches || []).map(cm =>
+        `  - [${cm.type}] Chapter: ${cm.chapter || 'N/A'}, Subtopic: ${cm.subtopic || 'N/A'}\n` +
+        `    Confidence: ${pct(cm.confidence)}, Mastery: ${pct(cm.mastery)}`
+    ).join('\n') || '  None identified';
+
+    const retentionRisksText = (assessmentMetrics?.retentionRisks || []).map(rr =>
+        `  - Chapter: ${rr.chapter || 'N/A'}, Subtopic: ${rr.subtopic || 'N/A'}\n` +
+        `    ForgettingFactor: ${pct(rr.forgettingFactor)}, Risk: ${rr.risk}`
+    ).join('\n') || '  None identified';
+
+    const difficultyText = Object.entries(assessmentMetrics?.difficultyBreakdown || {}).map(([diff, data]) =>
+        `  - ${diff}: correct=${data.correct ?? data.correctCount ?? 0}/${data.total ?? data.questionCount ?? 0}, accuracy=${pct(data.accuracy)}`
     ).join('\n') || '  No difficulty breakdown';
 
-    return `Generate a structured teacher report for the following assessment:
+    return `Generate a structured teacher report for the following assessment.
+
+IMPORTANT: All numeric values below come from the deterministic analytics pipeline.
+You MUST NOT change, invent, or contradict ANY of these values.
+Your role is ONLY to interpret these facts and provide actionable recommendations.
 
 ASSESSMENT INFO:
   Title: ${assessmentTitle || 'Assessment'}
   Date: ${assessmentDate || 'N/A'}
 
-ASSESSMENT RESULTS (deterministic — from evaluation engine):
+OVERALL RESULTS (from evaluation engine — authoritative):
   Score: ${pct(assessmentMetrics?.scorePercentage)}
   Correct: ${assessmentMetrics?.totalCorrect || 0}/${assessmentMetrics?.totalQuestions || 0}
   Completion Rate: ${pct(assessmentMetrics?.completionRate)}
-  Average Response Time: ${assessmentMetrics?.avgResponseTimeMs || 0}ms
 
-TOPIC BREAKDOWN (from evaluation engine):
-${topicBreakdown}
-
-DIFFICULTY BREAKDOWN (from evaluation engine):
-${difficultyBreakdown}
-
-STUDENT PROFILE (from adaptive pipeline):
+STUDENT PROFILE (from adaptive pipeline — authoritative):
   Overall Mastery: ${pct(dskp.overallMastery)}
   Readiness: ${pct(dskp.readinessScore)}
   Consistency: ${pct(dskp.consistencyScore)}
-  Confidence: ${pct(dskp.confidenceScore)}
-  Retention: ${pct(dskp.retentionEstimate)}
+  Confidence Score: ${pct(dskp.confidenceScore)}
+  Retention Estimate: ${pct(dskp.retentionEstimate)}
   Learning Pace: ${dskp.learningPace || 'N/A'}
 
-WEAK TOPICS:
-${(dskp.weakTopics || []).map(t => `  - ${t.topic}: mastery=${pct(t.masteryScore)}, trend=${t.trendType}`).join('\n') || '  None'}
+CRITICAL WEAK AREAS (from granular analytics — authoritative, use ONLY these in criticalWeakAreas output):
+${criticalWeakAreasText}
+
+CONFIDENCE MISMATCHES (authoritative, use ONLY these in confidenceInsights output):
+${confMismatchText}
+
+RETENTION RISKS (authoritative, use ONLY these in retentionRisks output):
+${retentionRisksText}
+
+DIFFICULTY BREAKDOWN (from evaluation engine — authoritative):
+${difficultyText}
+
+WEAK TOPICS (broader list):
+${(dskp.weakTopics || []).map(t => `  - ${t.chapter || t.topic}: mastery=${pct(t.masteryScore)}, trend=${t.trendType}`).join('\n') || '  None'}
 
 STRONG TOPICS:
-${(dskp.strongTopics || []).map(t => `  - ${t.topic}: mastery=${pct(t.masteryScore)}`).join('\n') || '  None'}
+${(dskp.strongTopics || []).map(t => `  - ${t.chapter || t.topic}: mastery=${pct(t.masteryScore)}`).join('\n') || '  None'}
 
-ACTIVE ALERTS:
-${(dskp.alerts || []).map(a => `  - [${a.alertType}] ${a.topic || 'general'}`).join('\n') || '  None'}
-
-Generate a comprehensive teacher report following the JSON schema exactly. All numbers must come from the data above — never invent statistics.`;
+Generate the teacher report as strict JSON matching the required schema. ONLY use chapter/subtopic/concept names from the data above. NEVER invent topics or scores.`;
 }
 
 /**

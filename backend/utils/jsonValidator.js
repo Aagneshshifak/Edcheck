@@ -68,16 +68,23 @@ const STUDY_PLAN_FIELDS = [
 ];
 
 const STAFF_REPORT_FIELDS = [
-    { field: 'report_type',            type: 'string',  required: true,  default: 'post_assessment' },
-    { field: 'overall_performance',    type: 'object',  required: true,  default: {} },
-    { field: 'subject_performance',    type: 'array',   required: false, default: [] },
-    { field: 'topic_analysis',         type: 'object',  required: true,  default: {} },
-    { field: 'confidence_analysis',    type: 'object',  required: false, default: {} },
-    { field: 'learning_trend',         type: 'object',  required: false, default: {} },
-    { field: 'difficulty_recommendation', type: 'object', required: false, default: {} },
-    { field: 'immediate_intervention_required', type: 'boolean', required: true, default: false },
-    { field: 'intervention_details',   type: 'string',  required: false, default: '' },
-    { field: 'recommended_teacher_actions', type: 'array', required: true, default: [] },
+    // New primary shape (from upgraded STAFF_REPORT_SYSTEM_PROMPT)
+    { field: 'summary',                   type: 'string',  required: true,  default: '' },
+    { field: 'criticalWeakAreas',         type: 'array',   required: true,  default: [] },
+    { field: 'confidenceInsights',        type: 'array',   required: false, default: [] },
+    { field: 'retentionRisks',            type: 'array',   required: false, default: [] },
+    { field: 'teacherRecommendations',    type: 'array',   required: true,  default: [] },
+    // Backward-compat fields from legacy prompt shape (optional)
+    { field: 'report_type',               type: 'string',  required: false, default: 'post_assessment' },
+    { field: 'overall_performance',       type: 'object',  required: false, default: {} },
+    { field: 'subject_performance',       type: 'array',   required: false, default: [] },
+    { field: 'topic_analysis',            type: 'object',  required: false, default: {} },
+    { field: 'confidence_analysis',       type: 'object',  required: false, default: {} },
+    { field: 'learning_trend',            type: 'object',  required: false, default: {} },
+    { field: 'difficulty_recommendation', type: 'object',  required: false, default: {} },
+    { field: 'immediate_intervention_required', type: 'boolean', required: false, default: false },
+    { field: 'intervention_details',      type: 'string',  required: false, default: '' },
+    { field: 'recommended_teacher_actions', type: 'array', required: false, default: [] },
     { field: 'recommended_student_actions', type: 'array', required: false, default: [] },
     { field: 'next_assessment_recommendation', type: 'object', required: false, default: {} },
 ];
